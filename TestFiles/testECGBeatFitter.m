@@ -45,7 +45,7 @@ x = data1 + sqrt(NoisePower)*randn(size(data1));
 
 peaks = PeakDetection(x,f/fs);                  % peak detection
 
-[phase phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
 
 teta = 0;                                       % desired phase shift
 pphase = PhaseShifting(phase,teta);             % phase shifting
@@ -69,7 +69,7 @@ plot(t,peaks*2,'ro');
 plot(t,phase,'c--','linewidth',1);
 plot(t,pphase,'g','linewidth',1);
 grid;
-xlabel('time (sec.)');
+xlabel('time(s)');
 legend('Scaled ECG','ECG Peaks','phase','shifted phase');
 
 figure;
@@ -77,6 +77,6 @@ errorbar(meanphase,ECGmean,ECGsd/2);
 hold on;
 plot(meanphase,ECGmean,'r');
 legend('SD Bar','Mean ECG');
-xlabel('phase (rads.)');
+xlabel('phase(rad)');
 grid
 
