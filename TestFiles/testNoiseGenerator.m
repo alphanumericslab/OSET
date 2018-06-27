@@ -22,7 +22,7 @@
 % MA  02110-1301, USA.
 
 clc
-clear all
+clear
 close all;
 
 % load('SampleECG1.mat');
@@ -36,7 +36,7 @@ bsline = LPFilter(data,.7/fs);          % baseline wander removal (may be replac
 %bsline = BaseLineKF(data,.5/fs);       % baseline wander removal (may be replaced by other approaches)
 data = data-bsline;
 
-t = [0:N-1]/fs;
+t = (0:N-1)/fs;
 
 % noise variance calculation
 SNR = 5;

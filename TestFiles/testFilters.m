@@ -20,7 +20,7 @@
 % Public License for more details.
 
 clc
-clear all
+clear
 close all;
 
 % load('SampleECG1.mat');

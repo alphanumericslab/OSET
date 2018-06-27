@@ -13,23 +13,16 @@
 % under the terms of the GNU General Public License as published by the
 % Free Software Foundation; either version 2 of the License, or (at your
 % option) any later version.
-% This program is distributed in the hope that it will be useful, but
-% WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-% Public License for more details. You should have received a copy of the
-% GNU General Public License along with this program; if not, write to the
-% Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-% MA  02110-1301, USA.
 
 clc
-clear all
+clear
 close all;
 
 load('SampleECG1.mat');
 %load('SampleECG2.mat'); data = data(1:15000,6)';
 
 fs = 1000;
-t = [0:length(data)-1]/fs;
+t = (0:length(data)-1)/fs;
 
 f = 1;                                          % approximate R-peak frequency
 
@@ -37,7 +30,7 @@ bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may b
 
 peaks = PeakDetection(data-bsline,f/fs);        % peak detection
 
-[phase phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
 
 teta = -pi/5;                                   % desired phase shift
 pphase = PhaseShifting(phase,teta);             % phase shifting

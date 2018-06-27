@@ -35,7 +35,7 @@ x = data-bsline;
 
 peaks1 = PeakDetection(x,f/fs);     % peak detection (max detection)
 peaks2 = PeakDetection2(x,fs);      % peak detection (Pan-Tompkins)
-[Y I] = max(abs(x));
+[Y, I] = max(abs(x));
 peaks3 = PeakDetection3(x,fs,x(I-50:I+49),.2,1.5);    % peak detection (matched filter)
 
 figure;

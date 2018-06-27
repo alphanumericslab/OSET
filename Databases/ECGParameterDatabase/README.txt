@@ -1,0 +1,1 @@
+This folder contains synthetic ECG parameters trained from real data.

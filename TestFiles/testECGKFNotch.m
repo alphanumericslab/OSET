@@ -26,7 +26,7 @@
 % 
 
 clc
-clear all
+clear
 close all;
 
 load('SampleECG1kHz1.mat'); fs = 1000; % sample ECG 1

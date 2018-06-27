@@ -19,7 +19,7 @@
 % Public License for more details.
 
 clc
-clear all
+clear
 close all;
 
 % load('SampleECG1.mat');
@@ -35,7 +35,7 @@ bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may b
 x = data-bsline;
 peaks = PeakDetection(x,f/fs);                  % peak detection
 
-[phase phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
 
 teta = 0;                                       % desired phase shift
 pphase = PhaseShifting(phase,teta);             % phase shifting

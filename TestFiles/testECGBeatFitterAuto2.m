@@ -7,13 +7,13 @@
 % reza.sameni@gmail.com
 
 clc
-clear all
+clear
 close all;
 
 load('SampleECG2.mat'); data = data(1:15000,2)';
 
 fs = 1000;
-t = [0:length(data)-1]/fs;
+t = (0 : length(data)-1)/fs;
 
 f = 1;                                          % approximate R-peak frequency
 
@@ -21,7 +21,7 @@ bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may b
 x = data-bsline;
 peaks = PeakDetection(x,f/fs);                  % peak detection
 
-[phase phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
 
 teta = 0;                                       % desired phase shift
 pphase = PhaseShifting(phase,teta);             % phase shifting

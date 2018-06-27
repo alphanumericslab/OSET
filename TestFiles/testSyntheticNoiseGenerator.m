@@ -23,7 +23,7 @@
 % MA  02110-1301, USA.
 
 clc
-clear all
+clear
 close all;
 
 N = 10000;      % number of samples
@@ -53,11 +53,11 @@ alpha = 1;                          % KF forgetting factor
 % generating different instances of ECG noise using the time-variant AR parameters
 noise1 =  zeros(NumCh,N);
 noise2 =  zeros(NumCh,N);
-for j = 1:NumCh,
+for j = 1:NumCh
     x = randn(1,M);
     y1 =  zeros(M,1);
     y2 =  zeros(M,1);
-    for i = order+1:M-1,
+    for i = order+1:M-1
         y1(i) = (sqrt(1)*x(i)-Ahat(:,i)'*y1(i-1:-1:i-order))/1;         % KF
         y2(i) = (sqrt(1)*x(i)-Asmoothed(:,i)'*y2(i-1:-1:i-order))/1;    % KS
     end
@@ -70,7 +70,7 @@ end
 template = template(101:N+100);
 
 % plotting the results
-time = [0:N-1]/fs;
+time = (0:N-1)/fs;
 figure;
 hold on;
 plot(time,noise1');

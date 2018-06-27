@@ -141,10 +141,10 @@ alpha = 1;                          % KF forgetting factor
 
 % generating different instances of ECG noise using the time-variant AR parameters
 noise =  zeros(NumCh,N);
-for j = 1:NumCh,
+for j = 1:NumCh
     x = randn(1,M);
     y1 =  zeros(M,1);
-    for i = order+1:M-1,
+    for i = order+1:M-1
         y1(i) = (sqrt(1)*x(i)-Ahat(:,i)'*y1(i-1:-1:i-order))/1;         % KF
     end
     % resampling the noise matrix to the desired sampling rate
@@ -154,16 +154,19 @@ end
 
 %//////////////////////////////////////////////////////////////////////////
 % ECG calculation
-for i = 1:NumCh,
-    for j = 1:3,
+H_m = zeros(NumCh, 3);
+H_f1 = zeros(NumCh, 3);
+H_f2 = zeros(NumCh, 3);
+for i = 1:NumCh
+    for j = 1:3
         H_m(i,j) = k_m* ((ElecPos(i,j)-pos_m(j))/sqrt(sum((ElecPos(i,:)-pos_m).^2))^3 - (ElecNeg(i,j)-pos_m(j))/sqrt(sum((ElecNeg(i,:)-pos_m).^2))^3);
         H_f1(i,j) = k_f1* ((ElecPos(i,j)-pos_f1(j))/sqrt(sum((ElecPos(i,:)-pos_f1).^2))^3 - (ElecNeg(i,j)-pos_f1(j))/sqrt(sum((ElecNeg(i,:)-pos_f1).^2))^3);
         H_f2(i,j) = k_f2* ((ElecPos(i,j)-pos_f2(j))/sqrt(sum((ElecPos(i,:)-pos_f2).^2))^3 - (ElecNeg(i,j)-pos_f2(j))/sqrt(sum((ElecNeg(i,:)-pos_f2).^2))^3);
     end
 end
-[DIP_m teta_m] = DipoleGenerator2(N,fs,F_m,alphai_m,bi_m,tetai_m,teta0_m);
-[DIP_f1 teta_f1] = DipoleGenerator2(N,fs,F_f1,alphai_f1,bi_f1,tetai_f1,teta0_f1);
-[DIP_f2 teta_f2] = DipoleGenerator2(N,fs,F_f2,alphai_f2,bi_f2,tetai_f2,teta0_f2);
+[DIP_m, teta_m] = DipoleGenerator2(N,fs,F_m,alphai_m,bi_m,tetai_m,teta0_m);
+[DIP_f1, teta_f1] = DipoleGenerator2(N,fs,F_f1,alphai_f1,bi_f1,tetai_f1,teta0_f1);
+[DIP_f2, teta_f2] = DipoleGenerator2(N,fs,F_f2,alphai_f2,bi_f2,tetai_f2,teta0_f2);
 
 VCG_m = R_m*Lambda_m*[DIP_m.x ; DIP_m.y ; DIP_m.z];
 VCG_f1 = R_f1*Lambda_f1*[DIP_f1.x ; DIP_f1.y ; DIP_f1.z];
@@ -174,8 +177,8 @@ s = s0 + (sqrt(sum(s0.^2,2))./sqrt(sum(noise.^2,2))/sqrt(10^(snr/10))*ones(1,siz
 
 %//////////////////////////////////////////////////////////////////////////
 % Mixture decomposition and plotting
-time = [0:N-1]/fs;
-if(decompose == 0),
+time = (0:N-1)/fs;
+if(decompose == 0)
     % plotting results
     figure;
     plot(time,1000*s');
@@ -200,8 +203,8 @@ else
     chindex = 1:NumCh;
 
     %//////////////////////////////////////////////////////////////////////////
-    for i = 1:size(s,1),
-        h = figure;
+    for i = 1:size(s,1)
+        figure;
         plot(time(1:NN),1000*s(i,1:NN),'k','Linewidth',.5);
         xlabel('time(s)','FontSize',10);
         ylabel(['Ch_',num2str(chindex(i)),'(mV)'],'FontSize',10);
@@ -210,8 +213,8 @@ else
     end
 
     %//////////////////////////////////////////////////////////////////////////
-    for i = 1:size(s2,1),
-        h = figure;
+    for i = 1:size(s2,1)
+        figure;
         plot(time(1:NN),s2(i,1:NN),'k','Linewidth',.5);
         xlabel('time(s)','FontSize',10);
         ylabel(['IC_',num2str(chindex(i))],'FontSize',10);

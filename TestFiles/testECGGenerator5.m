@@ -59,7 +59,7 @@ tetai_m.x = params_m{1}.theta;
 tetai_m.y = params_m{2}.theta;
 tetai_m.z = params_m{3}.theta;
 
-[DIP_m teta_m] = DipoleGenerator4(BPM_m,fs,alphai_m,bi_m,tetai_m,teta0_m);
+[DIP_m, teta_m] = DipoleGenerator4(BPM_m,fs,alphai_m,bi_m,tetai_m,teta0_m);
 
 
 %//////////////////////////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ tetai_f.x = params_f{1}.theta;
 tetai_f.y = params_f{2}.theta;
 tetai_f.z = params_f{3}.theta;
 
-[DIP_f teta_f] = DipoleGenerator4(BPM_f,fs,alphai_f,bi_f,tetai_f,teta0_f);
+[DIP_f, teta_f] = DipoleGenerator4(BPM_f,fs,alphai_f,bi_f,tetai_f,teta0_f);
 
 
 %//////////////////////////////////////////////////////////////////////////
@@ -95,7 +95,7 @@ Nf = size(DIP_f.x,2);
 
 N = min([Nm,Nf]);
 ns = zeros(dim,N);
-for i = 1:dim,
+for i = 1:dim
     ns(i,:) = NoiseGenerator(1,1,0,N,fs,beta,mod(i,2));                     % colored noise with 2 independent dimensions
 %     ns(i,:) = NoiseGenerator(0,1,0,N,mod(i,3));                           % white noise with 3 independent dimensions
 %      ns(i,:) =  NoiseGenerator(5,1,0,N,fs,[w_bw,w_em,w_ma],mod(i,8)*1000); % real noise with 8 independent dimensions

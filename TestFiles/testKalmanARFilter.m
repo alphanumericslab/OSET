@@ -1,10 +1,10 @@
-% Kalman filter
+% Kalman filter based on autoregressive model
 
 clc
-clear all
+clear
 close all;
 
-% load('SampleECG1.mat'); data = data';
+% load('SampleECG1.mat');
 % load('dataEEG.txt'); data = dataEEG(:,11)';
 data = load('eeg.txt')'; %data = data(5001:20000)';
 
@@ -26,7 +26,7 @@ x = data;
 % b = 1;
 % beta = .5;
 
-mdl = arx(x, 12);
+mdl = arx(x', 12);
 a = get(mdl, 'a');
 b = 1;
 beta = get(mdl, 'NoiseVariance');

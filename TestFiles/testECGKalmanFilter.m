@@ -19,7 +19,7 @@
 % Public License for more details.
 
 clc
-clear all
+clear
 close all;
 
 % load('SampleECG1.mat');
@@ -59,7 +59,7 @@ plot(t,data1,'r');
 grid
 
 
-[phase phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
 
 teta = 0;                                       % desired phase shift
 pphase = PhaseShifting(phase,teta);             % phase shifting
@@ -99,9 +99,9 @@ RadaptWlen = ceil(fs/2);    % window length for observation covariance adaptatio
 % Likelihood ellipse
 DF = zeros(size(PSmoothed));
 DS = zeros(size(Phat));
-for i = 100:length(PSmoothed)-100,
-    [V,DS(:,:,i)] = eig(squeeze(PSmoothed(:,:,i)));
-    [V,DF(:,:,i)] = eig(squeeze(Phat(:,:,i)));
+for i = 100:length(PSmoothed)-100
+    [V, DS(:,:,i)] = eig(squeeze(PSmoothed(:,:,i)));
+    [V, DF(:,:,i)] = eig(squeeze(Phat(:,:,i)));
 end
 
 DF = sqrt(DF);  DF1 = squeeze(DF(1,1,100:end-100))'; DF2 = squeeze(DF(2,2,100:end-100))';

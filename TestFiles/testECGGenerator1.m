@@ -10,18 +10,9 @@
 % Copyright (C) 2006  Reza Sameni
 % Sharif University of Technology, Tehran, Iran -- LIS-INPG, Grenoble, France
 % reza.sameni@gmail.com
-
-% This program is free software; you can redistribute it and/or modify it
-% under the terms of the GNU General Public License as published by the
-% Free Software Foundation; either version 2 of the License, or (at your
-% option) any later version.
-% This program is distributed in the hope that it will be useful, but
-% WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-% Public License for more details. You should have received a copy of the
-% GNU General Public License along with this program; if not, write to the
-% Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-% MA  02110-1301, USA.
+% 
+% Revision history:
+% June 2018: Compatibility check with new matlab versions
 
 %//////////////////////////////////////////////////////////////////////////
 clc
@@ -69,18 +60,19 @@ bi.z     = [.03  .12  .04         .4    .045       .05    .8 .4 .2 .4];
 %//////////////////////////////////////////////////////////////////////////
 % Noise generation
 noise =  zeros(NumCh,N);
-for j = 1:NumCh,
+for j = 1 : NumCh
     noise(j,:) = NoiseGenerator(1,1,snr,N,fs,beta);
 end
 
 %//////////////////////////////////////////////////////////////////////////
 % ECG calculation
-for i = 1:NumCh,
-    for j = 1:3,
+H = zeros(NumCh, 3);
+for i = 1:NumCh
+    for j = 1:3
         H(i,j) = k* ((ElecPos(i,j)-heartlocation(j))/sqrt(sum((ElecPos(i,:)-heartlocation).^2))^3 - (ElecNeg(i,j)-heartlocation(j))/sqrt(sum((ElecNeg(i,:)-heartlocation).^2))^3);
     end
 end
-[DIP teta] = DipoleGenerator(N,fs,F,alphai,bi,tetai,teta0);
+[DIP, teta] = DipoleGenerator(N,fs,F,alphai,bi,tetai,teta0);
 VCG = R0*Lambda*[DIP.x ; DIP.y ; DIP.z];
 s0 = H*VCG;
 
@@ -88,7 +80,7 @@ s = s0 + (sqrt(sum(s0.^2,2))./sqrt(sum(noise.^2,2))/sqrt(10^(snr/10))*ones(1,siz
 
 %//////////////////////////////////////////////////////////////////////////
 % data plotting
-t = [0:N-1]/fs;
+t = (0:N-1)/fs;
 figure;
 plot(t,1000*s');
 grid
