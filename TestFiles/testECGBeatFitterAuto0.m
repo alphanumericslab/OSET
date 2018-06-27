@@ -7,7 +7,7 @@
 % reza.sameni@gmail.com
 
 clc
-clear all
+clear
 close all;
 
 load('SampleECG2.mat'); data = data(1:15000,8)';
