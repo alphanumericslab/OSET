@@ -25,12 +25,12 @@
 
 %//////////////////////////////////////////////////////////////////////////
 clc
-clear all
+clear
 close all;
 
 N = 3000;
 fs = 1000;
-t = [0:N-1]/fs;
+t = 0:N-1/fs;
 
 f = 1;                                          % approximate R-peak frequency
 
@@ -38,7 +38,7 @@ peaks = zeros(1,N);
 I = 10:round(fs/f):N;
 peaks(I) = 1;
 
-[phase phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
 
 teta = pi;                                       % desired phase shift
 pphase = PhaseShifting(phase,teta);             % phase shifting
@@ -55,7 +55,7 @@ tetai = pi*[-90 -10 0 15 100]/180;
 
 % teta0 = pi/2;
 teta0 = 0;
-[ECG teta]= SingleChannelECGGenerator(pphase,teta0,alphai,bi,tetai);
+[ECG, teta]= SingleChannelECGGenerator(pphase,teta0,alphai,bi,tetai);
 
 %//////////////////////////////////////////////////////////////////////////
 % data plotting

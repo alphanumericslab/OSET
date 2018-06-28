@@ -19,7 +19,7 @@
 % Public License for more details.
 
 clc
-clear all
+clear
 close all;
 
 load('SampleECG1.mat');
@@ -31,10 +31,10 @@ t = (0:length(data)-1)/fs;
 f = 1;                                      % approximate R-peak frequency
 
 bsline = LPFilter(data,.7/fs);              % baseline wander removal
-x = data-bsline;
+x = data - bsline;
 
-peaks1 = PeakDetection(x,f/fs);     % peak detection (max detection)
-peaks2 = PeakDetection2(x,fs);      % peak detection (Pan-Tompkins)
+peaks1 = PeakDetection(x, f/fs);     % peak detection (max detection)
+peaks2 = PeakDetection2(x, fs);      % peak detection (Pan-Tompkins)
 [Y, I] = max(abs(x));
 peaks3 = PeakDetection3(x,fs,x(I-50:I+49),.2,1.5);    % peak detection (matched filter)
 

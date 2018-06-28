@@ -59,7 +59,7 @@ lowpassed = zeros(size(y));
 Samples = size(y,2);
 
 a = zeros(size(y));
-for i = 1:size(y,1),
+for i = 1:size(y,1)
     ymean = mean(y(i,:));
     y(i,:) = y(i,:) - ymean;
 
@@ -84,7 +84,7 @@ for i = 1:size(y,1),
     mem1 = ones(VarWinlen1,1);
     %//////////////////////////////////////////////////////////////////////////
     % Filtering
-    for k = 1 : Samples,
+    for k = 1 : Samples
         % Store results
         Xbar(k) = Xminus';
         Pbar(k) = Pminus';
@@ -119,8 +119,8 @@ for i = 1:size(y,1),
     X = zeros(size(Xhat));
     PSmoothed(Samples) = Phat(Samples);
     X(Samples) = Xhat(Samples);
-    for k = Samples-1 : -1 : 1,
-        S = Phat(k) * A' * inv(Pbar(k+1));
+    for k = Samples-1 : -1 : 1
+        S = Phat(k) * A' / Pbar(k+1);
         X(k) = Xhat(k) + S * (X(k+1) - Xbar(k+1));
         PSmoothed(k) = Phat(k) - S * (Pbar(k+1) - PSmoothed(k+1)) * S';
     end

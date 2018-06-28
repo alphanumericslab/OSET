@@ -30,7 +30,6 @@ t = (0:length(data)-1)/fs;
 f = 1;                                          % approximate R-peak frequency
 
 bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may be replaced by other approaches)
-%bsline = BaseLineKF(data,.5/fs);                % baseline wander removal (may be replaced by other approaches)
 
 x = data - bsline;
 
@@ -52,7 +51,7 @@ bi = OptimumParams(L+1:2*L);
 tetai = OptimumParams(2*L+1:3*L);
 % teta0 = pi/2;
 teta0 = 0;
-[ECG, teta]= SingleChannelECGGenerator(pphase',teta0,alphai,bi,tetai);
+[ECG, teta]= SingleChannelECGGenerator(pphase,teta0,alphai,bi,tetai);
 
 %//////////////////////////////////////////////////////////////////////////
 % data plotting
@@ -63,12 +62,14 @@ grid
 xlabel('time(s)');
 ylabel('Amplitude(mV)');
 title('Original ECG');
+
 subplot(312);
 plot(t,1000*x,'r');
 grid
 xlabel('time(s)');
 ylabel('Amplitude(mV)');
-title('Original ECG');
+title('Baseline Removed');
+
 subplot(313);
 plot(t,1000*ECG,'m');
 grid

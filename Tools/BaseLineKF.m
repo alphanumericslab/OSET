@@ -1,5 +1,7 @@
 function [baseline,baseline1,baseline2] = BaseLineKF(y,fc,winlen1,winlen2,approach)
 %
+% UNDER DEVELOPMENT
+%
 % b = BaseLineKF(x,fc),
 % Baseline wander extraction from biomedical recordings, using a first
 % order Kalman Smoother
@@ -45,7 +47,7 @@ function [baseline,baseline1,baseline2] = BaseLineKF(y,fc,winlen1,winlen2,approa
 baseline = zeros(size(y));
 baseline1 = zeros(size(y));
 baseline2 = zeros(size(y));
-for i = 1:size(y,1),
+for i = 1:size(y,1)
     %     ymean = mean(y(i,:));
     %     y(i,:) = y(i,:) - ymean;
 
@@ -82,7 +84,7 @@ for i = 1:size(y,1),
     obs = bw;
     %//////////////////////////////////////////////////////////////////////////
     % Filtering
-    for k = 1 : Samples,
+    for k = 1 : Samples
         % Store results
         Xbar(k) = Xminus';
         Pbar(k) = Pminus';

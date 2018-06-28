@@ -22,39 +22,15 @@ close all;
 fs = 1600;          % sampling rate
 N = 16000;           % segment length
 n0 = 1;             % start of segment
-t = [0:N-1]/fs;     % time vector
+t = (0:N-1)/fs;     % time vector
 L = 6;              % no. of channels
 
 %/////////////////////////////////////////////////////////////////////////
-% the desired data channel
-
-% load('MA20060905_ch_ab1');
-% data = ch_ab1(n0:n0+N-1);      clear ch_ab1;
-% load('MA20060905_ch_ab2');
-% data = ch_ab2(n0:n0+N-1);      clear ch_ab2;
-% load('MA20060905_ch_ab3');
-% data = ch_ab3(n0:n0+N-1);      clear ch_ab3;
-% load('MA20060905_ch_ab4');
-% data = ch_ab4(n0:n0+N-1);      clear ch_ab4;
-% load('MA20060905_ch_ab5');
-% data = ch_ab5(n0:n0+N-1);      clear ch_ab5;
-
+% abdominal leads
 load('CC20060830_ch_ab1');
 data = ch_ab1(n0:n0+N-1);      clear ch_ab1;
-% load('CC20060830_ch_ab2');
-% data = ch_ab2(n0:n0+N-1);      clear ch_ab2;
-% load('CC20060830_ch_ab3');
-% data = ch_ab3(n0:n0+N-1);      clear ch_ab3;
-% load('CC20060830_ch_ab4');
-% data = ch_ab4(n0:n0+N-1);      clear ch_ab4;
-% load('CC20060830_ch_ab5');
-% data = ch_ab5(n0:n0+N-1);      clear ch_ab5;
 
-%/////////////////////////////////////////////////////////////////////////
 % reference maternal ECG channel
-
-% load('MA20060905_ch_mat');
-% ref = ch_mat(n0:n0+N-1);      clear ch_mat;
 load('CC20060830_ch_mat');
 ref = ch_mat(n0:n0+N-1);      clear ch_mat;
 
@@ -74,7 +50,7 @@ peaks = PeakDetection(ref,f/fs,flag);
 %/////////////////////////////////////////////////////////////////////////
 % maternal ECG phase calculation
 
-[phase phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
 teta = 0;                                       % phase shift
 pphase = PhaseShifting(phase,teta);             % phase shifting
 bins = fs/4;                                    % number of phase bins

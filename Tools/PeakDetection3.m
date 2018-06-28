@@ -48,9 +48,9 @@ if(nargout==1)
     wlen2 = round(fs/fmax);
     I = find(r>0);
 
-    for i = 1:length(I),
+    for i = 1:length(I)
         ind = max(1,I(i)-wlen2):min(N,I(i)+wlen2);
-        if (max(r(ind))==r(I(i))),
+        if (max(r(ind))==r(I(i)))
             peaks(I(i)) = 1;
         end
     end
@@ -59,9 +59,9 @@ else
     I = find(r>0);
 
     seg = zeros(length(I),L);
-    for i = 1:length(I),
+    for i = 1:length(I)
         ind = max(1,I(i)-wlen2):min(N,I(i)+wlen2);
-        if (max(r(ind))==r(I(i))),
+        if (max(r(ind))==r(I(i)))
             peaks(I(i)) = 1;
             sg = x(max(1,I(i)-w+1):min(N,I(i)+w));
             seg(i,:) = [sg zeros(1,L-length(sg))];
