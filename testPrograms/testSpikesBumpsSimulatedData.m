@@ -1,4 +1,7 @@
-% test the Spikes and Bumps phenomenon in ICA
+% test the Spikes and Bumps phenomenon in ICA using simulated data
+% Reza Sameni, Copyright 2006
+% Modified June 2018
+
 clear;
 close all;
 randn('seed',0);
