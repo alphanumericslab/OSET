@@ -18,7 +18,7 @@ close all;
 load('SampleFECGDaISy');
 data = cell2mat(data);
 mref = data(8, :);
-data = data(2, :); 
+data = data(1, :); 
 fs = cell2mat(fs);
 % % % load('SampleECG2.mat'); data = data(1:15000,2)';
 
@@ -32,7 +32,7 @@ s = data - bsline;
 
 %//////////////////////////////////////////////////////////////////////////
 % Making the data noisy
-SNR = 10;
+SNR = 15;
 SignalPower = mean(s.^2);
 NoisePower = SignalPower / 10^(SNR/10);
 % x = s + sqrt(NoisePower)*randn(size(s));
