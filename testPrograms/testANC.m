@@ -1,4 +1,4 @@
-% Sample code for active noise cancellation from audio signals
+% Sample code for active noise cancellation
 %
 % Reza Sameni (C)
 % Email: rsameni@shirazu.ac.ir
@@ -11,8 +11,14 @@ clear;
 close all;
 clc
 
-load SampleSpeech10kHz
-fs = 10000; % Sampling rate of speeches (s1 and s2) is 10kHz.
+% audio signals
+% load SampleSpeech10kHz
+% fs = 10000; % Sampling rate of speeches (s1 and s2) is 10kHz.
+
+% fetal ECG signals
+load('FOETAL_ECG.dat'); data = FOETAL_ECG(:,2:end)'; time = FOETAL_ECG(:,1)'; clear FOETAL_ECG; fs = 250;
+s1 = data(1, :);
+s2 = data(1, :);
 
 s1 = s1(:).';   % row vector
 s2 = s2(:).';   % row vector
@@ -23,9 +29,9 @@ s2 = s2 / max(abs(s2)); % normalization
 A1 = 0.9; % Noise level
 A2 = 0.8; % Noise level
 f1 = 50; % Noise frequency 1 (Hz)
-f2 = 95; % Noise frequency 2 (Hz)
-mu1 = 0.001; % Adaptation factor
-mu2 = 0.001; % Adaptation factor
+f2 = 60; % Noise frequency 2 (Hz)
+mu1 = 0.01; % Adaptation factor
+mu2 = 0.01; % Adaptation factor
 
 n = 0:(length(s1)-1);
 
@@ -84,3 +90,28 @@ legend('Noisy', 'ANC Output', 'Original');
 xlabel('time (s)');
 ylabel('Amplitude');
 title('Channel 2');
+
+figure
+psd(s1(end/2:end), 1024, fs);
+title('The original signal spectrum (ch 1)');
+
+figure
+psd(x1(end/2:end), 1024, fs);
+title('The noisy signal spectrum (ch 1)');
+
+figure
+psd(out1(end/2:end), 1024, fs);
+title('The denoised signal spectrum (ch 1)');
+
+figure
+psd(s2(end/2:end), 1024, fs);
+title('The original signal spectrum (ch 2)');
+
+figure
+psd(x2(end/2:end), 1024, fs);
+title('The noisy signal spectrum (ch 2)');
+
+figure
+psd(out2(end/2:end), 1024, fs);
+title('The denoised signal spectrum (ch 2)');
+

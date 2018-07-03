@@ -1,9 +1,10 @@
 % test baseline wander removal by curve fitting
+% Status: UNDER TEST
 % Reza Sameni, 2005
 
 clear;
 close all;
-% load LOUETTE_07-Oct-2005_40s.txt -mat;data = LOUETTE_40s';clear LOUETTE_40s
+% load LTE07102005_40s.txt -mat;data = LOUETTE_40s';clear LOUETTE_40s
 % load fortict_20-Jan-2006.datfortict_20-Jan-2006.dat_acq.mat;
 % load fortict5_20-Jan-2006.datfortict5_20-Jan-2006.dat_acq.mat;data = data';
 %load Bonhomme3_20-Jan-2006.datBonhomme3_20-Jan-2006.dat_acq.mat;
@@ -27,7 +28,7 @@ mn = mean(data(:,400:600),2);
 AA = ones(size(data));
 BB = zeros(size(data));
 data2 = zeros(size(data));
-for ch = 1:5;
+for ch = 1:5
     Channel = data(ch,:);
 
     % baseline removal 2
@@ -52,10 +53,13 @@ for ch = 1:5;
     Beta = zeros(size(I));
     winlen = 40/2;
 
-    index0 = I(1) - winlen : I(1) + winlen;
-    xref = Channel(index0);
-    for i = 1:length(I),
-        for j = 1:length(shift);
+    index2 = I(2) - winlen : I(2) + winlen;
+    xref = Channel(index2);
+    for i = 1:length(I)
+        alpha = zeros(1, length(shift));
+        beta = zeros(1, length(shift));
+        er = zeros(1, length(shift));
+        for j = 1:length(shift)
             index = I(i) - winlen + shift(j) : I(i) + winlen + shift(j);
             alpha(j) = (mean(xref.*Channel(index)) - mean(xref)*mean(Channel(index)))/(mean(Channel(index).^2)-mean(Channel(index))^2);
             beta(j) = mean(xref - alpha(j)*Channel(index));
