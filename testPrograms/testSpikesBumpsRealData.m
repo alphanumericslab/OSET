@@ -64,7 +64,7 @@ for i = 1:size(s1,1)
         % % %         print('-dpng','-r600',['C:\Reza\ECGChannels_',num2str(k),'.png']);
         % % %         print('-deps','-r600',['C:\Reza\ECGChannels_',num2str(k),'.eps']);
     end
-    set(gcf,'Position',[146 157 776 928]);
+% % %     set(gcf,'Position',[146 157 776 928]);
 end
 
 %//////////////////////////////////////////////////////////////////////////
