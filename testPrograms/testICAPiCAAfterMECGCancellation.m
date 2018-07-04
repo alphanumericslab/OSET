@@ -3,24 +3,25 @@
 clear;
 close all;
 
-% load('FOETAL_ECG.dat'); data = FOETAL_ECG(:,2:end)'; time = FOETAL_ECG(:,1)'; clear FOETAL_ECG; fs = 250;
-load('data.txt');
-time = data(:,1)';
-data = data(:,2:end)';
-fs = 1000;
-data = data + 32768;
-data(data>32768) = data(data>32768) - 65536;
+load('FOETAL_ECG.dat'); data = FOETAL_ECG(:,2:end)'; time = FOETAL_ECG(:,1)'; clear FOETAL_ECG; fs = 250;
+
+% load('data.txt');
+% time = data(:,1)';
+% data = data(:,2:end)';
+% fs = 1000;
+% data = data + 32768;
+% data(data>32768) = data(data>32768) - 65536;
 
 L1 = size(data,1);
 L2 = size(data,2);
 bins = fs;
 
 % R-peak detection
-% ref = data(5,:);
-ref = data(9,:);
+ref = data(5,:);
+% ref = data(9,:);
 b = LPFilter(ref,1.5/fs);
 ref = ref - b;
-f = 1.7;
+f = 1.4;
 peaks = PeakDetection(ref,f/fs);
 
 % ECG phase calculation
@@ -32,6 +33,14 @@ n1 = diff(J);
 prd = round(mean(n1));
 wlen = max(n1)-min(n1);
 
+% for visualization
+figure
+plot(ref);
+hold on
+plot(J, ref(J), 'ro');
+grid
+
+
 T1 = zeros(L2-prd-wlen,1);
 NN = length(T1);
 for t = 1:NN
@@ -41,8 +50,8 @@ for t = 1:NN
 end
 T0 = 1:NN;
 
-% Main iteration
-Itr = 5;
+% Main deflation iteration
+Itr = 4;
 wholedata = zeros(L1,L2,Itr+1);
 wholedata(:,:,1) = data;
 dat = data;
@@ -136,54 +145,29 @@ s1 = W*data2;
 % % % s2 = W*data2;
 s2 = PiCA(data2,fpeaks);
 
-PlotECG(data,4,'b',fs);
-PlotECG(data2,4,'r',fs);
+PlotECG(data,8,'b',fs, 'Original Data');
+PlotECG(data2,8,'r',fs, 'After mECG Cancellation');
 
-PlotECG(s1,4,'b',fs);
-PlotECG(s2,4,'m',fs);
+PlotECG(s1,8,'b',fs, 'After JADE');
+PlotECG(s2,8,'m',fs, 'After PiCA');
 
-fECGmean1 = zeros(size(data,1),bins);
-fECGmean2 = zeros(size(data,1),bins);
-fECGsd1 = zeros(size(data,1),bins);
-fECGsd2 = zeros(size(data,1),bins);
-fmeanphase1 = zeros(size(data,1),bins);
-fmeanphase2 = zeros(size(data,1),bins);
-
-
-% % % figure;
-% % % for i = 1:L1,
-% % %     subplot(L1,1,i);
-% % %     plot(time,s1,'k','linewidth',1);
-% % %     grid;
-% % %     set(gca,'Box','On','FontSize',16);
-% % %     if (i<L1)
-% % %         set(gca,'XTickLabel',[]);
-% % %     end
-% % %     %     ylabel(['IC_',num2str(i)],'FontSize',16);
-% % %     if (itr ==1 && i==1),
-% % %         title('Original Data');
-% % %     end
-% % %     if (itr ==Itr+1 && i==1),
-% % %         title('After Maternal Artifact Removal');
-% % %     end
-% % % end
-% % % xlabel('Time (s)','FontSize',16);
-% % %
-% % % figure;
-% % % for i = 1:L1,
-% % %     subplot(L1,1,i);
-% % %     plot(time,s2,'k','linewidth',1);
-% % %     grid;
-% % %     set(gca,'Box','On','FontSize',16);
-% % %     if (i<L1)
-% % %         set(gca,'XTickLabel',[]);
-% % %     end
-% % %     %     ylabel(['IC_',num2str(i)],'FontSize',16);
-% % %     if (itr ==1 && i==1),
-% % %         title('Original Data');
-% % %     end
-% % %     if (itr ==Itr+1 && i==1),
-% % %         title('After Maternal Artifact Removal');
-% % %     end
-% % % end
-% % % xlabel('Time (s)','FontSize',16);
+L = L1;
+t = (0:L2-1)/fs;
+for i = 1:L1
+    if(mod(i,L)==1 || L==1)
+        figure;
+    end
+    subplot(L,1,mod(i-1,L)+1);
+    plot(t,data(i,:), 'b');
+    hold on;
+    plot(t,data2(i,:), 'r');
+    
+    ylabel(num2str(i));
+    grid;
+    if(mod(i,L)==1 || L==1)
+        title('Before/After mECG Cancellation Comparison');
+    end
+    if(mod(i,L)==0 || L==1)
+        xlabel('time(s)');
+    end
+end
