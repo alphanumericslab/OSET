@@ -1,4 +1,4 @@
-% Comparing different multichannel fetal ECG extraction methods for test
+% Comparing different multichannel fetal ECG denoising methods
 % Reza Sameni, copyright 2018
 %
 
@@ -25,12 +25,14 @@ s_pca = V(:, I_pca)'*x;
 
 % JADE
 [A_jade, s_jade] = jade(x);
-
+xden_jade = A_jade(:,[3 5])*s_jade([3 5], :);
 % fastICA
 s_fastica = fastica(x, 'verbose', 'off', 'displayMode', 'off');
 
 % SOBI
 [W_sobi, s_sobi] = sobi(x, [], 1000);
+A_sobi = pinv(W_sobi);
+xden_sobi = A_sobi(:,[4 6 7])*s_sobi([4 6 7], :);
 
 % PiCA based on maternal peaks
 mref = x(6,:);
@@ -44,7 +46,8 @@ fref = s_jade(5, :); % CAUTION: CHANNEL SELECTED BY VISUAL INSPECTION
 f_fet = 2.2; % the expected fetal heart rate in Hz
 fpeaks = PeakDetection(fref, f_fet/fs); % fetal R-peak detection
 Jf = find(fpeaks);
-s_pica_f = PiCA(x, fpeaks);
+[s_pica_f, W_pica_f, A_pica_f]  = PiCA(x, fpeaks);
+xden_pica_f = A_pica_f(:,[1 2])*s_pica_f([1 2], :);
 
 % PiCA based on maternal-fetal peaks
 s_pica_mf = PiCA(x, mpeaks, fpeaks);
@@ -65,13 +68,23 @@ grid
 title('fetal R-peak detection');
 
 PlotECG(x, 8, 'b', fs, 'Original data');
+
 PlotECG(s_pca, 8, 'g', fs, 'PCA Results');
 figure; semilogy(lambdas, 'bo'); grid; title('eigenvalue distribution plot');
+
 PlotECG(s_jade, 8, 'r', fs, 'JADE Results');
+PlotECG(xden_jade, 8, 'r', fs, 'fECG after denosing by JADE');
+
 PlotECG(s_sobi, 8, 'm', fs, 'SOBI Results');
+PlotECG(xden_sobi, 8, 'm', fs, 'fECG after denosing by SOBI');
+
 PlotECG(s_fastica, 8, 'c', fs, 'FastICA Results');
+
 PlotECG(s_pica_m, 8, 'm', fs, 'Maternal-based PiCA Results');
+
 PlotECG(s_pica_f, 8, 'k', fs, 'Fetal-based PiCA Results');
+PlotECG(xden_pica_f, 8, 'k', fs, 'fECG after denosing by fetal-based PiCA');
+
 PlotECG(s_pica_mf, 8, 'b', fs, 'Maternal-Fetal based PiCA Results');
 
 
