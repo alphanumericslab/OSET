@@ -1,12 +1,10 @@
-function [HR peaks] = HRCalculation1(x,f,fs,trim,method)
+function HR = HRCalculationFromPeaks(peaks, fs, trim, method)
 %
-% HR = HRCalculation1(x,f,fs,trim,method),
-% Heartrate calculator. The R-peak detector is based on max search and the
-% HR is the median of the HR over the data window.
+% HR = HRCalculationFromPeaks(peaks, fs, trim, method),
+% Heartrate calculator from the R-peaks impulse vector
 %
 % inputs:
-% x: vector of input data
-% f: approximate ECG beat-rate in Hz
+% peaks: an impulse vector containing the R-peaks
 % fs: sampling frequency in Hz
 % trim: number of beats to trim from averaging
 % method: 'trmean' or 'median'
@@ -38,7 +36,6 @@ function [HR peaks] = HRCalculation1(x,f,fs,trim,method)
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 % Public License for more details.
 
-peaks = PeakDetection5(x,f/fs);
 I = find(peaks);
 D = diff(I);
 
