@@ -54,7 +54,7 @@ I = find(peaks);
 figure;
 plot(t,x);
 hold on;
-plot(t(I),x(I).*peaks(I),'ro');
+plot(t(I),x(I),'ro');
 plot(t,data1,'r');
 grid
 
@@ -67,8 +67,7 @@ pphase = PhaseShifting(phase,teta);             % phase shifting
 bins = 250;                                     % number of phase bins
 [ECGmean,ECGsd,meanphase] = MeanECGExtraction(x,pphase,bins,1); % mean ECG extraction
 
-
-ECGBeatFitter(ECGmean,ECGsd,meanphase,'OptimumParams');           % ECG beat fitter GUI
+OptimumParams = ECGBeatFitter(ECGmean,ECGsd,meanphase,'OptimumParams');           % ECG beat fitter GUI
 
 %//////////////////////////////////////////////////////////////////////////
 N = length(OptimumParams)/3;% number of Gaussian kernels

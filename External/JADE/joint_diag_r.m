@@ -24,7 +24,7 @@ function [ V ,  qDs ]= rjd(A,threshold)
 % ie a common othonormal set eigenvectors, then the algorithm finds it.
 % The eigenvectors THEN are the column vectors of V
 % and D1, ...,Dn are diagonal matrices.
-% 
+%
 % The algorithm implements a properly extended Jacobi algorithm.
 % The algorithm stops when all the Givens rotations in a sweep
 % have sines smaller than 'threshold'.
@@ -34,7 +34,7 @@ function [ V ,  qDs ]= rjd(A,threshold)
 % Hence, it is often not necessary to push the accuracy of
 % the rotation matrix V to the machine precision.
 % It is defaulted here to the square root of the machine precision.
-% 
+%
 %
 % Author : Jean-Francois Cardoso. cardoso@sig.enst.fr
 % This software is for non commercial use only.
@@ -75,24 +75,24 @@ if nargin==1, threshold=sqrt(eps); end;
 
 encore=1;
 while encore, encore=0;
- for p=1:m-1,
-  for q=p+1:m,
-   %%%computation of Givens rotations
-   g=[ A(p,p:m:nm)-A(q,q:m:nm) ; A(p,q:m:nm)+A(q,p:m:nm) ];
-   g=g*g';
-   ton =g(1,1)-g(2,2); toff=g(1,2)+g(2,1);
-   theta=0.5*atan2( toff , ton+sqrt(ton*ton+toff*toff) );
-   c=cos(theta);s=sin(theta);
-   encore=encore | (abs(s)>threshold);
-    %%%update of the A and V matrices 
-   if (abs(s)>threshold) ,
-    Mp=A(:,p:m:nm);Mq=A(:,q:m:nm);
-    A(:,p:m:nm)=c*Mp+s*Mq;A(:,q:m:nm)=c*Mq-s*Mp;
-    rowp=A(p,:);rowq=A(q,:);
-    A(p,:)=c*rowp+s*rowq;A(q,:)=c*rowq-s*rowp;
-    temp=V(:,p);V(:,p)=c*V(:,p)+s*V(:,q); V(:,q)=c*V(:,q)-s*temp;
-   end%%of the if
-  end%%of the loop on q
- end%%of the loop on p
+    for p=1:m-1,
+        for q=p+1:m,
+            %%%computation of Givens rotations
+            g=[ A(p,p:m:nm)-A(q,q:m:nm) ; A(p,q:m:nm)+A(q,p:m:nm) ];
+            g=g*g';
+            ton =g(1,1)-g(2,2); toff=g(1,2)+g(2,1);
+            theta=0.5*atan2( toff , ton+sqrt(ton*ton+toff*toff) );
+            c=cos(theta);s=sin(theta);
+            encore=encore | (abs(s)>threshold);
+            %%%update of the A and V matrices
+            if (abs(s)>threshold) ,
+                Mp=A(:,p:m:nm);Mq=A(:,q:m:nm);
+                A(:,p:m:nm)=c*Mp+s*Mq;A(:,q:m:nm)=c*Mq-s*Mp;
+                rowp=A(p,:);rowq=A(q,:);
+                A(p,:)=c*rowp+s*rowq;A(q,:)=c*rowq-s*rowp;
+                temp=V(:,p);V(:,p)=c*V(:,p)+s*V(:,q); V(:,q)=c*V(:,q)-s*temp;
+            end%%of the if
+        end%%of the loop on q
+    end%%of the loop on p
 end%%of the while loop
 qDs = A ;

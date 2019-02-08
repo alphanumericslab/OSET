@@ -1,4 +1,4 @@
-function E = ECGModelError(X,ECGmn,Phasemn,flag);
+function E = ECGModelError(X,ECGmn,Phasemn,flag)
 %
 % Synthetic ECG model error
 %

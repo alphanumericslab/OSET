@@ -75,7 +75,7 @@ for i = 1:Itr
     xxx = xx - bsline;
     [ECGmean,ECGsd,meanphase] = MeanECGExtraction(xxx,phase,bins,1); % mean ECG extraction
 
-    ECGBeatFitter(ECGmean,ECGsd,meanphase);           % ECG beat fitter GUI
+    OptimumParams = ECGBeatFitter(ECGmean,ECGsd,meanphase);           % ECG beat fitter GUI
 
     %//////////////////////////////////////////////////////////////////////////
     N = length(OptimumParams)/3;% number of Gaussian kernels

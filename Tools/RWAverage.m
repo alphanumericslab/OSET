@@ -1,4 +1,4 @@
-function mn = RWAverage(x)
+function [mn vr_samples] = RWAverage(x)
 %
 % mn = RWAverage(x)
 % Robust weighted averaging
@@ -8,6 +8,7 @@ function mn = RWAverage(x)
 %
 % output:
 % mn: the robust weighted average over the N rows of x
+% vr: the variance of the average beat across the N rows of x
 %
 % Reference:
 % J.M. Leski. Robust weighted averaging of biomedical signals. IEEE Trans. Biomed. Eng., 49(8):796-804, 2002.
@@ -17,6 +18,9 @@ function mn = RWAverage(x)
 % Copyright (C) 2008  Reza Sameni
 % Sharif University of Technology, Tehran, Iran -- GIPSA-Lab, INPG, Grenoble, France
 % reza.sameni@gmail.com
+%
+% Updaed February 2019 to return the average beat variance
+%
 
 % This program is free software; you can redistribute it and/or modify it
 % under the terms of the GNU General Public License as published by the
@@ -29,11 +33,15 @@ function mn = RWAverage(x)
 
 if(size(x,1)>1)
     mn0 = mean(x,1);
-    noise = x - mn0(ones(size(x,1),1),:);
-    vr = var(noise,[],2);
+    noise0 = x - mn0(ones(size(x,1),1),:);
+    vr = var(noise0,[],2);
     sm = sum(1./vr);
     weight = 1./(vr*sm);
     mn = weight'*x;
+    noise = x - mn(ones(size(x,1),1),:);
+    vr_samples = var(noise,[],1);
 else
     mn = x;
+    vr_samples = zeros(size(x));
 end
+

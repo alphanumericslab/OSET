@@ -231,7 +231,10 @@ er = 100*mean((Model-data.ECGmean).^2)/mean(data.ECGmean.^2);
 
 set(data.kernelnumber,'String',length(data.SelectedIndeces));
 set(data.opterror,'String',round(100*er)/100);
-assignin('base',handles.mdlError,er);
+
+% Modified 25/1/2019 by Reza Sameni:
+% assignin('base',handles.mdlError,er);
+assignin('caller',handles.mdlError,er);
 
 
 guidata(gcbo,data);
@@ -242,7 +245,9 @@ function ExportData_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-assignin('base',handles.ExpParamName,handles.OptimizedParameters);
+% Modified 25/1/2019 by Reza Sameni:
+% assignin('base',handles.ExpParamName,handles.OptimizedParameters);
+assignin('caller',handles.ExpParamName,handles.OptimizedParameters);
 
 % handles.output = 1; % Function has finished execution
 % guidata(hObject, handles);
