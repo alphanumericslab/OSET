@@ -1,6 +1,6 @@
-function [HR peaks] = HRCalculation1(x,f,fs,trim,method)
+function [HR peaks HRPeriodSD] = HRCalculation1(x,f,fs,trim,method)
 %
-% HR = HRCalculation1(x,f,fs,trim,method),
+% [HR peaks HRPeriodSD] = HRCalculation1(x,f,fs,trim,method),
 % Heartrate calculator. The R-peak detector is based on max search and the
 % HR is the median of the HR over the data window.
 %
@@ -13,6 +13,8 @@ function [HR peaks] = HRCalculation1(x,f,fs,trim,method)
 %
 % output:
 % HR: the trimmed mean/median of the HR over the data window.
+% peaks: the detected R-peaks
+% HRPeriodSD: the standard deviation of the RR-intervals (in samples)
 %
 % Notes:
 % - The HR is reported as number of beats per minute (BPM)
@@ -45,9 +47,11 @@ D = diff(I);
 % median approach:
 if(strcmp(method,'median')) % median approach
     HR = 60*fs/median(D);
+    HRPeriodSD = std(D);
 elseif(strcmp(method, 'trmean')) % trimmed-mean approach
     D = sort(D);
     HR = 60*fs/mean(D(trim+1:end-trim));
+    HRPeriodSD = std(D(trim+1:end-trim));
 else
     error('unknown method');
 end

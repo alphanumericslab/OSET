@@ -1,5 +1,4 @@
 // A filter for moving averaging, median, trimmed mean, and weighted median filtering
-
 /*
      Open Source ECG Toolbox, version 2.0, July 2008
  	 Released under the GNU General Public License

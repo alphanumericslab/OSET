@@ -18,9 +18,9 @@
 */
 
 #include<stdio.h>
-#include <fstream>
-#include <iostream>
-using namespace std;
+//#include <fstream>
+//#include <iostream>
+//using namespace std;
 
 #include "List.h"
 

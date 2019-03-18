@@ -82,8 +82,9 @@ else
 end
 
 % remove fake peaks
-% % % I = find(peaks);
-% % % J = abs(x(I))<th*max(abs(x(I)));
-% % % peaks(I(J))=0;
+I = find(peaks);
+mx = max(abs(x(I)));
+J = find(abs(x(I)) < th*mx);
+peaks(I(J)) = 0;
 
-peaks(abs(x(peaks==1))<th*max(abs(x(peaks==1)))) = 0;
+% peaks(abs(x(peaks==1))<th*max(abs(x(peaks==1)))) = 0;

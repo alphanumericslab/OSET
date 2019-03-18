@@ -1,4 +1,4 @@
-function ind = ChannelIndex9(x,ff,fs)
+function ind = ChannelIndex9(x,ff,fs, varargin)
 % Channel selection based on variance around average beat
 %
 % Reza Sameni
@@ -6,7 +6,11 @@ function ind = ChannelIndex9(x,ff,fs)
 
 L1 = size(x,1);
 L2 = size(x,2);
-bins = round(0.25*fs);
+if(nargin == 3)
+    bins = round(0.25*fs);
+else
+    bins = varargin{1};
+end
 
 ind = zeros(L1,1);
 mn = mean(x,2)*ones(1,L2);
