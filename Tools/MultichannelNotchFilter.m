@@ -26,12 +26,11 @@ for i = 1:size(x, 1),
     end
 end
 
-
 B = cov(y');
 C = cov(x');
 
-C = (C+C')/2;
 B = (B+B')/2;
+C = (C+C')/2;
 
 [V,D] = eig(B, C, 'chol');
 [YY, II] = sort(diag(D), 1, 'descend');

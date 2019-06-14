@@ -1,8 +1,8 @@
 function [yy criterion] = PeriodicDeflDecompositionWDEN(dat, Itr, MM, T0, T1, TPTR, SORH, SCAL, NDEN, WNAME)
 %
 % [yy criterion] = PeriodicDeflDecompositionWDEN(dat, Itr, MM, T0, T1, TPTR, SORH, SCAL, NDEN, WNAME)
-% Heartrate calculator. The R-peak detector is based on max search and the
-% HR is the median of the HR over the data window.
+% (maternal) cardiac signal supression by deflation using periodic component
+% analysis and wavelet shrinkage for nonlinear denoising.
 %
 % Ref: An implementation of the following paper:
 % Sameni, Reza, Christian Jutten, and Mohammad B. Shamsollahi.
