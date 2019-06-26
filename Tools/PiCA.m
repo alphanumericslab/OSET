@@ -64,7 +64,7 @@ elseif flag ==1,
 end
 
 d = diag(D);
-[YY,I] = sort(d);
+[YY, I] = sort(d);
 I = I(end:-1:1);
 
 W = V(:,I)';
