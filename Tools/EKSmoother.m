@@ -156,7 +156,7 @@ PSmoothed(:,:,Samples) = Phat(:,:,Samples);
 X(:,Samples) = Xhat(:,Samples);
 for k = Samples-1 : -1 : 1,
     [A] = Linearization(Xhat(:,k),Wmean,0);
-    S = Phat(:,:,k) * A' * inv(Pbar(:,:,k+1));
+    S = Phat(:,:,k) * A' / Pbar(:,:,k+1);
     X(:,k) = Xhat(:,k) + S * (X(:,k+1) - Xbar(:,k+1));
     PSmoothed(:,:,k) = Phat(:,:,k) - S * (Pbar(:,:,k+1) - PSmoothed(:,:,k+1)) * S';
 
