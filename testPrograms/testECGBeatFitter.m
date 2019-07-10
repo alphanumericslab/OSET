@@ -53,7 +53,7 @@ pphase = PhaseShifting(phase,teta);             % phase shifting
 bins = round(fs/3);                                     % number of phase bins
 [ECGmean,ECGsd,meanphase] = MeanECGExtraction(x,pphase,bins,1); % mean ECG extraction 
 
-ECGBeatFitter(ECGmean,ECGsd,meanphase,'OptimalParams');               % ECG beat fitter GUI
+OptimalParams = ECGBeatFitter(ECGmean,ECGsd,meanphase);               % ECG beat fitter GUI
 
 % display the optimal parameters
 L = length(OptimalParams)/3;
