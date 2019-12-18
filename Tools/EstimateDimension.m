@@ -1,4 +1,4 @@
-function [lambda AIC MDL NEW ENSTh ENS] = EstimateDimension(x, noisevar, flagplot)
+function [lambda AIC MDL NEW ENSTh ENS fhand] = EstimateDimension(x, noisevar, flagplot)
 % estimates the dimensions of the signal space from noisy data
 % Reza Sameni
 % May 2011
@@ -12,7 +12,7 @@ function [lambda AIC MDL NEW ENSTh ENS] = EstimateDimension(x, noisevar, flagplo
 L = size(x,1);
 N = size(x,2);
 R = cov(x',1);
-[v, d] = eig(R);
+[~, d] = eig(R);
 lambda = sort(diag(d),'descend');
 P = min(N,L);
 AIC = zeros(1,P);
@@ -34,10 +34,10 @@ ENSTh = 1 + sqrt(L/N);
 
 K = find(lambda > noisevar*ENSTh);
 ENS = length(K);
-
+fhand = [];
 if(flagplot)
     nn = 1:P;
-    figure;
+    f1 = figure;
     hold on;
     plot(nn,log(lambda/lambda(1)),'linewidth',3);
     plot(nn,log(lambda/lambda(1)),'ro','linewidth',3);
@@ -46,7 +46,7 @@ if(flagplot)
     title('normalized eigenvalues');
     grid
 
-    figure;
+    f2 = figure;
     hold on;
     plot(log(AIC),'-','linewidth',4,'color',0*ones(1,3));
     plot(log(MDL),'-.','linewidth',4,'color',.6*ones(1,3));
@@ -58,16 +58,18 @@ if(flagplot)
     xlabel('m');
     hold off;
 
-    figure;
+    f3 = figure;
     hold on;
     plot(nn,lambda,'linewidth',3,'color',.2*ones(1,3)); % all channels should be normalized to have the same variance
     plot(nn,lambda,'.','markersize',30,'color',.2*ones(1,3)); % all channels should be normalized to have the same variance
     plot(nn,ENSTh(ones(1,length(nn)))+noisevar, '--','linewidth',4,'color',.5*ones(1,3));
-    text(15,ENSTh*noisevar,'$\sigma^2(1 + \sqrt{n/T})$','FontSize',18,'interpreter','latex')
+    text(round(max(nn)/2),ENSTh + noisevar,'$\delta^2(1 + \sqrt{N_c/T})$','FontSize',18,'interpreter','latex');
+    axis('tight');
     grid
     set(gca,'fontsize',16,'box','on');
     set(gca,'yscale','log');
-    xlabel('n');
-    ylabel('$\log(\lambda_n)$','interpreter','latex');
+    xlabel('$n$','interpreter','latex');
+    ylabel('$\log(l_n)$','interpreter','latex');
     hold off;
+    fhand = [f1 f2 f3];
 end
