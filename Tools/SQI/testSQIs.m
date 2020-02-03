@@ -2,29 +2,44 @@
 % The channel selection method tries to rank the components according to
 % their similarity to the fetal mixtures.
 %
-% Fahimeh Jamshidian Tehrani
+% Fahimeh Jamshidian Tehrani,
+% jamshidian.t@cse.shirazu.ac.ir,
+% fahimeh.jt@gmail.com
 % February 2020
+%
+% The Open Source Electrophysiological Toolbox, version 3.14, February 2020
+% Released under the GNU General Public License
+% https://gitlab.com/rsameni/OSET/
+
+
+
 
 
 clc
 clear all
 close all
 
-% Parameter nitializing
+% Data loading
 filename = 'ExtractfECGecgca771SNR10.mat';
+load(filename);
+
+% Parameter nitializing
+[CH, ~] = size(fECGdata);
 fs = 1000;
 segLen = 10*fs; % segmentation length
+noSegLen = length(fECGdata)/segLen; % # of segments
 average_peak_detection_rate = 2.5; %average FECG peak detection rate
 flgInput = 1; % Asking user for channel ranking; 1:enable, 0:disable
 winLen = 120; % window length for SQI5 algorithm
 flgOutput = 1; % Print Results
+peaks = cell(CH); % R-peak impulse train for each channel
+SQIoutputs = cell(noSegLen); % Calculated SQI(s) for each segment of data
+visualIND = cell(noSegLen); % Visual SQI for each segment of data
+VotedCH = cell(noSegLen); % Voted SQI for each segment of data
 
-% Data loading
-load(filename);
-[CH, ~] = size(fECGdata);
-
+fig = figure(1); set(gcf,'Visible', 'off');
 % Applying SQIs for each segment of data
-for seg = 1 : length(fECGdata)/segLen
+for seg = 1 : noSegLen
     
     segIND = (seg-1)*segLen+1 : seg*segLen;
     
@@ -45,28 +60,28 @@ for seg = 1 : length(fECGdata)/segLen
     end
     
     % Call the signal quality indexe algorithms
-    [valindSQI1, indSQI1] = sort(SQI1(JADEcomp, peaks));
+    [valindSQI1, indSQI1] = SQI1(JADEcomp, peaks);
     
-    [valindSQI2, indSQI2] = sort(SQI2(JADEcomp, peaks));
+    [valindSQI2, indSQI2] = SQI2(JADEcomp, peaks);
     
-    [valindSQI3, indSQI3] = sort(SQI3(JADEcomp),'descend');
+    [valindSQI3, indSQI3] = SQI3(JADEcomp);
     
-    [valindSQI4, indSQI4] = sort(SQI4(JADEcomp),'descend');
+    [valindSQI4, indSQI4] = SQI4(JADEcomp);
     
-    [valindSQI5, indSQI5] = sort(SQI5(JADEcomp, winLen),'descend');
+    [valindSQI5, indSQI5] = SQI5(JADEcomp, winLen);
     
-    [valindSQI6, indSQI6] = sort(SQI6(JADEcomp, peaks),'descend');
+    [valindSQI6, indSQI6] = SQI6(JADEcomp, peaks);
     
     SQIoutputs{seg} = [indSQI1; indSQI2; indSQI3; indSQI4; indSQI5; indSQI6;];
-    
-    close all
-    figure(1);
-    PlotECG(JADEcomp,CH,'b',fs);
+
+    close(fig);
+    fig = PlotECG(JADEcomp,CH,'b',fs);
+    set(gcf,'Visible', 'on');
     if flgInput  % Asking user for channel ranking
         for ch = 1 : CH
-            s = input(strcat('Please enetr channel of rank',num2str(ch),': '));
-            while isempty(s) || s > 10
-                s = input(strcat('Please enetr again the channel of rank',num2str(ch), ': '));
+            s = input(strcat('Please enetr the channel # of rank',num2str(ch),': '));
+            while isempty(s) || s > CH
+                s = input(strcat('Please enetr again the channel # of rank',num2str(ch), ': '));
             end
             visualIND{seg}(ch) = s;
         end
