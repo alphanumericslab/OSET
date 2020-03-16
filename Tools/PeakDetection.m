@@ -41,14 +41,14 @@ peaks = zeros(1,N);
 th = .5;
 rng = floor(th/ff);
 
-if(nargin==3),
+if(nargin==3)
     flag = varargin{1};
 else
     flag = abs(max(x))>abs(min(x));
 end
 
 if(flag)
-    for j = 1:N,
+    for j = 1 : N
         %         index = max(j-rng,1):min(j+rng,N);
         if(j>rng && j<N-rng)
             index = j-rng:j+rng;
@@ -63,7 +63,7 @@ if(flag)
         end
     end
 else
-    for j = 1:N,
+    for j = 1 : N
         %         index = max(j-rng,1):min(j+rng,N);
         if(j>rng && j<N-rng)
             index = j-rng:j+rng;
