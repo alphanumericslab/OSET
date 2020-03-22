@@ -1,4 +1,4 @@
-% A simulation of the susceptible-exposed-infected-recovered-passed (SEIRP) model for
+% A simulation of multiple scenarios of the susceptible-exposed-infected-recovered-passed (SEIRP) model for
 % epidemic diseases
 %
 % Reza Sameni, March 2020
@@ -13,21 +13,10 @@ close all;
 clc;
 
 dt = 0.1; % simulation time step (in days)
-scenario = 'A';
+scenario = 'B';
 
 switch scenario
-    case 'A'
-        T = 4000; % days
-        K = round(T/dt);
-        alpha_e = 0.65*ones(1, K);
-        alpha_i = 0.005*ones(1, K);
-        kappa = 0.05*ones(1, K);
-        rho = 0.08*ones(1, K);
-        beta = 0.1*ones(1, K);
-        mu = 0.02*ones(1, K);
-        gamma = 0.001*ones(1, K);
-        N = 84.0e6;
-    case 'B'
+    case 'A' % Immunizing disease
         T = 300; % days
         K = round(T/dt);
         alpha_e = 0.65*ones(1, K);
@@ -38,11 +27,22 @@ switch scenario
         mu = 0.02*ones(1, K);
         gamma = 0.0*ones(1, K);
         N = 84.0e6;
-    case 'C'
-        T = 3000; % days
+    case 'B' % Non-immunizing disease
+        T = 4000; % days
         K = round(T/dt);
-        alpha_e = 0.095*linspace(1, 0.1, K);
-        alpha_i = 0.005*linspace(1, 0.1, K);
+        alpha_e = 0.65*ones(1, K);
+        alpha_i = 0.005*ones(1, K);
+        kappa = 0.05*ones(1, K);
+        rho = 0.08*ones(1, K);
+        beta = 0.1*ones(1, K);
+        mu = 0.02*ones(1, K);
+        gamma = 0.001*ones(1, K);
+        N = 84.0e6;
+    case 'C'
+        T = 120; % days
+        K = round(T/dt);
+        alpha_e = 0.65*linspace(1, 0.01, K);
+        alpha_i = 0.005*linspace(1, 0.01, K);
         kappa = 0.05*ones(1, K);
         rho = 0.08*ones(1, K);
         beta = 0.1*ones(1, K);
@@ -60,38 +60,53 @@ switch scenario
         mu = 0.02*ones(1, K);
         gamma = 0.001*ones(1, K);
         N = 84.0e6;
+    case 'E'
+        T = 4000; % days
+        K = round(T/dt);
+        alpha_e = 0.65*ones(1, K);
+        alpha_i = 0.005*ones(1, K);
+        kappa = 0.05*ones(1, K);
+        rho = 0.08*ones(1, K);
+        beta = 0.1*ones(1, K);
+        mu = 0.02*ones(1, K);
+        gamma = (1/365)*ones(1, K);
+        N = 84.0e6;
 end
 
-s = zeros(1, K);
-e = zeros(1, K);
-i = zeros(1, K);
-r = zeros(1, K);
-d = zeros(1, K);
+E0 = 1;
+[S, E, I, R, P] = SEIRP(alpha_e, alpha_i, kappa, rho, beta, mu, gamma, N, N-E0, E0, 0, 0, 0, T, dt);
 
-s(1) = (N - 1)/N;
-e(1) = 1/N;
-i(1) = 0;
-r(1) = 0;
-d(1) = 0;
+% Find eigenvalues of the linearized system (for s(t) close to 1)
+A = [alpha_e(1)-kappa(1)-rho(1), alpha_i(1), 0, 0 ; kappa(1), -beta(1)-mu(1), 0, 0 ; rho(1), beta(1), -gamma(1), 0 ; 0, mu(1), 0, 0];
+C = [zeros(3, 1) eye(3)]
 
-for t = 1 : K - 1
-    s(t + 1) = (-alpha_e(t) * s(t) * e(t) - alpha_i(t) * s(t) * i(t) + gamma(t) * r(t)) * dt + s(t);
-    e(t + 1) = (alpha_e(t) * s(t) * e(t) + alpha_i(t) * s(t) * i(t) - kappa(t) * e(t) - rho(t) * e(t)) * dt + e(t);
-    i(t + 1) = (kappa(t) * e(t) - beta(t) * i(t) - mu(t) * i(t))* dt + i(t);
-    r(t + 1) = (beta(t) * i(t) + rho(t) * e(t) - gamma(t) * r(t)) * dt + r(t);
-    d(t + 1) = (mu(t) * i(t)) * dt + d(t);
-end
+[V D] = eig(A)
+lambda1 = 0;
+lambda2 = -gamma(1);
+delta = alpha_e(1) - kappa(1) - rho(1);
+lambda3 = (delta - beta(1) - mu(1) + sqrt((beta(1) + mu(1) + delta(1))^2 + 4*kappa(1)*alpha_i(1))) / 2;
+lambda4 = (delta - beta(1) - mu(1) - sqrt((beta(1) + mu(1) + delta(1))^2 + 4*kappa(1)*alpha_i(1))) / 2;
+lambda = [lambda1, lambda2, lambda3, lambda4];
+v1 = [0, 0, 0, 1]';
+v2 = [0, 0, 1, 0]';
+v3 = [1, (lambda3 - delta)/alpha_i(1), (rho(1)*alpha_i(1)+beta(1)*(lambda3-delta))/alpha_i(1)/(lambda3 + gamma(1)), mu(1)*(lambda3 - delta)/lambda3/alpha_i(1)]';
+v3 = v3/sqrt(v3'*v3);
+v4 = [1, (lambda4 - delta)/alpha_i(1), (rho(1)*alpha_i(1)+beta(1)*(lambda4-delta))/alpha_i(1)/(lambda4 + gamma(1)), mu(1)*(lambda4 - delta)/lambda4/alpha_i(1)]';
+v4 = v4/sqrt(v4'*v4);
 
 t = dt*(0 : K - 1);
+ii = E0*(lambda3 - delta)*(lambda4 - delta)/(lambda3 - lambda4)*(exp(lambda4*t) - exp(lambda3*t));
+ee = E0/(lambda3 - lambda4)*((lambda3 - delta)*exp(lambda4*t) - (lambda4 - delta)*exp(lambda3*t));
+
 figure;
 hold on
-plot(t, s, 'b', 'linewidth', 3);
-plot(t, e, 'c', 'linewidth', 3);
-plot(t, i, 'r', 'linewidth', 3);
-plot(t, r, 'g', 'linewidth', 3);
-plot(t, d, 'k', 'linewidth', 3);
+plot(t, S/N, 'b', 'linewidth', 3);
+plot(t, E/N, 'c', 'linewidth', 3);
+plot(t, I/N, 'r', 'linewidth', 3);
+plot(t, R/N, 'g', 'linewidth', 3);
+plot(t, P/N, 'k', 'linewidth', 3);
 grid
-legend('S(t)', 'E(t)', 'I(t)', 'R(t)', 'D(t)');
+legend('S(t)', 'E(t)', 'I(t)', 'R(t)', 'P(t)');
 ylabel('Population Ratio');
 xlabel('days');
 set(gca, 'fontsize', 16)
@@ -99,10 +114,12 @@ set(gca, 'box', 'on');
 
 figure;
 hold on
-plot(t, i, 'linewidth', 3);
-plot(t, e, 'linewidth', 3);
+plot(t, I, 'linewidth', 3);
+plot(t, E, 'linewidth', 3);
+% plot(t, ii, 'linewidth', 1);
+% plot(t, ee, 'linewidth', 1);
 grid
-legend('I(t)', 'E(t)');
+legend('I(t)', 'E(t)', 'II(t)', 'EE(t)');
 ylabel('Population ratio');
 xlabel('days');
 set(gca, 'fontsize', 16)
