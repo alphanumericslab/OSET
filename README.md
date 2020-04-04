@@ -1,3 +1,5 @@
+# The Open-Source Electrophysiological Toolbox
+![OSET Logo](/images/OSETlogo.png)
 ====================================================================
 INTRODUCTION
 
