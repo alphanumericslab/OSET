@@ -1,5 +1,5 @@
-# The Open-Source Electrophysiological Toolbox
 ![OSET Logo](/images/OSETlogo.png)
+# The Open-Source Electrophysiological Toolbox
 
 ## INTRODUCTION
 
@@ -19,7 +19,7 @@ Starting from Version 3.14 released on June 2018, OSET is accessible and will be
 2- Add the repository and its subfolders to your Matlab path
 3- Start working with the toolbox!
 
-ATTENTION:
+*ATTENTION:*
 1- The source codes and folder structures may change in the future. Repeat items 1 and 2 after each re-download or re-fetch of the repository.
 2- Remember to compile the C and C++ MEX-files according to your OS and Matlab version before using them
 
