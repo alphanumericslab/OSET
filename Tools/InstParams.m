@@ -37,6 +37,11 @@ function [A, f0, bw, fskew, skew, kurt, f1] = InstParams(signal, fs, wlen, windo
 if(isempty(flag))
     flag = 0; % causal
 end
+
+% make the signals row-wise
+signal = signal(:)';
+window = window(:)';
+
 A = zeros(size(signal));
 f0 = zeros(size(signal));
 
