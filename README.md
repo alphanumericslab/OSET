@@ -1,6 +1,6 @@
 ---
 layout: home
-title: 
+title: OSET
 ---
 ![OSET Logo](/images/OSETlogo.png)
 # The Open-Source Electrophysiological Toolbox
