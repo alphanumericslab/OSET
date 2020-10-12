@@ -39,7 +39,4 @@ Starting from Version 3.14 released on June 2018, OSET is accessible and will be
 Please cite OSET as follows: R. Sameni, OSET: The open-source electrophysiological toolbox. Version 3.14, URL: [http://www.oset.ir](http://www.oset.ir)
 
 ## CONTACT
-Reza Sameni,
-School of Electrical & Computer Engineering, Shiraz University, Shiraz, Iran
-Email: reza.sameni@gmail.com
-Web: [https://sameni.info](https://sameni.info)
+Reza Sameni, Web: [https://sameni.info](https://sameni.info)
