@@ -1,5 +1,5 @@
 
-![OSET Logo](/images/OSETlogo.png)
+![OSET Logo](OSETlogo.png)
 
 # The Open-Source Electrophysiological Toolbox
 
