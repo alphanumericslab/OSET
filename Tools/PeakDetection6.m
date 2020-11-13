@@ -26,7 +26,10 @@ function peaks = PeakDetection6(x,ff,th,varargin)
 % Copyright (C) 2006  Reza Sameni
 % Sharif University of Technology, Tehran, Iran -- GIPSA-Lab, INPG, Grenoble, France
 % reza.sameni@gmail.com
-
+%
+% Updates:
+% Nov 2020: Used logical indexing for speed improvement
+%
 % This program is free software; you can redistribute it and/or modify it
 % under the terms of the GNU General Public License as published by the
 % Free Software Foundation; either version 2 of the License, or (at your
@@ -43,14 +46,14 @@ peaks = zeros(1,N);
 
 rng = floor(0.5/ff);
 
-if(nargin==4),
+if(nargin==4)
     flag = varargin{1};
 else
     flag = abs(max(x))>abs(min(x));
 end
 
 if(flag)
-    for j = 1:N,
+    for j = 1:N
         %         index = max(j-rng,1):min(j+rng,N);
         if(j>rng && j<N-rng)
             index = j-rng:j+rng;
@@ -65,7 +68,7 @@ if(flag)
         end
     end
 else
-    for j = 1:N,
+    for j = 1:N
         %         index = max(j-rng,1):min(j+rng,N);
         if(j>rng && j<N-rng)
             index = j-rng:j+rng;
@@ -84,7 +87,7 @@ end
 % remove fake peaks
 I = find(peaks);
 mx = max(abs(x(I)));
-J = find(abs(x(I)) < th*mx);
+J = abs(x(I)) < th*mx;
 peaks(I(J)) = 0;
 
 % peaks(abs(x(peaks==1))<th*max(abs(x(peaks==1)))) = 0;

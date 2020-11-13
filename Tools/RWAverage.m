@@ -1,6 +1,6 @@
-function [mn vr_samples] = RWAverage(x)
+function [mn, vr_samples] = RWAverage(x)
 %
-% mn = RWAverage(x)
+% [mn, vr] = RWAverage(x)
 % Robust weighted averaging
 %
 % inputs:

@@ -163,7 +163,7 @@ Kgain = zeros(order,N);
 Q0 = Q;
 %//////////////////////////////////////////////////////////////////////////
 % Forward Filtering Stage
-for k = 1 : N,
+for k = 1 : N
     % Store results
     Xbar(:,k) = Xminus;
     Pbar(:,:,k) = Pminus;
@@ -207,7 +207,7 @@ PSmoothed = zeros(size(Phat));
 X = zeros(size(Xhat));
 PSmoothed(:,:,N) = Phat(:,:,N);
 X(:,N) = Xhat(:,N);
-for k = N-1 : -1 : 1,
+for k = N-1 : -1 : 1
     S = Phat(:,:,k) * A' / Pbar(:,:,k+1);
     X(:,k) = Xhat(:,k) + S * (X(:,k+1) - Xbar(:,k+1));
     PSmoothed(:,:,k) = Phat(:,:,k) - S * (Pbar(:,:,k+1) - PSmoothed(:,:,k+1)) * S';

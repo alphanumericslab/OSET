@@ -30,6 +30,8 @@
 % Sharif University of Technology, Tehran, Iran -- LIS-INPG, Grenoble, France
 % reza.sameni@gmail.com
 %
+% Revised:
+%   Oct 2020: updated call format to function ECGBeatFitter  
 %
 % This program is free software; you can redistribute it and/or modify it
 % under the terms of the GNU General Public License as published by the
@@ -68,7 +70,7 @@ phase1 = PhaseShifting(phase,-pi/2.5);
 % h1 = ECGBeatFitter(mn1,Phasemn1,'ParamsChannel1','Cz');           % ECG beat fitter GUI
 % h2 = ECGBeatFitter(mn2,Phasemn2,'ParamsChannel2','AF8');           % ECG beat fitter GUI
 % h3 = ECGBeatFitter(mn3,Phasemn3,'ParamsChannel3','ECG');           % ECG beat fitter GUI
-ECGBeatFitter(mn2,sd2,Phasemn2,'ParamsChannel2');               % ECG beat fitter GUI
+ParamsChannel2 = ECGBeatFitter(mn2,sd2,Phasemn2);               % ECG beat fitter GUI
 
 %//////////////////////////////////////////////////////////////////////////
 % KF required parameters

@@ -1,7 +1,7 @@
 function [x_smoothed1, x_smoothed2, optim_lambdas1, optim_lambdas2, cc1, ee1, cc2, ee2, L_curveC1, L_curveE1, L_curveC2, L_curveE2, knots0, knots] = ECGSmoothnessPriorsDenoiserBW(x, SmoothnessFactor, varargin)
 % Block-wise ECG denoising based on smoothness priors
 %
-% [x_smoothed1, x_smoothed2] = ECGSmoothnessPriorsDenoiserBW(x, SmoothnessFactor, mode, FilterParam, KnotsParam, ACCURACY, MAX_ITERATION)
+% [x_smoothed1, x_smoothed2] = ECGSmoothnessPriorsDenoiserBW(x, SmoothnessFactor, mode, FilterParam, KnotsParam, ACCURACY, MAX_ITERATION, FORGETTING_FACTOR, LCurveSweepLength)
 %
 % mode = 0: y_opt = argmin(|x - y| + lambda*|D*y + b|), fixed smoothness penalty (lambda)
 % mode = 1: y_opt = argmin(|D * y + b| + gamma*|x - y|), fixed MSE penalty (gamma)
@@ -139,7 +139,7 @@ cc1 = zeros(M, length(knots0)-1);
 ee1 = zeros(M, length(knots0)-1);
 L_curveC1 = zeros(M, length(knots0)-1, LCurveSweepLength);
 L_curveE1 = zeros(M, length(knots0)-1, LCurveSweepLength);
-for k = 1 : length(knots0) - 1,
+for k = 1 : length(knots0) - 1
     indexes = knots0(k) : knots0(k + 1) - 1 + orvlp;
     if(length(indexes) < L)
         pad = L - length(indexes);
@@ -153,7 +153,7 @@ for k = 1 : length(knots0) - 1,
         Dd = toeplitz([h(1) zeros(1, Nk - L)], [h zeros(1, Nk - L)]);
     end
     
-    for ch = 1 : M,
+    for ch = 1 : M
         % take a segment
         xx = x(ch, indexes)';
         mn = mean(xx);

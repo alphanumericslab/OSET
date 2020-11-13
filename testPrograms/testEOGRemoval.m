@@ -3,6 +3,9 @@
 % Created 2011
 % Modified June 2018
 %
+% Modified Oct 2020
+%   Obsolate psd() replaced with pwelch()
+%
 % Ref:
 % Sameni, R. and Gouy-Pailler, C. (2014). An iterative subspace denoising
 % algorithm for removing electroencephalogram ocular artifacts. Journal of 
@@ -66,10 +69,13 @@ xlabel('time(s)','FontSize',16);
 figure
 % h = spectrum.welch;
 % psd(h,EEG(ch(i),:),'Fs', fs, 'NFFT', 1024);
-psd(EEG(ch(1),:), 1000, fs);
+% psd(EEG(ch(1),:), 1000, fs);
+pwelch(EEG(ch(1),:), hamming(1000), 950, 1000, fs);
 hold on
 % psd(h,y(ch(i),:),'Fs', fs, 'NFFT', 1024);
-psd(y(ch(1),:), 1000, fs);
+% psd(y(ch(1),:), 1000, fs); % no longer supported in new version sof
+% Matlab
+pwelch(y(ch(1),:), hamming(1000), 950, 1000, fs);
 legend('Original', 'After EOG Removal');
 
 

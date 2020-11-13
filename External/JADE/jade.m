@@ -275,8 +275,7 @@ return ;
 %-------------------------------------------------------------------
 %
 % Contact JF Cardoso for any comment bug report,and UPDATED VERSIONS.
-% email : cardoso@sig.enst.fr 
-% or check the WEB page http://sig.enst.fr/~cardoso/stuff.html 
+% email : cardoso@iap.fr
 %
 % Reference:
 %  @article{CS_iee_94,
@@ -292,7 +291,6 @@ return ;
 %
 %  Some analytical insights into the asymptotic performance of JADE are in
 % @inproceedings{PerfEusipco94,
-%  HTML 	= "ftp://sig.enst.fr/pub/jfc/Papers/eusipco94_perf.ps.gz",
 %  author       = "Jean-Fran\c{c}ois Cardoso",
 %  address      = {Edinburgh},
 %  booktitle    = "{Proc. EUSIPCO}",

@@ -53,9 +53,9 @@ B = x(:,T0)*x(:,T0)';
 A = (A+A')/2;
 B = (B+B')/2;
 
-if flag == 0,
+if flag == 0
     [V,D] = eig(A,B,'chol');
-elseif flag ==1,
+elseif flag ==1
     % PM time calculation for the second peaks sequence
     [T0,T1] = SynchPhaseTimes2(peaks2);
     AA = x(:,T0)*x(:,T1)';
@@ -70,4 +70,4 @@ I = I(end:-1:1);
 W = V(:,I)';
 A = pinv(W);
 
-y = W*x;
+y = W * x;

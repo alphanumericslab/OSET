@@ -8,7 +8,8 @@ function y = ECGSmoothnessPriorsDenoiserLTI(x, SmoothnessFactor, mode, FilterPar
 %
 % Note: Segment lengths should not be shorter than the filter length
 % Reza Sameni, 2015
-%
+% 
+% Modified Oct 2020 to work with multichannel signals
 
 % use the given filter or calculate the filter impulse response
 if(isempty(FilterParam))
@@ -33,7 +34,7 @@ if(mode == 0) % lambda-based
     I_causal = r_abs < th;
     r_causal = r(I_causal);
     p_causal = poly(r_causal);
-    y = filtfilt(sum(p_causal), p_causal, x);
+    y = filtfilt(sum(p_causal), p_causal, x')';
 elseif(mode == 1) % gamma-based
     gg = phi;
     gg(midindex) = gg(midindex) + SmoothnessFactor;
@@ -42,5 +43,5 @@ elseif(mode == 1) % gamma-based
     I_causal = r_abs < th;
     r_causal = r(I_causal);
     p_causal = poly(r_causal);
-    y = filtfilt(sum(p_causal), p_causal, x); % Note: the sqrt(SmoothnessFactor) which should be theoretically multiplied in x in this line is automatically compensated by the sum(p_causal) term
+    y = filtfilt(sum(p_causal), p_causal, x')'; % Note: the sqrt(SmoothnessFactor) which should be theoretically multiplied in x in this line is automatically compensated by the sum(p_causal) term
 end

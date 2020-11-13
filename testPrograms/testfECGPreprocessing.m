@@ -1,6 +1,8 @@
 % test fetal ECG preprocessing
 % Reza Sameni
 % July 2018
+% Revised:
+%   Oct 2020: obsolate psd replaced by pwelch 
 
 clc
 clear;
@@ -40,11 +42,11 @@ legend('noisy', 'original', 'LPF', 'BPF', 'wdn');
 
 
 figure
-psd(data(ch, :), 1024, fs);
+pwelch(data(ch, :), [], [], 1024, fs);
 title('The original signal spectrum');
 % figure
 hold on
-psd(x(ch, :), 1024, fs);
+pwelch(x(ch, :), [], [], 1024, fs);
 title('The noisy signal spectrum');
 
 % PlotECG(data, 4, 'b', fs)
