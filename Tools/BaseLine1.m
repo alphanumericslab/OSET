@@ -35,12 +35,12 @@ b = zeros(size(x));
 flen = floor(L/2);
 
 if (strcmp(approach,'mn'))      % moving average filter
-    for j = 1:N,
+    for j = 1:N
         index = max(j-flen,1):min(j+flen,N);
         b(:,j) = mean(x(:,index),2);
     end
 elseif (strcmp(approach,'md'))  % median filter
-    for j = 1:N,
+    for j = 1:N
         index = max(j-flen,1):min(j+flen,N);
         b(:,j) = median(x(:,index),2);
     end

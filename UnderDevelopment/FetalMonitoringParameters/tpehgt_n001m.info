@@ -1,0 +1,17 @@
+Source: record tpehgt/tpehgt_n001
+val has 8 rows (signals) and 35300 columns (samples/signal)
+Duration:    29:25
+Sampling frequency: 20 Hz  Sampling interval: 0.05 sec
+Row	Signal	Gain	Base	Units
+1	EHG1	13107	0	mV
+2	EHG1_Butter-4-bi-0.08-5	13107	0	mV
+3	EHG2	13107	0	mV
+4	EHG2_Butter-4-bi-0.08-5	13107	0	mV
+5	EHG3	13107	0	mV
+6	EHG3_Butter-4-bi-0.08-5	13107	0	mV
+7	TOCO	13107	0	mV
+8	TOCO_Butter-4-bi-0.08-5	13107	0	mV
+
+To convert from raw units to the physical units shown
+above, call the 'rdmat.m' function from the wfdb-matlab
+toolbox: https://physionet.org/physiotools/matlab/wfdb-app-matlab/

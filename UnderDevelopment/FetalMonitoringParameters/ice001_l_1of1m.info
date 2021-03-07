@@ -1,0 +1,25 @@
+Source: record ehgdb/ice001_l_1of1
+val has 16 rows (signals) and 100000 columns (samples/signal)
+Duration:     8:20
+Sampling frequency: 200 Hz  Sampling interval: 0.005 sec
+Row	Signal	Gain	Base	Units
+1	EHG1	131.068	0	mV
+2	EHG10	131.068	0	mV
+3	EHG11	131.068	0	mV
+4	EHG12	131.068	0	mV
+5	EHG13	131.068	0	mV
+6	EHG14	131.068	0	mV
+7	EHG15	131.068	0	mV
+8	EHG16	131.068	0	mV
+9	EHG2	131.068	0	mV
+10	EHG3	131.068	0	mV
+11	EHG4	131.068	0	mV
+12	EHG5	131.068	0	mV
+13	EHG6	131.068	0	mV
+14	EHG7	131.068	0	mV
+15	EHG8	131.068	0	mV
+16	EHG9	131.068	0	mV
+
+To convert from raw units to the physical units shown
+above, call the 'rdmat.m' function from the wfdb-matlab
+toolbox: https://physionet.org/physiotools/matlab/wfdb-app-matlab/

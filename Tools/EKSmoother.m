@@ -33,6 +33,10 @@ function [Xhat,Phat,X,PSmoothed,a] = EKSmoother(Y,X0,P0,Q,R0,Wmean,Vmean,Inits,V
 % Peks: the EKS state vector covariance matrix (samples x 2 x 2)
 % a: measure of innovations signal whiteness
 %
+% Reference: Sameni, Reza, Mohammad B. Shamsollahi, Christian Jutten, and 
+% Gari D. Clifford. "A nonlinear Bayesian filtering framework for ECG 
+% denoising." IEEE Transactions on Biomedical Engineering 54, no. 12 (2007),
+% pp 2172-2185.
 %
 % Open Source ECG Toolbox, version 1.0, November 2006
 % Released under the GNU General Public License
@@ -54,10 +58,10 @@ function [Xhat,Phat,X,PSmoothed,a] = EKSmoother(Y,X0,P0,Q,R0,Wmean,Vmean,Inits,V
 
 %//////////////////////////////////////////////////////////////////////////
 plotflag = 0;
-if(nargin==13),
+if(nargin==13)
     plotflag = varargin{1};
 end
-if(plotflag==1),
+if(plotflag==1)
     wtbar = waitbar(0,'Forward filtering in progress. Please wait...');
 end
 %//////////////////////////////////////////////////////////////////////////
@@ -93,7 +97,7 @@ end
 %//////////////////////////////////////////////////////////////////////////
 R = R0;
 % Filtering
-for k = 1 : Samples,
+for k = 1 : Samples
 
     % This is to prevent 'Xminus' mis-calculations on phase jumps
     if(abs(Xminus(1)-Y(1,k))>pi)
@@ -106,7 +110,7 @@ for k = 1 : Samples,
 
     XX = Xminus;
     PP = Pminus;
-    for jj = 1:size(Y,1);
+    for jj = 1 : size(Y,1)
         % Measurement update (A posteriori updates)
         Yminus = ObservationProp(XX,Vmean);
         YY = Yminus(jj);
@@ -145,7 +149,7 @@ for k = 1 : Samples,
 end
 
 %//////////////////////////////////////////////////////////////////////////
-if (plotflag == 1),
+if (plotflag == 1)
     waitbar(0,wtbar,'Backward smoothing in progress. Please wait...');
 end
 
@@ -154,7 +158,7 @@ PSmoothed = zeros(size(Phat));
 X = zeros(size(Xhat));
 PSmoothed(:,:,Samples) = Phat(:,:,Samples);
 X(:,Samples) = Xhat(:,Samples);
-for k = Samples-1 : -1 : 1,
+for k = Samples-1 : -1 : 1
     [A] = Linearization(Xhat(:,k),Wmean,0);
     S = Phat(:,:,k) * A' / Pbar(:,:,k+1);
     X(:,k) = Xhat(:,k) + S * (X(:,k+1) - Xbar(:,k+1));
@@ -165,7 +169,7 @@ for k = Samples-1 : -1 : 1,
     end
 end
 
-if (plotflag == 1),
+if (plotflag == 1)
     close(wtbar);
 end
 
@@ -186,7 +190,7 @@ function xout = StateProp(x,Wmean)
 persistent tetai alphai bi fs w dt;
 
 % Check if variables should be initialized
-if nargin==1,
+if nargin==1
     % mean of the noise parameters
     % Inits = [alphai bi tetai w fs];
     L = (length(x)-2)/3;
@@ -201,7 +205,7 @@ if nargin==1,
 end
 
 xout(1,1) = x(1) + w*dt;                                                    % teta state variable
-if(xout(1,1)>pi),
+if(xout(1,1)>pi)
     xout(1,1) = xout(1,1) - 2*pi;
 end
 
@@ -214,7 +218,7 @@ xout(2,1) = x(2) - dt*sum(w*alphai./(bi.^2).*dtetai.*exp(-dtetai.^2./(2*bi.^2)))
 function y = ObservationProp(x,v)
 
 % Check if variables should be initialized
-if nargin==1,
+if nargin==1
     return
 end
 
@@ -233,7 +237,7 @@ function [M,N] = Linearization(x,Wmean,flag)
 persistent tetai alphai bi fs w dt L;
 
 % Check if variables should be initialized
-if nargin==1,
+if nargin==1
     % Inits = [alphai bi tetai w fs];
     L = (length(x)-2)/3;
     alphai = x(1:L);
@@ -246,7 +250,7 @@ if nargin==1,
     return
 end
 % Linearize state equation
-if flag==0,
+if flag==0
     dtetai = rem(x(1) - tetai,2*pi);
 
     M(1,1) = 1;                                                                     % dF1/dteta
@@ -267,7 +271,7 @@ if flag==0,
     N(2,3*L+2) = 1;
 
     % Linearize output equation
-elseif flag==1,
+elseif flag==1
     M(1,1) = 1;
     M(1,2) = 0;
     M(2,1) = 0;

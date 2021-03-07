@@ -27,7 +27,7 @@ bi = X(L+1:2*L);
 tetai = X(2*L+1:3*L);
 
 Z = zeros(size(Phasemn));
-for j = 1:length(alphai),
+for j = 1:length(alphai)
     dtetai = rem(Phasemn - tetai(j) + pi,2*pi)-pi;
     Z = Z + alphai(j) .* exp(-dtetai .^2 ./ (2*bi(j) .^ 2));
 end
