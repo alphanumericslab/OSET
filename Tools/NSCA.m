@@ -11,7 +11,7 @@ B = (B+B')/2;
 [V,D] = eig(B,C,'chol');
 
 d = diag(D);
-[YY,II] = sort(d);
+[YY, II] = sort(d);
 II = II(end:-1:1);
 
 W = V(:,II)';

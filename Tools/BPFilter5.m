@@ -15,7 +15,7 @@ function y = BPFilter5(x,fc,bw,order)
 % Note:
 % - fc and bw are the center frequency and bandwidth of the bandpass filter
 % normalized by the sampling frequency
-% - the filter performs forward-reverse filtering successively. It has 
+% - the filter performs forward-reverse filtering successively. It has
 % zero-phase for even CIC filter orders and a phase-lag equal to a single
 % stage CIC filter for odd CIC filter orders
 %
@@ -50,29 +50,29 @@ v = exp(1j*2*pi*fc*n);
 % the real part of the filter
 x1 = x.*w(ones(M,1),:);
 y1 = x1;
-for k = 1:order,
-    for i = 1:M,
+for k = 1 : order
+    for i = 1 : M
         y1(i,:) = filter(h,1,y1(i,:));
     end
-    y1 = y1(:,end:-1:1);
+    y1 = y1(:, end:-1:1);
 end
 if(mod(order,2)==1)
-    y1 = y1(:,end:-1:1);
-end    
+    y1 = y1(:, end:-1:1);
+end
 z1 = y1.*v(ones(M,1),:);
 
 % the imaginary part of the filter
 x2 = x.*v(ones(M,1),:);
 y2 = x2;
-for k = 1:order,
-    for i = 1:M,
+for k = 1 : order
+    for i = 1 : M
         y2(i,:) = filter(h,1,y2(i,:));
     end
     y2 = y2(:,end:-1:1);
 end
 if(mod(order,2)==1)
     y2 = y2(:,end:-1:1);
-end    
+end
 z2 = y2.*w(ones(M,1),:);
 
 y = real(z1 + z2);

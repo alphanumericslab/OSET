@@ -9,9 +9,9 @@ k = max(round(L2*f1),1):min(round(L2*f2),L2);
 
 k = [k L2-k+1];
 Ax = zeros(L1,L1);
-for ii = 1:L1,
+for ii = 1:L1
     X = fft(x(ii,:),L2);
-    for jj = 1:L1,
+    for jj = 1:L1
         Y = fft(x(jj,:),L2);
         c = X.*conj(Y);
         Ax(ii,jj) = sum(c(k));
