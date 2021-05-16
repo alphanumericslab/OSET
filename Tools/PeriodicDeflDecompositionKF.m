@@ -1,4 +1,4 @@
-function [output criterion] = PeriodicDeflDecompositionKF(dat,Itr,peaks, bins, f0, fs)
+function [output, criterion] = PeriodicDeflDecompositionKF(dat,Itr,peaks, bins, f0, fs)
 %
 % [output criterion] = PeriodicDeflDecompositionKF(dat,Itr,peaks, bins, f0, fs)
 % (maternal) cardiac signal supression by deflation using periodic component

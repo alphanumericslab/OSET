@@ -1,4 +1,4 @@
-function [yy criterion] = PeriodicDeflDecompositionWDEN(dat, Itr, MM, T0, T1, TPTR, SORH, SCAL, NDEN, WNAME)
+function [yy, criterion] = PeriodicDeflDecompositionWDEN(dat, Itr, MM, T0, T1, TPTR, SORH, SCAL, NDEN, WNAME)
 %
 % [yy criterion] = PeriodicDeflDecompositionWDEN(dat, Itr, MM, T0, T1, TPTR, SORH, SCAL, NDEN, WNAME)
 % (maternal) cardiac signal supression by deflation using periodic component
@@ -21,7 +21,7 @@ L2 = size(dat,2);
 mn = mean(dat,2)*ones(1,L2);
 dat = dat - mn;
 criterion = zeros(1, Itr);
-for i = 1:Itr,
+for i = 1 : Itr
 
     % periodic component analysis stage
     A = dat(:,T0)*dat(:,T1)'/length(T0);
@@ -42,7 +42,7 @@ for i = 1:Itr,
     dat = W*dat;
 
     % wavelet denoising
-    for k = 1:MM,
+    for k = 1:MM
         est = wden(dat(k,:), TPTR, SORH, SCAL, NDEN, WNAME);
         dat(k,:) = dat(k,:) - est;
     end
