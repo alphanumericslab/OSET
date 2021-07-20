@@ -64,9 +64,9 @@ title('KF gains');
 
 figure;
 hold on;
-psd(x,10*fs,fs);
-psd(y,10*fs,fs);
-psd(data,10*fs,fs);
+pwelch(x, length(x)/8, 1024, fs);
+pwelch(y, length(y)/8, 1024, fs);
+pwelch(data, length(data)/8, 1024, fs);
 legend('Noisy','Denoised','Original');
 
 

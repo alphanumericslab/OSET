@@ -24,7 +24,7 @@ close all;
 
 % load('SampleECG1.mat');
 % load('SampleECG2.mat'); data = data(1:15000,2)';
-load('FOETAL_ECG.dat'); data = FOETAL_ECG(:,2)'; refdata = FOETAL_ECG(:,9)'; time = FOETAL_ECG(:,1)'; clear FOETAL_ECG; fs = 250;
+load('FOETAL_ECG.dat'); data = FOETAL_ECG(:, 3)'; refdata = FOETAL_ECG(:,9)'; time = FOETAL_ECG(:,1)'; clear FOETAL_ECG; fs = 250;
 
 
 t = (0:length(data)-1)/fs;
@@ -35,6 +35,13 @@ bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may b
 %bsline = BaseLineKF(data,.5/fs);                % baseline wander removal (may be replaced by other approaches)
 
 x = data - bsline;
+
+figure
+plot(t, x);
+title('maternal abdominal channel');
+xlabel('time(s)','FontSize',10);
+ylabel('Amplitude(mV)','FontSize',10);
+grid
 
 %//////////////////////////////////////////////////////////////////////////
 % bslinex = LPFilter(x,.7/fs);                  % baseline wander removal (may be replaced by other approaches)
@@ -86,13 +93,15 @@ Phat = squeeze(Phat(2,2,:))';
 Xeks = Xeks(2,:);
 PSmoothed = squeeze(PSmoothed(2,2,:))';
 
-% % % figure
-% % % plot(t,x);
-% % % hold on;
-% % % plot(t,Xekf','g');
-% % % plot(t,Xeks','r');
-% % % grid;
-% % % legend('Noisy','EKF Output','EKS Output');
+figure
+plot(t,x);
+hold on;
+plot(t,Xekf','g');
+plot(t,Xeks','r');
+grid;
+legend('Noisy','EKF Output','EKS Output');
+xlabel('time(s)','FontSize',10);
+ylabel('Amplitude(mV)','FontSize',10);
 
 I = 1:length(x);
 
@@ -110,6 +119,7 @@ set(h,'PaperUnits','inches');
 set(h,'PaperPosition',[.01 .01 8.5 2.5])
 % print('-dpng','-r600',['C:\Reza\DaISy1','.png']);
 % print('-deps','-r600',['C:\Reza\DaISy1','.eps']);
+title('Original maternal abdominal channel');
 
 h = figure;
 plot(time(I),Xeks(I),'k','Linewidth',.5);
@@ -125,6 +135,7 @@ set(h,'PaperUnits','inches');
 set(h,'PaperPosition',[.01 .01 8.5 2.5])
 % print('-dpng','-r600',['C:\Reza\DaISy1EKS','.png']);
 % print('-deps','-r600',['C:\Reza\DaISy1EKS','.eps']);
+title('EKS estimate of the maternal ECG');
 
 h = figure;
 plot(time(I),x(I)-Xeks(I),'k','Linewidth',.5);
@@ -140,3 +151,4 @@ set(h,'PaperUnits','inches');
 set(h,'PaperPosition',[.01 .01 8.5 2.5])
 % print('-dpng','-r600',['C:\Reza\DaISy1EKSDenoised','.png']);
 % print('-deps','-r600',['C:\Reza\DaISy1EKSDenoised','.eps']);
+title('Denoised by EKS');

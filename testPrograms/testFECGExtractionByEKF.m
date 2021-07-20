@@ -47,6 +47,18 @@ f = 1.5;    % approximate maternal heart rate (the algorithm is not very sensiti
 flag = 1;   % detect positive peaks
 peaks = PeakDetection(ref,f/fs,flag);
 
+%//////////////////////////////////////////////////////////////////////////
+% Display signals before processing
+peak_ind = find(peaks);
+figure;
+plot(t,ref);
+hold on;
+plot(t(peak_ind),ref(peak_ind),'ro');
+grid;
+legend('Reference Channel used for R-wave detection','detected R-waves');
+xlabel('time(s)');
+ylabel('Amplitude(mV)');
+
 %/////////////////////////////////////////////////////////////////////////
 % maternal ECG phase calculation
 
@@ -108,16 +120,15 @@ Denoised_eks = data - Xeks(2,:)-bsline;   % the denoised signal (Maternal ECG re
 
 %//////////////////////////////////////////////////////////////////////////
 % Display Results
-
-figure;
-plot(t,ref);
-hold on;
-plot(t,-peaks*100,'r');
-grid;
-legend('Reference Channel used for R-wave detection','detected R-waves');
-xlabel('time(s)');
-ylabel('Amplitude(mV)');
-
+% figure;
+% plot(t,ref);
+% hold on;
+% plot(t,-peaks*100,'r');
+% grid;
+% legend('Reference Channel used for R-wave detection','detected R-waves');
+% xlabel('time(s)');
+% ylabel('Amplitude(mV)');
+% 
 figure;
 subplot(211);
 plot(t, data(1,:),'b');

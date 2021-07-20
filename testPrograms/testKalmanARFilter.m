@@ -4,9 +4,9 @@ clc
 clear
 close all;
 
-% load('SampleECG1.mat');
+load('SampleECG1.mat');
 % load('dataEEG.txt'); data = dataEEG(:,11)';
-data = load('eeg.txt')'; %data = data(5001:20000)';
+% data = load('eeg.txt')'; %data = data(5001:20000)';
 
 load LPFilterCoefs50Hzfs250Hz h
 fs = 250;
@@ -30,8 +30,7 @@ mdl = arx(x', 12);
 a = get(mdl, 'a');
 b = 1;
 beta = get(mdl, 'NoiseVariance');
-
-gamma = 1;%0.9;
+gamma = 1.0;%0.9;
 wlen = round(fs*.250);
 
 [y1f,y1s,Pbar,Phat,PSmoothed,Kgain] = KalmanARFilter(x, b, a, beta, var(x - BPFilter(x,4/fs,25/fs)), gamma, wlen, 'obsrv');
@@ -41,19 +40,21 @@ t = (0:length(data)-1)/fs;
 
 figure;
 hold on;
-plot(t, x, 'b');
-plot(t, x - y1s, 'r');
-plot(t, x - y1f, 'm');
+lbl = {};
+plot(t, x, 'b'); lbl = cat(2, lbl, 'Noisy signal');
+plot(t, x - y1s, 'r'); lbl = cat(2, lbl, 'Kalman filter denoised');
+plot(t, x - y1f, 'm');  lbl = cat(2, lbl, 'Kalman smoother denoised');
 grid;
 xlabel('time (sec.)');
-% legend('noisy ECG','Kalman smoother');
-% legend('original ECG','noisy ECG','Kalman filter','Kalman smoother');
+legend(lbl);
 
 figure;
 hold on;
-psd(x,256,fs);
-psd(x-y1s,256,fs);
-% psd(x-y2s,256,fs);
+lbl = {};
+pwelch(x, length(x)/2, length(x)/8, 1024, fs); lbl = cat(2, lbl, 'Noisy signal');
+pwelch(x - y1f, length(x)/2, length(x)/8, 1024, fs); lbl = cat(2, lbl, 'Kalman filter denoised');
+pwelch(x - y1s, length(x)/2, length(x)/8, 1024, fs); lbl = cat(2, lbl, 'Kalman smoother denoised');
+legend(lbl);
 
 figure;
 freqz(b,a,256,fs);
