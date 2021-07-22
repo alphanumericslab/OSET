@@ -37,12 +37,12 @@ data1 = data - bsline;
 
 %//////////////////////////////////////////////////////////////////////////
 % Making the data noisy
-SNR = 10;
+SNR = 0;
 SignalPower = mean(data1.^2);
 NoisePower = SignalPower / 10^(SNR/10);
-% x = data1 + sqrt(NoisePower)*randn(size(data1));
+x = data1 + sqrt(NoisePower)*randn(size(data1));
 % % % x =  data1 + [NoiseGenerator(5,SignalPower,SNR,length(data1),fs,[0 1 1],0)]';
-x = data1 + NoiseGenerator(1,SignalPower,SNR,length(data1),fs,1,0)';
+% x = data1 + NoiseGenerator(1,SignalPower,SNR,length(data1),fs,1,0)';
 %//////////////////////////////////////////////////////////////////////////
 % bslinex = LPFilter(x,.7/fs);                  % baseline wander removal (may be replaced by other approaches)
 % x = x - bslinex;
@@ -119,6 +119,9 @@ plot(DF1-mean(DF1),DF2-mean(DF2),'bo');
 hold on;
 plot(DS1-mean(DS1),DS2-mean(DS2),'ro');
 grid;
+xlabel('ECG phase error');
+ylabel('ECG amplitude error');
+legend('EKF', 'EKS');
 
 figure
 plot(t,x);
@@ -128,6 +131,9 @@ plot(t,Xeks','r');
 plot(t,data1,'m');
 grid;
 legend('Noisy','EKF Output','EKS Output','Original ECG');
+xlabel('time(s)');
+ylabel('Amplitude (mV)');
+title('ECG denoising with EKF & EKS');
 
 figure
 plot(t,x);
@@ -140,6 +146,9 @@ plot(t,Xekf+3*sqrt(Phat),'m','linewidth',1);
 legend('Noisy','EKF Output','Original ECG','\sigma envelope','3\sigma envelope');
 plot(t,Xekf-sqrt(Phat),'c','linewidth',1);
 plot(t,Xekf-3*sqrt(Phat),'m','linewidth',1);
+xlabel('time(s)');
+ylabel('Amplitude (mV)');
+title('ECG denoising with EKF');
 
 figure
 plot(t,x);
@@ -152,6 +161,9 @@ plot(t,Xeks+3*sqrt(PSmoothed),'m','linewidth',1);
 legend('Noisy','EKS Output','Original ECG','\sigma envelope','3\sigma envelope');
 plot(t,Xeks-sqrt(PSmoothed),'c','linewidth',1);
 plot(t,Xeks-3*sqrt(PSmoothed),'m','linewidth',1);
+xlabel('time(s)');
+ylabel('Amplitude (mV)');
+title('ECG denoising with EKS');
 
 %//////////////////////////////////////////////////////////////////////////
 % performance evaluation

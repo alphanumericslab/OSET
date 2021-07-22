@@ -34,31 +34,31 @@ function [y1,y2,Pbar,Phat,PSmoothed,Kgain] = KalmanARFilter(x,b,a,varargin)
 %//////////////////////////////////////////////////////////////////////////
 % input arguments
 
-if(nargin>3  && ~isempty(varargin{1})),
+if(nargin>3  && ~isempty(varargin{1}))
     Q = varargin{1};
 else
     Q = var(x);
 end
 
-if(nargin>4 && ~isempty(varargin{2})),
+if(nargin>4 && ~isempty(varargin{2}))
     R = varargin{2};
 else
     R = var(x);
 end
 
-if(nargin>5  && ~isempty(varargin{3})),
+if(nargin>5  && ~isempty(varargin{3}))
     gamma = varargin{3};
 else
     gamma = 1;
 end
 
-if(nargin>6  && ~isempty(varargin{4})),
+if(nargin>6  && ~isempty(varargin{4}))
     VarWinlen = varargin{4};
 else
     VarWinlen = round(length(x)/10);
 end
 
-if(nargin>7  && ~isempty(varargin{5})),
+if(nargin>7  && ~isempty(varargin{5}))
     mode = varargin{5};
 else
     mode = 'obsvr';
@@ -112,7 +112,7 @@ Kgain = zeros(L,Samples);
 
 %//////////////////////////////////////////////////////////////////////////
 % Forward Filtering Stage
-for k = 1 : Samples,
+for k = 1 : Samples
     % Store results
     Xbar(:,k) = Xminus;
     Pbar(:,:,k) = Pminus;
@@ -120,25 +120,18 @@ for k = 1 : Samples,
     % Measurement update (A posteriori updates)
     Yminus = H*Xminus;
     
-    K = Pminus*H'/(H*Pminus*H'+ R);                        % Kalman gain
-    Pplus = (eye(L)-K*H)*Pminus*(eye(L)-K*H)'+K*R*K';       % Stabilized Kalman cov. matrix
+    K = Pminus * H' / (H * Pminus * H'+ R);                        % Kalman gain
+    Pplus = (eye(L) - K * H) * Pminus * (eye(L) - K * H)' + K * R * K';       % Stabilized Kalman cov. matrix
     
     innovations(k) = x(k) - Yminus;
-    Xplus = Xminus + K*innovations(k);                    % A posteriori state estimate
+    Xplus = Xminus + K * innovations(k);                    % A posteriori state estimate
     
     mem2 = [innovations(k).^2 ; mem2(1:end-1)];             % Observation covariance matrix update (for nonstationary signals)
-    R = gamma*R + (1-gamma)*mean(mem2);
-    
-    
-    % % %     A
-    % % %     Pplus
-    % % %     B
-    % % %     Q
-    
+    R = gamma*R + (1-gamma) * mean(mem2);
     
     % Time update (A priori updates)
-    Xminus = A*Xplus;                                       % State update
-    Pminus = A*Pplus*A' + B*Q*B';                           % Cov. matrix update
+    Xminus = A * Xplus;                                       % State update
+    Pminus = A * Pplus * A' + B * Q * B';                           % Cov. matrix update
     
     % Store results
     Xhat(:,k) = Xplus;
@@ -152,7 +145,7 @@ PSmoothed = zeros(size(Phat));
 X = zeros(size(Xhat));
 PSmoothed(:,:,Samples) = Phat(:,:,Samples);
 X(:,Samples) = Xhat(:,Samples);
-for k = Samples-1 : -1 : 1,
+for k = Samples-1 : -1 : 1
     S = Phat(:,:,k) * A' / Pbar(:,:,k+1);
     X(:,k) = Xhat(:,k) + S * (X(:,k+1) - Xbar(:,k+1));
     PSmoothed(:,:,k) = Phat(:,:,k) - S * (Pbar(:,:,k+1) - PSmoothed(:,:,k+1)) * S';

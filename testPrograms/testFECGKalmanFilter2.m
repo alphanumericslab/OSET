@@ -39,6 +39,14 @@ bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may b
 
 x = data - bsline;
 
+figure
+plot(time, x);
+xlabel('time(s)');
+ylabel('Amplitude(mV)');
+title('Sample fetal ECG after mECG cancellation and before post-processing');
+grid
+set(gca, 'fontsize',14);
+
 %//////////////////////////////////////////////////////////////////////////
 % bslinex = LPFilter(x,.7/fs);                  % baseline wander removal (may be replaced by other approaches)
 % x = x - bslinex;
@@ -113,6 +121,7 @@ set(h,'PaperUnits','inches');
 set(h,'PaperPosition',[.01 .01 8.5 2.5])
 % print('-dpng','-r600',['C:\Reza\DaISy1EKS_FetalPProcess','.png']);
 % print('-deps','-r600',['C:\Reza\DaISy1EKS_FetalPProcess','.eps']);
+title('Fetal ECG denoised by EKS');
 
 I = 501:850;
 figure
@@ -130,6 +139,7 @@ axis tight
 xlabel('time(s)','FontSize',16);
 ylabel('Amplitude(mV)','FontSize',16);
 set(gca,'FontSize',16);
+title('Fetal ECG denoised by EKS with confidence intervals');
 
 t = 1000*(0:length(ECGmean)-1)/fs;
 figure;
@@ -141,5 +151,6 @@ grid;
 axis tight;
 xlabel('time(ms)','FontSize',16);
 ylabel('Amplitude(mV)','FontSize',16);
+title('Average fetal ECG beat');
 
 
