@@ -134,7 +134,7 @@ Kgain = zeros(2,Samples);
 
 %//////////////////////////////////////////////////////////////////////////
 % Forward Filtering Stage
-for k = 1 : Samples,
+for k = 1 : Samples
     % Store results
     Xbar(:,k) = Xminus';
     Pbar(:,:,k) = Pminus';

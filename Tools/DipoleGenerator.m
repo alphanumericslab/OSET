@@ -48,14 +48,14 @@ Y = zeros(1,N);
 Z = zeros(1,N);
 
 teta(1) = teta0;
-for i = 1:N-1;
+for i = 1:N-1
     teta(i+1) = mod(teta(i) + w*dt + pi , 2*pi) - pi;
 
     dtetaix = mod(teta(i) - tetai.x + pi , 2*pi) - pi;
     dtetaiy = mod(teta(i) - tetai.y + pi , 2*pi) - pi;
     dtetaiz = mod(teta(i) - tetai.z + pi , 2*pi) - pi;
 
-    if(i==1),
+    if(i==1)
         X(i) = sum(alphai.x .* exp(-dtetaix .^2 ./ (2*bi.x .^ 2)));
         Y(i) = sum(alphai.y .* exp(-dtetaiy .^2 ./ (2*bi.y .^ 2)));
         Z(i) = sum(alphai.z .* exp(-dtetaiz .^2 ./ (2*bi.z .^ 2)));

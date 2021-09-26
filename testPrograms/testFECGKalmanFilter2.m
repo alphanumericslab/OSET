@@ -123,7 +123,8 @@ set(h,'PaperPosition',[.01 .01 8.5 2.5])
 % print('-deps','-r600',['C:\Reza\DaISy1EKS_FetalPProcess','.eps']);
 title('Fetal ECG denoised by EKS');
 
-I = 501:850;
+% I = 501:850;
+I = 1:length(time);
 figure
 plot(time(I),x(I),'linewidth',2,'Color',[128 128 128]/256);
 hold on;
