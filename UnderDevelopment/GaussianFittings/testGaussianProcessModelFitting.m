@@ -55,12 +55,13 @@ for k = 30 : 30%length(filelist)
     [ECG_mean, ECG_std, meanphase] = MeanECGExtraction(x, pphase, bins, 1); % mean ECG extraction
     
     % Method 1: min std
-    noise_std_est = min(ECG_std)
+    %     noise_std_est = min(ECG_std)
     
     % Method 2: average of the smallest std
-    %     avg_bins = 3;
-    %     ECG_std_up_sorted = sort(ECG_std);
+    avg_bins = 5;
+    ECG_std_up_sorted = sort(ECG_std);
     %     noise_std_est = median(ECG_std_up_sorted(1 : avg_bins))
+    noise_std_est = sqrt(mean((ECG_std_up_sorted(1 : avg_bins).^2)))
     
     % Method 3: percentiles
     %     p = 0.5; % the desired percentile
