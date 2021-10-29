@@ -71,6 +71,17 @@ for k = 30 : 30%length(filelist)
     
     lambda = 1.0;
     ECG_intrinsic_std_smoothed = TikhonovRegularization(ECG_intrinsic_std, 2, lambda);
+   
+    % Convert ECG phase into a (phase x time) matrix
+    M = ECGPhaseToMatrix(pphase, bins);
+    
+    % smooth the matrix in time and phase
+    wlen_time = 3;
+    wlen_phase = 3;
+    M_smoothed = filter2(ones(wlen_phase, wlen_time)/(wlen_phase * wlen_time), M);
+    
+    % reconstruct the ECG
+    x_reconstructed = ECG_mean * M_smoothed;
     
     figure
     errorbar(meanphase, ECG_mean, ECG_std);
@@ -87,5 +98,15 @@ for k = 30 : 30%length(filelist)
     figure
     plot(sort(ECG_std));
     grid
+    
+    figure
+    imagesc(filter2(ones(25), M))
+    
+    figure
+    plot(x)
+    hold on
+    plot(x_reconstructed)
+    grid
+    legend('ECG', 'Reconstruced from phase domain mean ECG')
 end
 
