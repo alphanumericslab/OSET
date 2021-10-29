@@ -17,6 +17,7 @@ for k = 30 : 30%length(filelist)
     datafilename = [filelist(k).folder '/' filelist(k).name];
     data = load(datafilename);
     data = data.val;
+    data = data(:, 1 : round(10*fs));
     
     switch(BASELINE_REMOVAL_APPROACH)
         case 'BP'
@@ -83,6 +84,9 @@ for k = 30 : 30%length(filelist)
     % reconstruct the ECG
     x_reconstructed = ECG_mean * M_smoothed;
     
+    SNR_pre = 10 * log10(mean(data(ch, :).^2) / mean(x - data(ch, :)).^2)
+    SNR_post = 10 * log10(mean(data(ch, :).^2) / mean(x_reconstructed - data(ch, :)).^2)
+
     figure
     errorbar(meanphase, ECG_mean, ECG_std);
     grid
@@ -100,13 +104,17 @@ for k = 30 : 30%length(filelist)
     grid
     
     figure
-    imagesc(filter2(ones(25), M))
+    imagesc(M_smoothed)
     
     figure
     plot(x)
     hold on
+    plot(data(ch, :))
     plot(x_reconstructed)
     grid
-    legend('ECG', 'Reconstruced from phase domain mean ECG')
+    legend('Noisy ECG', 'Raw ECG', 'Reconstruced from phase domain mean ECG')
+    
+    figure
+    imagesc(M_smoothed' * diag(ECG_intrinsic_std) * M_smoothed);
 end
 
