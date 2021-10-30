@@ -5,7 +5,7 @@ clear
 clc
 
 % Load data
-datafilepath = '../../../../DataFiles/PTBDataset/Physionet.org/files/ptbdb/1.0.0/';
+datafilepath = '../../DataFiles/PTBDataset/Physionet.org/files/ptbdb/1.0.0/';
 directory_list = dir([datafilepath 'patient*']);
 filelist = dir(fullfile([datafilepath, '**/*lr*.mat']));  % get list of all mat files
 fs = 1000.0;
