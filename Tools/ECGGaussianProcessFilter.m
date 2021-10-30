@@ -10,6 +10,7 @@ function [data_posterior_est, data_prior_est] = ECGGaussianProcessFilter(data, p
 %   peaks: R-peaks vector (common between all ECG channels)
 %   params: a structure containing the algorithm parameters
 %       params.bins: number of phase bins used for the ECG phase domain representation
+%       params.BEAT_AVG_METHOD: Beat averaging method ('MEAN' or 'MEDIAN')
 %       params.NOISE_VAR_EST_METHOD: noise variance estimation method
 %           ('MIN', 'AVGLOWER', 'MEDLOWER', 'PERCENTILE')
 %       params.avg_bins: Number of bins used in noise variance estimation
@@ -48,15 +49,13 @@ if ~isfield(params, 'n_mean') % noise average
     params.n_mean = 0; % zero, by default
 end
 
+if ~isfield(params, 'BEAT_AVG_METHOD') % beat averaging method
+    params.BEAT_AVG_METHOD = 'MEAN';
+    warning(['Beat averaging method not defined; using ', params.BEAT_AVG_METHOD, ' as default']);
+end
+
 phaseshift = pi/params.bins;
 pphase = PhaseShifting(phase, phaseshift); % phase shifting to compensate half a bin shift
-
-% figure
-% plot(phase)
-% hold on
-% plot(pphase)
-% grid
-% legend('phase', 'pphase');
 
 M = ECGPhaseToMatrix(pphase, params.bins); % Convert ECG phase into a (phase x time) matrix
 data_prior_est = zeros(size(data));
@@ -64,7 +63,14 @@ data_posterior_est = zeros(size(data));
 for ch = 1 : size(data, 1)
     x = data(ch, :); % the active channel
     
-    [ECG_mean, ECG_std, meanphase] = MeanECGExtraction(x, phase, params.bins, 1); % mean ECG extraction
+    [ECG_mean, ECG_std, meanphase, ECG_median] = MeanECGExtraction(x, phase, params.bins, 1); % mean ECG extraction
+    
+    switch params.BEAT_AVG_METHOD
+        case 'MEAN'
+            ECG_avg = ECG_mean;
+        case 'MEDIAN'
+            ECG_avg = ECG_median;
+    end
     
     switch params.NOISE_VAR_EST_METHOD
         case 'MIN' % Method 1: min std
@@ -119,7 +125,7 @@ for ch = 1 : size(data, 1)
     end
     
     % reconstruct the ECG
-    data_prior_est(ch, :) = ECG_mean * M_smoothed; % prior estimate based on average beat repetition over time
+    data_prior_est(ch, :) = ECG_avg * M_smoothed; % prior estimate based on average beat repetition over time
     s_var = ECG_intrinsic_var * M_smoothed; % ECG beat variance estimate repeated over time
     
     % MAP estimate of each ECG sample assuming a Gaussian distribution for
@@ -128,10 +134,19 @@ for ch = 1 : size(data, 1)
     
     if isfield(params, 'plotresults')
         if params.plotresults == true
+            % if ch == 1
+            %     figure
+            %     plot(phase)
+            %     hold on
+            %     plot(pphase)
+            %     grid
+            %     legend('phase', 'pphase');
+            % end
+ 
             figure
-            errorbar(meanphase, ECG_mean, ECG_std/2);
+            errorbar(meanphase, ECG_avg, ECG_std/2);
             hold on
-            plot(meanphase, ECG_mean);
+            plot(meanphase, ECG_avg);
             grid
             legend('Errorbar', 'Average ECG');
             title('Average ECG beat \pm STD');
