@@ -47,7 +47,7 @@ else
     ECGmean(1) =0;
     ECGsd(1) = -1;
 end
-for i = 1 : bins-1;
+for i = 1 : bins-1
     I = find( phase >= 2*pi*(i-0.5)/bins-pi & phase < 2*pi*(i+0.5)/bins-pi );
     if(~isempty(I))
         meanPhase(i + 1) = mean(phase(I));
@@ -60,7 +60,7 @@ for i = 1 : bins-1;
     end
 end
 K = find(ECGsd==-1);
-for i = 1:length(K),
+for i = 1:length(K)
     switch K(i)
         case 1
             meanPhase(K(i)) = -pi;

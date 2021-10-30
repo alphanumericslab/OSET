@@ -32,19 +32,20 @@ for k = 30 : 30%length(filelist)
             end
     end
     
-    ch = 1;
-    sd = 0.5 * std(data(ch, :))
-    x = data(ch, :) + sd * randn(size(data(ch, :)));
-
+    ch = 2;
+    sig = data(ch, :);
+    sd = 1 * std(sig)
+    x = sig + sd * randn(size(sig));
+    
     f0 = 1.2;
-    peaks = PeakDetection(data(ch, :), f0/fs);                  % peak detection
+    peaks = PeakDetection(sig, f0/fs);                  % peak detection
     
     I = find(peaks);
     t = (0 : length(x) - 1)/fs;
     figure;
     plot(t, x);
     hold on;
-    plot(t(I), data(ch, I),'ro');
+    plot(t(I), sig(I),'ro');
     grid
     
     [phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
@@ -52,7 +53,7 @@ for k = 30 : 30%length(filelist)
     teta = 0;                                       % desired phase shift
     pphase = PhaseShifting(phase,teta);             % phase shifting
     
-    bins = 250;                                     % number of phase bins
+    bins = 250;%median(diff(I));                                     % number of phase bins
     [ECG_mean, ECG_std, meanphase] = MeanECGExtraction(x, pphase, bins, 1); % mean ECG extraction
     
     % Method 1: min std
@@ -72,21 +73,30 @@ for k = 30 : 30%length(filelist)
     
     lambda = 1.0;
     ECG_intrinsic_std_smoothed = TikhonovRegularization(ECG_intrinsic_std, 2, lambda);
-   
+    
     % Convert ECG phase into a (phase x time) matrix
     M = ECGPhaseToMatrix(pphase, bins);
     
     % smooth the matrix in time and phase
-    wlen_time = 3;
-    wlen_phase = 3;
-    M_smoothed = filter2(ones(wlen_phase, wlen_time)/(wlen_phase * wlen_time), M);
+    wlen_time = 1;
+    wlen_phase = 1;
+    %     M_smoothed = filter2(ones(wlen_phase, wlen_time)/(wlen_phase * wlen_time), M);
+    M_smoothed = imgaussfilt(M, wlen_time);
     
     % reconstruct the ECG
-    x_reconstructed = ECG_mean * M_smoothed;
+    s_mean = ECG_mean * M_smoothed;
+    %s_var = (ECG_intrinsic_std.^2) * M_smoothed;
+    s_var = (ECG_intrinsic_std_smoothed.^2) * M_smoothed;
+    n_var = noise_std_est^2;
+    n_mean = 0;
     
-    SNR_pre = 10 * log10(mean(data(ch, :).^2) / mean(x - data(ch, :)).^2)
-    SNR_post = 10 * log10(mean(data(ch, :).^2) / mean(x_reconstructed - data(ch, :)).^2)
-
+    x_reconstructed = (s_var .* (x - n_mean) + n_var * s_mean) ./ (s_var + n_var);
+    
+    
+    SNR_pre = 10 * log10(mean(sig.^2) / mean((x - sig).^2))
+    SNR_smean = 10 * log10(mean(sig.^2) / mean((s_mean - sig).^2))
+    SNR_post = 10 * log10(mean(sig.^2) / mean((x_reconstructed - sig).^2))
+    
     figure
     errorbar(meanphase, ECG_mean, ECG_std);
     grid
@@ -109,10 +119,11 @@ for k = 30 : 30%length(filelist)
     figure
     plot(x)
     hold on
-    plot(data(ch, :))
-    plot(x_reconstructed)
+    plot(sig, 'linewidth', 2)
+    plot(x_reconstructed, 'linewidth', 2)
+    plot(s_mean, 'linewidth', 2)
     grid
-    legend('Noisy ECG', 'Raw ECG', 'Reconstruced from phase domain mean ECG')
+    legend('Noisy ECG', 'Original ECG', 'Reconstruced from phase domain mean ECG', 'smean')
     
     figure
     imagesc(M_smoothed' * diag(ECG_intrinsic_std) * M_smoothed);

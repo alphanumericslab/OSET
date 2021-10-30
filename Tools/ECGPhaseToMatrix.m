@@ -1,8 +1,8 @@
 function I = ECGPhaseToMatrix(phase, N)
 % Converts ECG phase signal of length T into a matrix of N phase bins with the same length
 % (used to calculate a binary image/matrix representation of the cardiac phase)
-
-% Reza Sameni, 2021
+%
+% Copyright Reza Sameni, 2021
 % The Open-Source Electrophysiological Toolbox
 % https://github.com/alphanumericslab/OSET
 
