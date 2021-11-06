@@ -1,4 +1,4 @@
-function [ECGmean, ECGsd, meanPhase, ECGmedian] = MeanECGExtraction(x,phase,bins,flag)
+function [ECGmean, ECGsd, meanPhase, ECGmedian, SamplesPerBin] = MeanECGExtraction(x,phase,bins,flag)
 %
 % [ECGmean,ECGsd,meanPhase] = MeanECGExtraction(x,phase,bins,flag)
 % Calculation of the mean and SD of ECG waveforms in different beats
@@ -14,9 +14,10 @@ function [ECGmean, ECGsd, meanPhase, ECGmedian] = MeanECGExtraction(x,phase,bins
 %
 % outputs:
 % ECGmean: mean ECG beat (in phase domain)
-% ECGsd: standard deviation of ECG beats
+% ECGsd: standard deviation of ECG beats (unbiased estimate)
 % meanPhase: the corresponding phase for one ECG beat
 % ECGmedian: median ECG beat (in phase domain)
+% SamplesPerBin: number of samples averaged in each phase bin (used for statistical analysis)
 %
 %
 % The Open Source Electrophysiological Toolbox (OSET)
@@ -26,14 +27,16 @@ function [ECGmean, ECGsd, meanPhase, ECGmedian] = MeanECGExtraction(x,phase,bins
 % reza.sameni@gmail.com
 %
 % V1 (March 2008): Original version
-% V2 (October 2021): Median beat calculation added
+% V2 (October 2021): Median beat calculation and SamplesPerBin added
 
 meanPhase = zeros(1, bins);
 ECGmean = zeros(1, bins);
 ECGmedian = zeros(1, bins);
 ECGsd = zeros(1, bins);
+SamplesPerBin = zeros(1, bins);
 
 I = find( phase >= (pi-pi/bins)  | phase < (-pi+pi/bins) );
+SamplesPerBin(1) = length(I);
 if ~isempty(I)
     meanPhase(1) = -pi;
     ECGmean(1) = mean(x(I));
@@ -41,12 +44,13 @@ if ~isempty(I)
     ECGsd(1) = std(x(I));
 else
     meanPhase(1) = 0;
-    ECGmean(1) =0;
-    ECGmedian(1) =0;
+    ECGmean(1) = 0;
+    ECGmedian(1) = 0;
     ECGsd(1) = -1;
 end
 for i = 1 : bins-1
     I = find( phase >= 2*pi*(i-0.5)/bins-pi & phase < 2*pi*(i+0.5)/bins-pi );
+    SamplesPerBin(i + 1) = length(I);
     if(~isempty(I))
         meanPhase(i + 1) = mean(phase(I));
         ECGmean(i + 1) = mean(x(I));
@@ -59,24 +63,27 @@ for i = 1 : bins-1
         ECGsd(i + 1) = -1;
     end
 end
-K = find(ECGsd==-1);
-for i = 1:length(K)
+K = find(ECGsd == -1);
+for i = 1 : length(K)
     switch K(i)
         case 1
             meanPhase(K(i)) = -pi;
-            ECGmean(K(i)) = ECGmean(K(i)+1);
-            ECGmedian(K(i)) = ECGmedian(K(i)+1);
-            ECGsd(K(i)) = ECGsd(K(i)+1);
+            ECGmean(K(i)) = ECGmean(K(i) + 1);
+            ECGmedian(K(i)) = ECGmedian(K(i) + 1);
+            ECGsd(K(i)) = ECGsd(K(i) + 1);
+            SamplesPerBin(K(i)) = SamplesPerBin(K(i) + 1);
         case bins
             meanPhase(K(i)) = pi;
-            ECGmean(K(i)) = ECGmean(K(i)-1);
-            ECGmedian(K(i)) = ECGmedian(K(i)-1);
-            ECGsd(K(i)) = ECGsd(K(i)-1);
+            ECGmean(K(i)) = ECGmean(K(i) - 1);
+            ECGmedian(K(i)) = ECGmedian(K(i) - 1);
+            ECGsd(K(i)) = ECGsd(K(i) - 1);
+            SamplesPerBin(K(i)) = SamplesPerBin(K(i) - 1);
         otherwise
-            meanPhase(K(i)) = mean([meanPhase(K(i)-1), meanPhase(K(i)+1)]);
-            ECGmean(K(i)) = mean([ECGmean(K(i)-1), ECGmean(K(i)+1)]);
-            ECGmedian(K(i)) = median([ECGmedian(K(i)-1), ECGmedian(K(i)+1)]);
-            ECGsd(K(i)) = mean([ECGsd(K(i)-1), ECGsd(K(i)+1)]);
+            meanPhase(K(i)) = mean([meanPhase(K(i) - 1), meanPhase(K(i) + 1)]);
+            ECGmean(K(i)) = mean([ECGmean(K(i) - 1), ECGmean(K(i) + 1)]);
+            ECGmedian(K(i)) = median([ECGmedian(K(i) - 1), ECGmedian(K(i) + 1)]);
+            ECGsd(K(i)) = mean([ECGsd(K(i)-1), ECGsd(K(i) + 1)]);
+            SamplesPerBin(K(i)) = SamplesPerBin(K(i) - 1) + SamplesPerBin(K(i) + 1);
     end
 end
 
@@ -84,4 +91,3 @@ if(flag==1)
     ECGmean = ECGmean - mean(ECGmean(1:ceil(length(ECGmean)/10)));
     ECGmedian = ECGmedian - median(ECGmedian(1:ceil(length(ECGmedian)/10)));
 end
-

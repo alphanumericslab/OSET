@@ -5,7 +5,7 @@ clear
 clc
 
 % Load data
-datafilepath = '../../../DataFiles/PTBDataset/Physionet.org/files/ptbdb/1.0.0/'; % Change this path to where you have the .mat data files
+datafilepath = '../../DataFiles/PTBDataset/Physionet.org/files/ptbdb/1.0.0/'; % Change this path to where you have the .mat data files
 filelist = dir(fullfile([datafilepath, '**/*.mat']));  % get list of all mat files of interest
 fs = 1000.0; % Sampling frequency of the data (put it in the loop and read it from the data if not fixed across all records)
 
@@ -13,7 +13,7 @@ fs = 1000.0; % Sampling frequency of the data (put it in the loop and read it fr
 w1 = 0.72; % First stage baseline wander removal window size (in seconds)
 w2 = 0.87; % Second stage baseline wander removal window size (in seconds)
 BASELINE_REMOVAL_APPROACH = 'BP'; %'MDMN'; % baseline wander removal method
-SNR_pre_set = 0; % the desired input SNR
+SNR_pre_set = 10; % the desired input SNR
 for k = 1 : 1%length(filelist) % Sweep over all or specific records
     datafilename = [filelist(k).folder '/' filelist(k).name];
     data = load(datafilename);
@@ -37,7 +37,7 @@ for k = 1 : 1%length(filelist) % Sweep over all or specific records
     
     for ch = 1 : size(data, 1) % sweep over all or a single desired channel
         sig = data(ch, :);
-        sd = sqrt(var(sig) / 10^(SNR_pre_set/10));
+        sd = sqrt(var(sig) / 10^(SNR_pre_set/10))
         x = sig + sd * randn(size(sig));
         
         f0 = 1.0; % approximate heart rate (in Hz) used for R-peak detection
@@ -48,11 +48,13 @@ for k = 1 : 1%length(filelist) % Sweep over all or specific records
         
         GPfilterparams.bins = 300; % number of phase domain bins
         GPfilterparams.BEAT_AVG_METHOD = 'MEDIAN'; % 'MEAN' or 'MEDIAN'
-        GPfilterparams.NOISE_VAR_EST_METHOD = 'AVGLOWER';
-        GPfilterparams.avg_bins = 3;
+        GPfilterparams.NOISE_VAR_EST_METHOD = 'AVGLOWER'; %'MIN', 'AVGLOWER', 'MEDLOWER', 'PERCENTILE' 
+        GPfilterparams.p = 0.5;
+        GPfilterparams.avg_bins = 10;
         GPfilterparams.SMOOTH_PHASE = 'GAUSSIAN';
         GPfilterparams.gaussianstd = 1.0;
         GPfilterparams.plotresults = 0;
+        GPfilterparams.nvar_factor = 2.0; % noise variance over/under estimation factor (1 by default)
         [data_posterior_est, data_prior_est] = ECGGaussianProcessFilter(x, peaks, GPfilterparams);
         
         SNR_pre = 10 * log10(mean(sig.^2) / mean((x - sig).^2));

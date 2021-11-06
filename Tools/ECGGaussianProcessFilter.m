@@ -54,6 +54,11 @@ if ~isfield(params, 'BEAT_AVG_METHOD') % beat averaging method
     warning(['Beat averaging method not defined; using ', params.BEAT_AVG_METHOD, ' as default']);
 end
 
+if ~isfield(params, 'nvar_factor') % noise variance over/under estimation factor
+    params.nvar_factor = 1;
+end
+
+
 phaseshift = pi/params.bins;
 pphase = PhaseShifting(phase, phaseshift); % phase shifting to compensate half a bin shift
 
@@ -63,7 +68,7 @@ data_posterior_est = zeros(size(data));
 for ch = 1 : size(data, 1)
     x = data(ch, :); % the active channel
     
-    [ECG_mean, ECG_std, meanphase, ECG_median] = MeanECGExtraction(x, phase, params.bins, 1); % mean ECG extraction
+    [ECG_mean, ECG_std, meanphase, ECG_median, ECGSamplesPerBin] = MeanECGExtraction(x, phase, params.bins, 1); % mean ECG extraction
     
     switch params.BEAT_AVG_METHOD
         case 'MEAN'
@@ -80,15 +85,17 @@ for ch = 1 : size(data, 1)
                 params.avg_bins = 3;
                 warning(['Undefined numer of averaging bins; using ', num2str(params.avg_bins) ' as default']);
             end
-            ECG_std_up_sorted = sort(ECG_std);
-            noise_std_est = sqrt(mean(ECG_std_up_sorted(1 : params.avg_bins).^2));
+            [ECG_std_up_sorted, std_sorted_indexes] = sort(ECG_std);
+            ECGSamplesPerBin_sorted = ECGSamplesPerBin(std_sorted_indexes);
+            bns = 1 : params.avg_bins;
+            noise_std_est = sqrt(sum(ECG_std_up_sorted(bns).^2 .* (ECGSamplesPerBin_sorted(bns) - 1)) / (sum(ECGSamplesPerBin_sorted(bns)) - 1)); % Note: recovers the original variances and renormalizes by total (N-1) to obtain an unbiased estimator  
         case 'MEDLOWER' % Method 3: median of the smallest std
             if ~isfield(params, 'avg_bins')
                 params.avg_bins = 3;
                 warning(['Undefined numer of averaging bins; using ', num2str(params.avg_bins) ' as default']);
             end
             ECG_std_up_sorted = sort(ECG_std);
-            noise_std_est = sqrt(median(ECG_std_up_sorted(1 : params.avg_bins).^2));
+            noise_std_est = sqrt(median(ECG_std_up_sorted(1 : params.avg_bins).^2)); % Note: the sequence of sqrt->mean->square is to avoid swapping averaging and sqrt, which is nonlinear
         case 'PERCENTILE' % Method 4: percentiles
             if ~isfield(params, 'p')
                 params.p = 0.5;
@@ -98,7 +105,8 @@ for ch = 1 : size(data, 1)
         otherwise
             error('Undefined noise variance estimation method');
     end
-    n_var = noise_std_est^2; % noise variance estimate
+    n_var = params.nvar_factor * noise_std_est^2; % noise variance estimate
+    % disp(['nvar estimate = ' num2str(sqrt(n_var))])
     
     ECG_intrinsic_var = max(0, ECG_std.^2 - n_var); % average beat variance estimate
     
