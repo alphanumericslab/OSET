@@ -1,9 +1,9 @@
-function [data_posterior_est, data_prior_est] = ECGGaussianProcessFilter(data, peaks, params)
-% Description: An ECG denoiser based on a data driven Gaussian Process model
-%   of the ECG samples and noise
+function [data_posterior_est, data_prior_est] = ECGPhaseDomainMAPFilter(data, peaks, params)
+% Description: An ECG denoiser based on a data driven MAP estimator in the
+% phase domain
 %
 % Usage:
-%   [data_posterior_est, data_prior_est] = ECGGaussianProcessFilter(data, peaks, params)
+%   [data_posterior_est, data_prior_est] = ECGPhaseDomainMAPFilter(data, peaks, params)
 %
 % Inputs:
 %   data: single or multichannel ECG signal with row-wise channels
@@ -26,6 +26,11 @@ function [data_posterior_est, data_prior_est] = ECGGaussianProcessFilter(data, p
 %       estimates (row-wise channels)
 %   data_prior_est: ECG signal based on prior distribution estimates
 %       (row-wise channels)
+%
+% Refs:
+%   1- ECG phase domain definition: R. Sameni, C. Jutten, and M. B. Shamsollahi.
+%   "Multichannel electrocardiogram decomposition using periodic component 
+%   analysis." IEEE transactions on biomedical engineering 55.8 (2008): 1935-1940.
 %
 % Copyright Reza Sameni, Oct 2021
 % The Open-Source Electrophysiological Toolbox
