@@ -1,6 +1,5 @@
 function [data_posterior_est, data_prior_est] = ECGPhaseDomainMAPFilter(data, peaks, params)
-% Description: An ECG denoiser based on a data driven MAP estimator in the
-% phase domain
+% An ECG denoiser based on a data driven MAP estimator in the phase domain
 %
 % Usage:
 %   [data_posterior_est, data_prior_est] = ECGPhaseDomainMAPFilter(data, peaks, params)
