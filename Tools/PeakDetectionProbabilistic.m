@@ -89,6 +89,30 @@ elseif isfield(params, 'filter_type') && isequal(params.filter_type, 'MULT_MATCH
         
         data_filtered(kk, :) = sqrt(band_passsed1.^2 + band_passsed2.^2);
     end
+elseif isfield(params, 'filter_type') && isequal(params.filter_type, 'MDMN')
+    % Bandpass filter
+    if ~isfield(params, 'wlen_md')
+        params.wlen_md = 0.11;
+    end
+    if ~isfield(params, 'wlen_mn')
+        params.wlen_mn = 0.01;
+    end
+    data_filtered = zeros(size(data_sat));
+    wlen1 = round(params.wlen_md * fs);
+    wlen2 = round(params.wlen_mn * fs);
+    for kk = 1 : size(data_sat, 1)
+        bl1 = BaseLine1(data_sat(kk, :), wlen1, 'md');
+        %         bl2 = BaseLine1(bl1, 2 * wlen1, 'md');
+        data_filtered(kk, :) = data_sat(kk, :) - BaseLine1(bl1, wlen2, 'mn');
+        %         figure
+        %         plot(data_sat(kk, :));
+        %         hold on
+        %         plot(bl1);
+        %         plot(bl2);
+        %         plot(data_filtered(kk, :));
+        %         grid
+        %         legend('datasat', 'bl1', 'bl2', 'filtered');
+    end
 elseif ~isfield(params, 'filter_type') || (isfield(params, 'filter_type') && isequal(params.filter_type, 'BANDPASS_FILTER'))
     % Bandpass filter
     if ~isfield(params, 'low_cutoff')
@@ -133,88 +157,8 @@ for jj = 1 : length(bumps_indexes)
         peak_indexes = cat(2, peak_indexes, bump_index);
     end
 end
-peaks = zeros(1, SigLen);
-peaks(peak_indexes) = 1;
-
-if 0
-    f0 = 1/params.rpeak_search_wlen;
-    peaks = PeakDetection(data_filtered_env, f0/fs);
-    peak_indexes = find(peaks);
-    peak_amps = data_filtered_env(peak_indexes);
-    peak_amps_max = max(peak_amps);
-    peak_amps_min = min(peak_amps);
-    peak_amps_med = median(peak_amps);
-    
-    figure
-    hold on
-    grid
-    plot(signal)
-    plot(data_sat)
-    plot(data_filtered)
-    plot(data_filtered_env)
-    plot(peak_indexes, data_filtered_env(peak_indexes), 'ko', 'markersize', 14, 'linewidth', 3)
-    for itr = 1 : 150
-        NumBeats = length(peak_indexes);
-        event_width = 2 * round(0.75    *           median(diff(peak_indexes))/2) + 1;
-        %     event_width = 2 * round(fs * params.rpeak_search_wlen/2) + 1;
-        
-        
-        
-        %     stacked_beats = EventStacker(data_filtered, peak_indexes, event_width);
-        stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
-        
-        
-        
-        %     ECG_robust_mean = RWAverage(stacked_beats);
-        ECG_robust_mean = mean(stacked_beats, 1);
-        ECG_robust_mean_replicated = ones(NumBeats, 1) * ECG_robust_mean;
-        noise = stacked_beats - ECG_robust_mean_replicated;
-        snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
-        %     hr_std = max(abs(diff(peak_indexes)));
-        hr_std = std(diff([1, peak_indexes, SigLen]));
-        snr_excluding_this_beat = zeros(1, NumBeats);
-        hr_std_excluding_this_beat = zeros(1, NumBeats);
-        for p = 1 : NumBeats
-            all_but_this_beat_index = 1 : NumBeats;
-            all_but_this_beat_index(p) = [];
-            %         ECG_robust_mean = RWAverage(stacked_beats(all_but_this_beat_index, :));
-            ECG_robust_mean = mean(stacked_beats(all_but_this_beat_index, :), 1);
-            ECG_robust_mean_replicated = ones(NumBeats - 1, 1) * ECG_robust_mean;
-            % estimate channel quality SNR
-            noise = stacked_beats(all_but_this_beat_index, :) - ECG_robust_mean_replicated;
-            snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
-            %         hr_std_excluding_this_beat(p) = max(abs(diff(peak_indexes(all_but_this_beat_index))));
-            hr_std_excluding_this_beat(p) = std(diff([1, peak_indexes(all_but_this_beat_index), SigLen]));
-            %         if snr < snr_excluding_this_beat(p)
-            %             peaks(peak_indexes(p)) = 0;
-            %         end
-        end
-        [snr_max_imporvement, I_max_snr_imporvement] = max(snr_excluding_this_beat);
-        % % %     if snr >= snr_max_imporvement% && hr_std <= hr_std_excluding_this_beat(I_max_snr_imporvement)
-        % % %         continue
-        % % %         %     elseif data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_min)/2 %if hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement)
-        % % %     elseif data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_med)/2 %if hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement)
-        % % %         peaks(peak_indexes(I_max_snr_imporvement)) = 0;
-        % % %         peak_indexes = find(peaks);
-        % % %     end
-        if snr_max_imporvement > snr% && data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_med)/2% && hr_std <= hr_std_excluding_this_beat(I_max_snr_imporvement)
-            peaks(peak_indexes(I_max_snr_imporvement)) = 0;
-            peak_indexes = find(peaks);
-            %     elseif data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_min)/2 %if hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement)
-            %     elseif data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_med)/2 %if hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement)
-            %
-        end
-        %     peak_indexes = find(peaks);
-    end
-    plot(peak_indexes, data_filtered_env(peak_indexes), 'ro', 'markersize', 16, 'linewidth', 3)
-    
-    figure
-    hold on
-    plot((0:size(stacked_beats, 2)-1)/fs, stacked_beats');
-    plot((0:size(stacked_beats, 2)-1)/fs, mean(stacked_beats, 1), 'k', 'linewidth', 3);
-    grid
-    
-end
+% peaks = zeros(1, SigLen);
+% peaks(peak_indexes) = 1;
 
 
 % bumps_amp_threshold = prctile(data_filtered_env(peak_indexes), 100*params.hist_search_th);
@@ -302,7 +246,7 @@ peak_indexes = find(peaks);
 
 % calculate a likelihood function for the R-peaks (useful for classification and scoring purposes)
 if ~isfield(params, 'likelihood_sigma')
-%     params.likelihood_sigma = 0.01;
+    %     params.likelihood_sigma = 0.01;
     params.likelihood_sigma = 0.3;
 end
 if ~isfield(params, 'max_likelihood_span')
@@ -314,27 +258,103 @@ lag = round(length(template)/2);
 qrs_likelihood = conv(template, peaks);
 qrs_likelihood = qrs_likelihood(lag : SigLen + lag - 1);
 
-% likelihood-based refinement of the R-peaks
-% peaks = PeakDetection(mean(data_filtered, 1).*qrs_likelihood, 1.0/median(diff(peak_indexes)));
-peaks = PeakDetection(mean(signal, 1) .* qrs_likelihood, 1.0/median(diff(peak_indexes)));
-% peaks = PeakDetection(mean(data_filtered_enhanced, 1) .* qrs_likelihood, 1.0/median(diff(peak_indexes)));
+% Likelihood-based refinement of the R-peaks:
 % peaks = PeakDetection(data_filtered_env .* qrs_likelihood, 1.0/median(diff(peak_indexes)));
+% peaks = PeakDetection(mean(data_filtered, 1).*qrs_likelihood, 1.0/median(diff(peak_indexes)));
+% peaks = PeakDetection(mean(signal, 1) .* qrs_likelihood, 1.0/median(diff(peak_indexes)));
+% peaks = PeakDetection(mean(data_filtered_enhanced, 1) .* qrs_likelihood, 1.0/median(diff(peak_indexes)));
+% peaks = PeakDetection(sign(skew(mean(data_filtered, 1))) * mean(data_filtered, 1).*qrs_likelihood, 1.0/median(diff(peak_indexes)), 1);
+
+% search for local peaks with sign of most frequent among previously found peaks
+data_filtered_mn_all_channels = mean(data_filtered, 1);
+peaks = PeakDetection(mode(sign(data_filtered_mn_all_channels(peak_indexes))) * data_filtered_mn_all_channels .* qrs_likelihood, 1.0/median(diff(peak_indexes)), 1);
+
 peak_indexes = find(peaks);
 
+% remove excess beats based on waveform similarity
 if 1
-    % remove excess beats based on waveform similarity
+    % Zero round (remove excess beats with extreme amplitude deviations from other peaks)
+    peak_amps = data_filtered_mn_all_channels(peak_indexes);
+    %     I_omit = abs(peak_amps - mean(peak_amps)) > 4.0 * std(peak_amps);
+    I_omit = abs(peak_amps) < 0.5 * prctile(abs(peak_amps), 70.0);
+    peak_indexes(I_omit) = [];
+    
+    % First round (negative correlations)
     event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
-    stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
+    %     stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
+    stacked_beats = EventStacker(data_filtered_mn_all_channels, peak_indexes, event_width);
     Rho_beats = corrcoef(stacked_beats');
     C_beats = (sum(Rho_beats, 1) - 1.0) / (length(peak_indexes) - 1); % Average correlation of each beat with the others
-    I_omit = C_beats < min(0.9, 0.4 * max(C_beats));
+    I_omit = C_beats < 0;
     peak_indexes(I_omit) = [];
-    peaks = zeros(1, SigLen);
-    peaks(peak_indexes) = 1;
-    lag = round(length(template)/2);
-    qrs_likelihood = conv(template, peaks);
-    qrs_likelihood = qrs_likelihood(lag : SigLen + lag - 1);
+    
+    % Second round (omit beats with low variance)
+    peak_amps = data_filtered_mn_all_channels(peak_indexes);
+    event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
+    %     stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
+    [stacked_beats, num_non_zeros] = EventStacker(data_filtered_mn_all_channels, peak_indexes, event_width);
+    std_beats = (event_width -1) * std(stacked_beats, 0, 2)' ./ (num_non_zeros - 1); % compensates the boundary events STD that were zero-padded in EventStacker
+    I_omit = std_beats < 0.2*median(std_beats) & abs(peak_amps - mean(peak_amps)) > 2.0 * std(peak_amps);
+    if(length(I_omit) < peak_indexes) % don't remove all peaks!
+        peak_indexes(I_omit) = [];
+    end
+    
+    % Third round (omit beats with low correlations)
+    event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
+    %     stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
+    stacked_beats = EventStacker(data_filtered_mn_all_channels, peak_indexes, event_width);
+    Rho_beats = corrcoef(stacked_beats');
+    C_beats = (sum(Rho_beats, 1) - 1.0) / (length(peak_indexes) - 1); % Average correlation of each beat with the others
+    %     I_omit = C_beats < max(0.3, min(0.8, 0.5 * max(C_beats))); % omit beats with low correlations
+    I_omit = abs(C_beats - mean(C_beats)) > 3.0 * std(C_beats) & C_beats < 0.5; % omit beats with low correlations
+    if(length(I_omit) < peak_indexes) % don't remove all peaks!
+        peak_indexes(I_omit) = [];
+    end
+    
+    % Fourth round (omit beats that increase average beat SNR and reduce HR variance. not applicable to the first and last beats)
+    max_itr = length(peak_indexes);
+    for itr = 1 : max_itr
+        NumBeats = length(peak_indexes);
+        event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
+        stacked_beats = EventStacker(data_filtered_mn_all_channels, peak_indexes, event_width);
+        
+        %     ECG_robust_mean = RWAverage(stacked_beats);
+        ECG_robust_mean = mean(stacked_beats, 1);
+        ECG_robust_mean_replicated = ones(NumBeats, 1) * ECG_robust_mean;
+        noise = stacked_beats - ECG_robust_mean_replicated;
+        snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+        %     hr_std = max(abs(diff(peak_indexes)));
+        %         hr_std = std(diff([1, peak_indexes, SigLen]));
+        hr_std = std(diff(peak_indexes));
+        snr_excluding_this_beat = zeros(1, NumBeats);
+        hr_std_excluding_this_beat = zeros(1, NumBeats);
+        for p = 1 : NumBeats
+            all_but_this_beat_index = 1 : NumBeats;
+            all_but_this_beat_index(p) = [];
+            %         ECG_robust_mean = RWAverage(stacked_beats(all_but_this_beat_index, :));
+            ECG_robust_mean = mean(stacked_beats(all_but_this_beat_index, :), 1);
+            ECG_robust_mean_replicated = ones(NumBeats - 1, 1) * ECG_robust_mean;
+            % estimate channel quality SNR
+            noise = stacked_beats(all_but_this_beat_index, :) - ECG_robust_mean_replicated;
+            snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+            %         hr_std_excluding_this_beat(p) = max(abs(diff(peak_indexes(all_but_this_beat_index))));
+            %             hr_std_excluding_this_beat(p) = std(diff([1, peak_indexes(all_but_this_beat_index), SigLen]));
+            hr_std_excluding_this_beat(p) = std(diff(peak_indexes(all_but_this_beat_index)));
+        end
+        [snr_max_imporvement, I_max_snr_imporvement] = max(snr_excluding_this_beat);
+        if snr_max_imporvement > snr && hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement) && I_max_snr_imporvement > 1 && I_max_snr_imporvement < NumBeats % && data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_med)/2% && hr_std <= hr_std_excluding_this_beat(I_max_snr_imporvement)
+            peak_indexes(I_max_snr_imporvement) = [];
+        else
+            break;
+        end
+    end
 end
+
+peaks = zeros(1, SigLen);
+peaks(peak_indexes) = 1;
+lag = round(length(template)/2);
+qrs_likelihood = conv(template, peaks);
+qrs_likelihood = qrs_likelihood(lag : SigLen + lag - 1);
 
 if 0 % peak refinement based on likelihoods
     signal_abs = sqrt(mean(data_filtered.^2, 1));
@@ -362,3 +382,84 @@ if 0
     plot(time, signal_likelihood);
     grid
 end
+
+if 0
+    f0 = 1/params.rpeak_search_wlen;
+    peaks = PeakDetection(data_filtered_env, f0/fs);
+    peak_indexes = find(peaks);
+    peak_amps = data_filtered_env(peak_indexes);
+    peak_amps_max = max(peak_amps);
+    peak_amps_min = min(peak_amps);
+    peak_amps_med = median(peak_amps);
+    
+    figure
+    hold on
+    grid
+    plot(signal)
+    plot(data_sat)
+    plot(data_filtered)
+    plot(data_filtered_env)
+    plot(peak_indexes, data_filtered_env(peak_indexes), 'ko', 'markersize', 14, 'linewidth', 3)
+    for itr = 1 : 150
+        NumBeats = length(peak_indexes);
+        event_width = 2 * round(0.75    *           median(diff(peak_indexes))/2) + 1;
+        %     event_width = 2 * round(fs * params.rpeak_search_wlen/2) + 1;
+        
+        
+        
+        %     stacked_beats = EventStacker(data_filtered, peak_indexes, event_width);
+        stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
+        
+        
+        
+        %     ECG_robust_mean = RWAverage(stacked_beats);
+        ECG_robust_mean = mean(stacked_beats, 1);
+        ECG_robust_mean_replicated = ones(NumBeats, 1) * ECG_robust_mean;
+        noise = stacked_beats - ECG_robust_mean_replicated;
+        snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+        %     hr_std = max(abs(diff(peak_indexes)));
+        hr_std = std(diff([1, peak_indexes, SigLen]));
+        snr_excluding_this_beat = zeros(1, NumBeats);
+        hr_std_excluding_this_beat = zeros(1, NumBeats);
+        for p = 1 : NumBeats
+            all_but_this_beat_index = 1 : NumBeats;
+            all_but_this_beat_index(p) = [];
+            %         ECG_robust_mean = RWAverage(stacked_beats(all_but_this_beat_index, :));
+            ECG_robust_mean = mean(stacked_beats(all_but_this_beat_index, :), 1);
+            ECG_robust_mean_replicated = ones(NumBeats - 1, 1) * ECG_robust_mean;
+            % estimate channel quality SNR
+            noise = stacked_beats(all_but_this_beat_index, :) - ECG_robust_mean_replicated;
+            snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+            %         hr_std_excluding_this_beat(p) = max(abs(diff(peak_indexes(all_but_this_beat_index))));
+            hr_std_excluding_this_beat(p) = std(diff([1, peak_indexes(all_but_this_beat_index), SigLen]));
+            %         if snr < snr_excluding_this_beat(p)
+            %             peaks(peak_indexes(p)) = 0;
+            %         end
+        end
+        [snr_max_imporvement, I_max_snr_imporvement] = max(snr_excluding_this_beat);
+        % % %     if snr >= snr_max_imporvement% && hr_std <= hr_std_excluding_this_beat(I_max_snr_imporvement)
+        % % %         continue
+        % % %         %     elseif data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_min)/2 %if hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement)
+        % % %     elseif data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_med)/2 %if hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement)
+        % % %         peaks(peak_indexes(I_max_snr_imporvement)) = 0;
+        % % %         peak_indexes = find(peaks);
+        % % %     end
+        if snr_max_imporvement > snr% && data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_med)/2% && hr_std <= hr_std_excluding_this_beat(I_max_snr_imporvement)
+            peaks(peak_indexes(I_max_snr_imporvement)) = 0;
+            peak_indexes = find(peaks);
+            %     elseif data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_min)/2 %if hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement)
+            %     elseif data_filtered_env(peak_indexes(I_max_snr_imporvement)) < (peak_amps_max + peak_amps_med)/2 %if hr_std > hr_std_excluding_this_beat(I_max_snr_imporvement)
+            %
+        end
+        %     peak_indexes = find(peaks);
+    end
+    plot(peak_indexes, data_filtered_env(peak_indexes), 'ro', 'markersize', 16, 'linewidth', 3)
+    
+    figure
+    hold on
+    plot((0:size(stacked_beats, 2)-1)/fs, stacked_beats');
+    plot((0:size(stacked_beats, 2)-1)/fs, mean(stacked_beats, 1), 'k', 'linewidth', 3);
+    grid
+    
+end
+

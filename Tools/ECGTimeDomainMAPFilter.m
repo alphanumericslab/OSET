@@ -1,8 +1,8 @@
-function [data_posterior_est, data_prior_est] = ECGTimeDomainMAPFilter(data, peaks, params)
+function [data_posterior_est, data_prior_est, n_var] = ECGTimeDomainMAPFilter(data, peaks, params)
 % An ECG denoiser based on a data driven MAP estimator in the time domain
 %
 % Usage:
-%   [data_posterior_est, data_prior_est] = ECGTimeDomainMAPFilter(data, peaks, params)
+%   [data_posterior_est, data_prior_est, n_var] = ECGTimeDomainMAPFilter(data, peaks, params)
 %
 % Inputs:
 %   data: single or multichannel ECG signal with row-wise channels
@@ -18,6 +18,8 @@ function [data_posterior_est, data_prior_est] = ECGTimeDomainMAPFilter(data, pea
 %       params.gaussianstd: smoothing window STD for params.SMOOTH_PHASE='GAUSSIAN'
 %       params.wlen_time: smoothing time window for params.SMOOTH_PHASE='MA'
 %       params.wlen_phase: smoothing phase window for params.SMOOTH_PHASE='MA'
+%       params.nvar: stationary noise variance (if available). Estimated internally, if not given as input
+%       params.nvar_factor: noise variance over/under estimation factor. Default = 1
 %       params.plotresults: plot results or not (true or false)
 %
 % Outputs:
@@ -25,6 +27,7 @@ function [data_posterior_est, data_prior_est] = ECGTimeDomainMAPFilter(data, pea
 %       estimates (row-wise channels)
 %   data_prior_est: ECG signal based on prior distribution estimates
 %       (row-wise channels)
+%   n_var: the noise variance estimate used in the algorithm (estimated internally)
 %
 % Copyright Reza Sameni, Nov 2021
 % The Open-Source Electrophysiological Toolbox
@@ -129,7 +132,13 @@ for ch = 1 : size(data, 1)
         otherwise
             error('Undefined noise variance estimation method');
     end
-    n_var = params.nvar_factor * noise_std_est^2; % noise variance estimate
+    
+    if ~isfield(params, 'nvar')
+        n_var = params.nvar_factor * noise_std_est^2; % noise variance estimate
+    else
+        n_var = params.nvar;
+    end
+    
     % disp(['nvar estimate = ' num2str(sqrt(n_var))])
     
     ECG_intrinsic_var = max(0, ECG_std.^2 - n_var); % average beat variance estimate

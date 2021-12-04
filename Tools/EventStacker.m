@@ -1,4 +1,4 @@
-function stacked_events = EventStacker(signal, event_indexes, event_width)
+function [stacked_events, num_non_zeros] = EventStacker(signal, event_indexes, event_width)
 %
 % stacked_events = EventStacker(signal, event_indexes, event_width)
 % Synchronous event stacking from input vectors and event indexes. This
@@ -6,13 +6,14 @@ function stacked_events = EventStacker(signal, event_indexes, event_width)
 % from the R-peak locations or event times.
 %
 % inputs:
-% signal: the input signal in vector form
-% event_indexes: a vector or event indexes
-% event_width: the time width of the stacked events (must be odd valued)
+%   signal: the input signal in vector form
+%   event_indexes: a vector or event indexes
+%   event_width: the time width of the stacked events (must be odd valued)
 %
 % output:
-% stacked_events: a matrix of the form N x event_width, where
-% N = length(event_indexes)
+%   stacked_events: a matrix of the form N x event_width, where N = length(event_indexes)
+%   num_non_zeros: number of stacked samples per event (equal to
+%   event_width except for the boundary events). Used to find the number of zero-padded samples per event
 %
 % Note: If event_width is even, the function updates it to the next odd value and issues a warning.
 %
@@ -36,7 +37,7 @@ center_index = half_len + 1; % The center index with equal half_len samples on e
 signal_len = length(signal); % Signal length
 num_events = length(event_indexes); % the number of events
 stacked_events = zeros(num_events, event_width); % the matrix for stacking the events
-
+num_non_zeros = zeros(1, num_events);
 for mm = 1 : num_events
     % The start of the event separation window (adjusted if exceeds input vector boundary)
     start = event_indexes(mm) - half_len;
@@ -54,4 +55,5 @@ for mm = 1 : num_events
     
     % separate the event
     stacked_events(mm, center_index - left_wing_len : center_index + right_wing_len) = signal(start : stop);
+    num_non_zeros(mm) = stop - start + 1;
 end
