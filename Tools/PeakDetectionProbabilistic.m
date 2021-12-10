@@ -102,8 +102,8 @@ elseif isfield(params, 'filter_type') && isequal(params.filter_type, 'MDMN')
     wlen2 = round(params.wlen_mn * fs);
     for kk = 1 : size(data_sat, 1)
         bl1 = BaseLine1(data_sat(kk, :), wlen1, 'md');
-        %         bl2 = BaseLine1(bl1, 2 * wlen1, 'md');
-        data_filtered(kk, :) = data_sat(kk, :) - BaseLine1(bl1, wlen2, 'mn');
+        bl2 = BaseLine1(bl1, wlen2, 'mn');
+        data_filtered(kk, :) = data_sat(kk, :) - bl2;
         %         figure
         %         plot(data_sat(kk, :));
         %         hold on
@@ -112,6 +112,32 @@ elseif isfield(params, 'filter_type') && isequal(params.filter_type, 'MDMN')
         %         plot(data_filtered(kk, :));
         %         grid
         %         legend('datasat', 'bl1', 'bl2', 'filtered');
+    end
+elseif isfield(params, 'filter_type') && isequal(params.filter_type, 'WAVELET')
+    % Wavelet denoiser
+    if isfield(params, 'WDtype')
+        wtype = params.WDtype;
+    else
+        wtype = 'sym4'; % mother wavelet used for wavelet denoising
+    end
+    
+    if isfield(params, 'WDLevel1')
+        level1 = params.WDLevel1;
+    else
+        level1 = floor(log2(fs/22.5)); % Upper frequency range for the wavelet denoiser
+    end
+    if isfield(params, 'WDLevel2')
+        level2 = params.WDLevel2;
+    else
+        level2 = ceil(log2(fs/6.5)); % Lower frequency range for the wavelet denoiser
+    end
+    
+    data_filtered = zeros(size(data_sat));
+    for kk = 1 : size(data_sat, 1)
+        wt = modwt(data_sat(kk, :), level2);
+        wtrec = zeros(size(wt));
+        wtrec(level1:level2,:) = wt(level1:level2,:);
+        data_filtered(kk, :) = imodwt(wtrec, wtype);
     end
 elseif ~isfield(params, 'filter_type') || (isfield(params, 'filter_type') && isequal(params.filter_type, 'BANDPASS_FILTER'))
     % Bandpass filter
