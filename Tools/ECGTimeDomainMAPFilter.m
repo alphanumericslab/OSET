@@ -74,6 +74,7 @@ for kk = 1 : NumBeats
     M(:, cols) = M(:, cols) + eye(event_width);
 end
 M = M(:, event_width + 1 : event_width + SignalLen);
+
 % fill the beginning and end points (before the first and after the last beat)
 first_set_index = peak_indexes(1) - half_len;
 for m = 1 : first_set_index - 1
