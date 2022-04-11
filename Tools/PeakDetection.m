@@ -1,4 +1,4 @@
-function peaks = PeakDetection(x,ff,varargin)
+function [peaks, peak_indexes] = PeakDetection(x,ff,varargin)
 %
 % peaks = PeakDetection(x,f,flag),
 % R-peak detector based on max search
@@ -11,6 +11,7 @@ function peaks = PeakDetection(x,ff,varargin)
 %
 % output:
 % peaks: vector of R-peak impulse train
+% peak_indexes: vector of R-peak indexes
 %
 % Notes:
 % - The R-peaks are found from a peak search in windows of length N; where 
@@ -85,3 +86,4 @@ I = find(peaks);
 d = diff(I);
 % z = find(d<rng);
 peaks(I(d<rng))=0;
+peak_indexes = find(peaks);

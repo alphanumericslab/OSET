@@ -20,6 +20,7 @@ function [peaks, peak_indexes, qrs_likelihood] = PeakDetectionProbabilistic(sign
 %       params.rpeak_search_wlen: the R-peak detector search window length (in seconds). Default = 0.2
 %       params.likelihood_sigma: R-peak likelihood estimator STD in seconds (assuming a Gaussian that drops from the peak maximum). Default = 0.01
 %       params.max_likelihood_span: R-peak likelihood estimator max window span in seconds (assuming a Gaussian that drops from the peak maximum). Default = 0.1
+%       params.RemoveUnsimilarBeats: remove the R-peaks that do not have similar morphology (true/false). Default = true
 %
 % Outputs:
 %   peaks: a vector with the signal length with 1's at the estimated R-peaks
@@ -51,7 +52,6 @@ if isfield(params, 'saturate') && isequal(params.saturate, 1)
 else
     data_sat = signal;
 end
-
 
 % pass the channels through a narrow bandpass filter or a matched filter
 if isfield(params, 'filter_type') && isequal(params.filter_type, 'MATCHED_FILTER')
@@ -298,7 +298,10 @@ peaks = PeakDetection(mode(sign(data_filtered_mn_all_channels(peak_indexes))) * 
 peak_indexes = find(peaks);
 
 % remove excess beats based on waveform similarity
-if 1
+if ~isfield(params, 'RemoveUnsimilarBeats')
+        params.RemoveUnsimilarBeats = true;
+end
+if params.RemoveUnsimilarBeats
     % Zero round (remove excess beats with extreme amplitude deviations from other peaks)
     peak_amps = data_filtered_mn_all_channels(peak_indexes);
     %     I_omit = abs(peak_amps - mean(peak_amps)) > 4.0 * std(peak_amps);
@@ -348,7 +351,8 @@ if 1
         ECG_robust_mean = mean(stacked_beats, 1);
         ECG_robust_mean_replicated = ones(NumBeats, 1) * ECG_robust_mean;
         noise = stacked_beats - ECG_robust_mean_replicated;
-        snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+        %snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+        snr = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
         %     hr_std = max(abs(diff(peak_indexes)));
         %         hr_std = std(diff([1, peak_indexes, SigLen]));
         hr_std = std(diff(peak_indexes));
@@ -362,7 +366,8 @@ if 1
             ECG_robust_mean_replicated = ones(NumBeats - 1, 1) * ECG_robust_mean;
             % estimate channel quality SNR
             noise = stacked_beats(all_but_this_beat_index, :) - ECG_robust_mean_replicated;
-            snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+            %snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+            snr_excluding_this_beat(p) = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
             %         hr_std_excluding_this_beat(p) = max(abs(diff(peak_indexes(all_but_this_beat_index))));
             %             hr_std_excluding_this_beat(p) = std(diff([1, peak_indexes(all_but_this_beat_index), SigLen]));
             hr_std_excluding_this_beat(p) = std(diff(peak_indexes(all_but_this_beat_index)));
@@ -442,7 +447,9 @@ if 0
         ECG_robust_mean = mean(stacked_beats, 1);
         ECG_robust_mean_replicated = ones(NumBeats, 1) * ECG_robust_mean;
         noise = stacked_beats - ECG_robust_mean_replicated;
-        snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+        %snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+        snr = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
+        
         %     hr_std = max(abs(diff(peak_indexes)));
         hr_std = std(diff([1, peak_indexes, SigLen]));
         snr_excluding_this_beat = zeros(1, NumBeats);
@@ -455,7 +462,9 @@ if 0
             ECG_robust_mean_replicated = ones(NumBeats - 1, 1) * ECG_robust_mean;
             % estimate channel quality SNR
             noise = stacked_beats(all_but_this_beat_index, :) - ECG_robust_mean_replicated;
-            snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+            %snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+            snr_excluding_this_beat(p) = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
+
             %         hr_std_excluding_this_beat(p) = max(abs(diff(peak_indexes(all_but_this_beat_index))));
             hr_std_excluding_this_beat(p) = std(diff([1, peak_indexes(all_but_this_beat_index), SigLen]));
             %         if snr < snr_excluding_this_beat(p)

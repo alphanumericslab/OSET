@@ -5,7 +5,7 @@ function [y,W,A] = SCA(x,f1,f2) % spectral component analysis
 L1 = size(x,1);
 L2 = size(x,2);
 
-k = max(round(L2*f1),1):min(round(L2*f2),L2);
+k = max(round(L2*f1), 1) : min(round(L2*f2), L2);
 
 k = [k L2-k+1];
 Ax = zeros(L1,L1);
