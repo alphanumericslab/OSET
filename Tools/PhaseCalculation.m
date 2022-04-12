@@ -1,4 +1,4 @@
-function [phase phasepos] = PhaseCalculation(peaks)
+function [phase, phasepos] = PhaseCalculation(peaks)
 %
 % [phase phasepos] = PhaseCalculation(peaks)
 % ECG phase calculation from a given set of R-peaks.
@@ -32,7 +32,7 @@ function [phase phasepos] = PhaseCalculation(peaks)
 phasepos = zeros(1,length(peaks));
 
 I = find(peaks);
-for i = 1:length(I)-1;
+for i = 1:length(I)-1
     m = I(i+1) - I(i);
     phasepos(I(i)+1:I(i+1)) = 2*pi/m : 2*pi/m : 2*pi;
 end
