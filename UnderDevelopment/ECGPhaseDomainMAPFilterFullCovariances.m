@@ -1,4 +1,4 @@
-function [data_posterior_est, data_prior_est, n_var] = ECGPhaseDomainMAPFilter(data, peaks, params)
+function [data_posterior_est, data_prior_est, n_var] = ECGPhaseDomainMAPFilterFullCovariances(data, peaks, params)
 % An ECG denoiser based on a data driven MAP estimator in the phase domain
 %
 % Usage:
@@ -31,7 +31,7 @@ function [data_posterior_est, data_prior_est, n_var] = ECGPhaseDomainMAPFilter(d
 %
 % Refs:
 %   1- ECG phase domain definition: R. Sameni, C. Jutten, and M. B. Shamsollahi.
-%   "Multichannel electrocardiogram decomposition using periodic component 
+%   "Multichannel electrocardiogram decomposition using periodic component
 %   analysis." IEEE transactions on biomedical engineering 55.8 (2008): 1935-1940.
 %
 % Copyright Reza Sameni, Oct 2021
@@ -69,22 +69,41 @@ end
 phaseshift = pi/params.bins;
 pphase = PhaseShifting(phase, phaseshift); % phase shifting to compensate half a bin shift
 
-M = ECGPhaseToMatrix(pphase, params.bins); % Convert ECG phase into a (phase x time) matrix
+[M, end_of_beat_indexes] = ECGPhaseToMatrix(pphase, params.bins); % Convert ECG phase into a (phase x time) matrix
 
 data_prior_est = zeros(size(data));
 data_posterior_est = zeros(size(data));
 for ch = 1 : size(data, 1)
     x = data(ch, :); % the active channel
-    
-    [ECG_mean, ECG_std, meanphase, ECG_median, ECGSamplesPerBin] = MeanECGExtraction(x, phase, params.bins, 1); % mean ECG extraction
-    
+
+    % construct a stacked matrix representation of the ECG beats in the phased omain
+    x_stacked = zeros(length(end_of_beat_indexes), params.bins);
+    for ll = 1 : length(end_of_beat_indexes)
+        if ll > 1
+            beat_start = end_of_beat_indexes(ll-1) + 1;
+        else
+            beat_start = 1;
+        end
+        beat_end = end_of_beat_indexes(ll);
+        x_stacked(ll, :) = x(beat_start : beat_end) * (diag(max(1, sum(M(:, beat_start : beat_end), 2))) \ M(:, beat_start : beat_end))';
+    end
+    ECG_mean = mean(x_stacked, 1);
+    ECG_median = median(x_stacked, 1);
+
+    [~, ~, meanphase, ~, ECGSamplesPerBin] = MeanECGExtraction(x, phase, params.bins, 1); % mean ECG extraction
+
     switch params.BEAT_AVG_METHOD
         case 'MEAN'
             ECG_avg = ECG_mean;
         case 'MEDIAN'
             ECG_avg = ECG_median;
     end
-    
+
+    %     x_stacked_zero_mean = x_stacked - ECG_avg(ones(1, size(x_stacked, 1)), :);
+    %     K_x_ph = x_stacked_zero_mean' * x_stacked_zero_mean / size(x_stacked_zero_mean, 1);
+    K_x_ph = cov(x_stacked); % identical to the above lines if called as: cov(x_stacked, 1)
+    ECG_std = sqrt(diag(K_x_ph))';
+
     switch params.NOISE_VAR_EST_METHOD
         case 'MIN' % Method 1: min std
             noise_std_est = min(ECG_std);
@@ -96,7 +115,7 @@ for ch = 1 : size(data, 1)
             [ECG_std_up_sorted, std_sorted_indexes] = sort(ECG_std);
             ECGSamplesPerBin_sorted = ECGSamplesPerBin(std_sorted_indexes);
             bns = 1 : params.avg_bins;
-            noise_std_est = sqrt(sum(ECG_std_up_sorted(bns).^2 .* (ECGSamplesPerBin_sorted(bns) - 1)) / (sum(ECGSamplesPerBin_sorted(bns)) - 1)); % Note: recovers the original variances and renormalizes by total (N-1) to obtain an unbiased estimator  
+            noise_std_est = sqrt(sum(ECG_std_up_sorted(bns).^2 .* (ECGSamplesPerBin_sorted(bns) - 1)) / (sum(ECGSamplesPerBin_sorted(bns)) - 1)); % Note: recovers the original variances and renormalizes by total (N-1) to obtain an unbiased estimator
         case 'MEDLOWER' % Method 3: median of the smallest std
             if ~isfield(params, 'avg_bins')
                 params.avg_bins = 3;
@@ -113,17 +132,17 @@ for ch = 1 : size(data, 1)
         otherwise
             error('Undefined noise variance estimation method');
     end
-    
+
     if ~isfield(params, 'nvar')
         n_var = params.nvar_factor * noise_std_est^2; % noise variance estimate
     else
         n_var = params.nvar;
     end
-    
+
     % disp(['nvar estimate = ' num2str(sqrt(n_var))])
-    
+
     ECG_intrinsic_var = max(0, ECG_std.^2 - n_var); % average beat variance estimate
-    
+
     % smooth the phase-time mapping matrix in time and phase
     switch params.SMOOTH_PHASE
         case 'BYPASS'
@@ -145,15 +164,64 @@ for ch = 1 : size(data, 1)
             end
             M_smoothed = imgaussfilt(M, params.gaussianstd);
     end
-    
+
     % reconstruct the ECG
-    data_prior_est(ch, :) = ECG_avg * M_smoothed; % prior estimate based on average beat repetition over time
-    s_var = ECG_intrinsic_var * M_smoothed; % ECG beat variance estimate repeated over time
-    
-    % MAP estimate of each ECG sample assuming a Gaussian distribution for
-    % the ECG samples and the noise (derived theoretically)
-    data_posterior_est(ch, :) = (s_var .* (x - params.n_mean) + n_var * data_prior_est(ch, :)) ./ (s_var + n_var);
-    
+    if 0 % under dev.
+        K_s_ph = K_x_ph - n_var * eye(params.bins);
+        rho = K_s_ph / n_var;
+        sig_len = length(x);
+        T = M_smoothed / length(end_of_beat_indexes);
+        %     K_s_tm = M' * K_s_ph * M;
+        %     K_x_tm = M' * K_s_ph * M + n_var * eye(size(M, 2));
+        data_prior_est(ch, :) = (0.5*length(end_of_beat_indexes)) * (T'*T) * x';%ECG_avg * T; % prior estimate based on average beat repetition over time
+        % MAP estimate of each ECG sample assuming a Gaussian distribution for
+        % the ECG samples and the noise (derived theoretically)
+        %     data_posterior_est(ch, :) = ((T' * rho * T) * (eye(sig_len) - T' * pinv(pinv(rho) + (T * T')) * T) * (eye(sig_len) - (T'*T)) + (T'*T)) * x';
+        data_posterior_est(ch, :) = (T' * rho * T) * (eye(sig_len) - T' * pinv(pinv(rho) + (T * T')) * T) * (x' - data_prior_est(ch, :)') + data_prior_est(ch, :)';
+    else % under dev.
+        K_s_ph = K_x_ph - n_var * eye(params.bins);
+
+        % make matrix SPD
+        [U,S,V] = svd(K_s_ph);
+        S(S < 0) = 0;
+        K_s_ph = U * S * V';
+
+        rho = K_s_ph / n_var;
+        sig_len = length(x);
+        T = M_smoothed;
+        %     K_s_tm = M' * K_s_ph * M;
+        %     K_x_tm = M' * K_s_ph * M + n_var * eye(size(M, 2));
+        T2 = (diag(sum(T, 2)) \ T);
+        data_prior_est(ch, :) = T' * (T2 * x');%ECG_avg * T; % prior estimate based on average beat repetition over time
+
+        % MAP estimate of each ECG sample assuming a Gaussian distribution for
+        % the ECG samples and the noise (derived theoretically)
+        %     data_posterior_est(ch, :) = ((T' * rho * T) * (eye(sig_len) - T' * pinv(pinv(rho) + (T * T')) * T) * (eye(sig_len) - (T'*T)) + (T'*T)) * x';
+
+        %         data_posterior_est(ch, :) = (T2' * rho * T2) * (eye(sig_len) - T2' * pinv(pinv(rho) + (T2 * T2')) * T2) * (x' - data_prior_est(ch, :)') + data_prior_est(ch, :)';
+
+        Delta = x' - data_prior_est(ch, :)';
+        term1 = T2 * Delta;
+        term2 = T2' * rho;
+        term3 = (T2 * T2');
+        data_posterior_est(ch, :) = (term2 * term1) - term2 * term3 * pinv(pinv(rho) + term3) * term1 + data_prior_est(ch, :)';
+
+        if 0
+            figure
+            plot(x)
+            hold on
+            plot(data_prior_est(ch, :));
+            plot(data_posterior_est(ch, :));
+            grid
+        end
+    end
+
+    %     plot(x)
+    %     hold on
+    %     plot(data_prior_est(ch, :))
+    %     plot(data_posterior_est(ch, :))
+    %     grid
+
     if isfield(params, 'plotresults')
         if params.plotresults == true
             % if ch == 1
@@ -164,7 +232,7 @@ for ch = 1 : size(data, 1)
             %     grid
             %     legend('phase', 'pphase');
             % end
- 
+
             figure
             errorbar(meanphase, ECG_avg, ECG_std/2);
             hold on
@@ -175,7 +243,7 @@ for ch = 1 : size(data, 1)
             xlabel('Phase (rad)');
             ylabel('Amplitude');
             set(gca, 'fontsize', 16)
-            
+
             figure
             plot(meanphase, ECG_std);
             hold on
@@ -187,7 +255,7 @@ for ch = 1 : size(data, 1)
             xlabel('Phase (rad)');
             ylabel('Amplitude');
             set(gca, 'fontsize', 16)
-            
+
             figure
             plot(sort(ECG_std));
             grid
@@ -195,7 +263,7 @@ for ch = 1 : size(data, 1)
             xlabel('Sorted bin index');
             ylabel('STDd');
             set(gca, 'fontsize', 16)
-            
+
             figure
             plot(x)
             hold on
