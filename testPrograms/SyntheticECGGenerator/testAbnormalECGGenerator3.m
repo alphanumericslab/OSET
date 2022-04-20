@@ -4,7 +4,7 @@
 %
 % Dependencies:
 %   - The synthetic ECG generator and noise generator package of the Open Source ECG Toolbox
-%   - Functions from ECGSYN (https://physionet.org/content/ecgsyn/1.0.0/)
+%   - The rrprocess.m function from ECGSYN (https://physionet.org/content/ecgsyn/1.0.0/)
 %
 % Open Source ECG Toolbox, version 2.0, April 2008
 % Released under the GNU General Public License
