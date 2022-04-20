@@ -1,4 +1,4 @@
-function [ECG teta]= SingleChannelECGGenerator(teta,teta0,alphai,bi,tetai);
+function [ECG, teta]= SingleChannelECGGenerator(teta,teta0,alphai,bi,tetai)
 %
 % [ECG teta]= DipoleGenerator2(teta,teta0,alphai,bi,tetai)
 % Synthetic cardiac dipole generator using the 'direct form' of the
@@ -44,4 +44,4 @@ teta = mod(teta + teta0 + pi, 2*pi) - pi;
 
 dtetai = mod(teta(ones(length(tetai),1),:)' - tetai(ones(1,N),:) + pi , 2*pi) - pi;
 
-ECG = [sum(alphai(ones(1,N),:) .* exp(-dtetai .^2 ./ (2*bi(ones(1,N),:) .^ 2)),2)]';
+ECG = sum(alphai(ones(1,N),:) .* exp(-dtetai .^2 ./ (2*bi(ones(1,N),:) .^ 2)),2)';
