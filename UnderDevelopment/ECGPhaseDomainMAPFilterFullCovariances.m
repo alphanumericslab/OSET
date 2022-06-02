@@ -86,6 +86,7 @@ for ch = 1 : size(data, 1)
         end
         beat_end = end_of_beat_indexes(ll);
         x_stacked(ll, :) = x(beat_start : beat_end) * (diag(max(1, sum(M(:, beat_start : beat_end), 2))) \ M(:, beat_start : beat_end))';
+        %         x_stacked(ll, :) = x(beat_start : beat_end) * M(:, beat_start : beat_end)';
     end
     ECG_mean = mean(x_stacked, 1);
     ECG_median = median(x_stacked, 1);
@@ -190,9 +191,12 @@ for ch = 1 : size(data, 1)
         sig_len = length(x);
         T = M_smoothed;
         %     K_s_tm = M' * K_s_ph * M;
-        %     K_x_tm = M' * K_s_ph * M + n_var * eye(size(M, 2));
-        T2 = (diag(sum(T, 2)) \ T);
-        data_prior_est(ch, :) = T' * (T2 * x');%ECG_avg * T; % prior estimate based on average beat repetition over time
+        %     K_x_tm = M' * K_s_ph * M + n_var * eye(s ize(M, 2));
+        %T2 = diag(sum(T, 2)) \ T;
+        T2 = T / diag(sum(T, 1));
+        
+%         data_prior_est(ch, :) = T' * (T2 * x');%ECG_avg * T; % prior estimate based on average beat repetition over time
+        data_prior_est(ch, :) = ECG_avg * T2;%ECG_avg * T; % prior estimate based on average beat repetition over time
 
         % MAP estimate of each ECG sample assuming a Gaussian distribution for
         % the ECG samples and the noise (derived theoretically)
@@ -203,8 +207,9 @@ for ch = 1 : size(data, 1)
         Delta = x' - data_prior_est(ch, :)';
         term1 = T2 * Delta;
         term2 = T2' * rho;
-        term3 = (T2 * T2');
-        data_posterior_est(ch, :) = (term2 * term1) - term2 * term3 * pinv(pinv(rho) + term3) * term1 + data_prior_est(ch, :)';
+        term3 = T2 * T2';
+        term3_ = tril(triu(term3, -round(params.bins/2)), round(params.bins/2)); % removes the phase glithces at the corners of term3
+        data_posterior_est(ch, :) = (term2 * term1) - term2 * term3_ * pinv(pinv(rho) + term3_) * term1 + data_prior_est(ch, :)';
 
         if 0
             figure

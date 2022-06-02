@@ -6,13 +6,13 @@ clear
 clc
 
 % Load data
-datafilepath = '../../../DataFiles/Physionet.org/files/ptbdb/1.0.0/'; % Change this path to where you have the .mat data files
-fs = 1000.0; % Sampling frequency of the data (put it in the loop and read it from the data if not fixed across all records)
-ofname = 'PTBAnalysisResults.csv';
+% datafilepath = '../../../../DataFiles/Physionet.org/files/ptbdb/1.0.0/'; % Change this path to where you have the .mat data files
+% fs = 1000.0; % Sampling frequency of the data (put it in the loop and read it from the data if not fixed across all records)
+% ofname = 'PTBAnalysisResults.csv';
 
-% datafilepath = '../../../DataFiles/Physionet.org/files/qtdb/1.0.0/'; % Change this path to where you have the .mat data files
-% fs = 250.0; % Sampling frequency of the data (put it in the loop and read it from the data if not fixed across all records)
-% ofname = 'QTAnalysisResults.csv';
+datafilepath = '../../../../DataFiles/Physionet.org/files/qtdb/1.0.0/'; % Change this path to where you have the .mat data files
+fs = 250.0; % Sampling frequency of the data (put it in the loop and read it from the data if not fixed across all records)
+ofname = 'QTAnalysisResults.csv';
 
 filelist = dir(fullfile([datafilepath, '**/*.mat']));  % get list of all mat files of interest
 % Make N by 2 matrix of fieldname + value type

@@ -1,4 +1,4 @@
-function [stacked_events, num_non_zeros] = EventStacker(signal, event_indexes, event_width)
+function [stacked_events, num_non_zeros] = EventStacker(signal, event_indexes, event_width, varargin)
 %
 % stacked_events = EventStacker(signal, event_indexes, event_width)
 % Synchronous event stacking from input vectors and event indexes. This
@@ -20,11 +20,17 @@ function [stacked_events, num_non_zeros] = EventStacker(signal, event_indexes, e
 % Open Source Electrophysiological Toolbox, version 3.14, Nov 2020
 % URL: https://gitlab.com/rsameni/OSET
 %
-% Copyright (C) 2020  Reza Sameni
+% Copyright (C) 2020 Reza Sameni
 % reza.sameni@gmail.com
 
 if(~isvector(signal))
     error('First input should be a vector');
+end
+
+if nargin < 4
+    method = 'unnormalized';
+else
+    method = varargin{1};
 end
 
 if(mod(event_width, 2) == 0)
@@ -38,22 +44,48 @@ signal_len = length(signal); % Signal length
 num_events = length(event_indexes); % the number of events
 stacked_events = zeros(num_events, event_width); % the matrix for stacking the events
 num_non_zeros = zeros(1, num_events);
-for mm = 1 : num_events
-    % The start of the event separation window (adjusted if exceeds input vector boundary)
-    start = event_indexes(mm) - half_len;
-    if(start < 1)
-        start = 1;
+
+if isequal(method, 'unnormalized')
+    for mm = 1 : num_events
+        % The start of the event separation window (adjusted if exceeds input vector boundary)
+        start = event_indexes(mm) - half_len;
+        if(start < 1)
+            start = 1;
+        end
+        left_wing_len = event_indexes(mm) - start;
+
+        % The start of the event separation window (adjusted if exceeds input vector boundary)
+        stop = event_indexes(mm) + half_len;
+        if(stop > signal_len)
+            stop = signal_len;
+        end
+        right_wing_len = stop - event_indexes(mm);
+
+        % separate the event
+        stacked_events(mm, center_index - left_wing_len : center_index + right_wing_len) = signal(start : stop);
+        num_non_zeros(mm) = stop - start + 1;
     end
-    left_wing_len = event_indexes(mm) - start;
-    
-    % The start of the event separation window (adjusted if exceeds input vector boundary)
-    stop = event_indexes(mm) + half_len;
-    if(stop > signal_len)
-        stop = signal_len;
-    end
-    right_wing_len = stop - event_indexes(mm);
-    
-    % separate the event
-    stacked_events(mm, center_index - left_wing_len : center_index + right_wing_len) = signal(start : stop);
-    num_non_zeros(mm) = stop - start + 1;
+    % Under-development: for stretching beats (simplified dynamic time-warping)
+    % elseif isequal(method, 'normalized')
+    %     end_of_beat_indexes = round(event_indexes(1:end-1) + event_indexes(2:end)) / 2;
+    %     for mm = 1 : length(end_of_beat_indexes)
+    %         if mm > 1
+    %             start = end_of_beat_indexes(mm-1) + 1;
+    %         else
+    %             start = 1;
+    %         end
+    %         stop = end_of_beat_indexes(mm);
+    %         left_wing_len = event_indexes(mm) - start;
+    %         right_wing_len = stop - event_indexes(mm);
+    %
+    %         seg_len = left_wing_len + right_wing_len + 1;
+    %         % separate the event
+    %         segment = zeros(1, seg_len); % the matrix for stacking the events
+    %         segment(center_index - half_len : center_index + half_len) = signal(start : stop);
+    %         sagment_resampled = resample(segment, event_width, seg_len);
+    %         stacked_events(mm, :) = sagment_resampled;
+    %         num_non_zeros(mm) = stop - start + 1;
+    %     end
+else
+    error('undefined method');
 end

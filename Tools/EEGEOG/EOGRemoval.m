@@ -43,12 +43,12 @@ end
 N = size(EEG,2);
 ref = EOG;
 x = EEG;
-energy = zeros(1,N);
+% energy = zeros(1,N);
 
 typical = x(1,:);
 Delta = [];
 delta = [];
-for i = 1:L,
+for i = 1:L
     % calculate the time-varying energy
     energy = sqrt(filtfilt(ones(1,wlen),wlen,ref.^2))./std(EOG); % notice the normalization by SD of EOG, and not the SD of ref!
 
@@ -114,7 +114,7 @@ for i = 1:L,
 
     % wavelet denoising
     % % %     for k = 1:M,
-    for k = 1:ENS,
+    for k = 1:ENS
         if(flagplot)
             figure;
             plot(y(k,:));
