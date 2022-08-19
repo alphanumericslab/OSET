@@ -45,7 +45,26 @@ for k = 1 : length(filelist) % Sweep over all or specific records
     datafilename = [filelist(k).folder '/' filelist(k).name];
     data = load(datafilename);
     data = data.val;
-    %     data = data(:, 1 : round(20*fs)); % select a short segment
+
+
+    data = data(:, 1 : round(20*fs)); % select a short segment
+
+
+
+
+
+    if 0
+        hh = hamming(35);
+        % peaks = PeakDetection(data(1, :), 1.0/fs);
+        peaks = zeros(1, length(data(1, :)));
+        peak_points = 1 : 193 : length(data(1, :));
+        peaks(peak_points) = 1 + 0.05*rand(1, length(peak_points));
+        data = filter(hh - hh(end), 1, peaks);
+        % data = data + 0.1*std(data)*randn(size(data));
+    end
+
+
+
 
     switch(BASELINE_REMOVAL_APPROACH)
         case 'BP'
@@ -62,7 +81,8 @@ for k = 1 : length(filelist) % Sweep over all or specific records
             warning('Unknown method. Bypassing baseline wander removal.');
     end
 
-    for SNR_pre_set = -5 : 5 : 30 % the desired input SNR
+    for SNR_pre_set = 25 : 5 : 30 % the desired input SNR
+    % for SNR_pre_set = 55 : 5 : 60 % the desired input SNR
         for ch = 1 : size(data, 1) % sweep over all or a single desired channel
             for itr = 1 : 5 % number of repeated runs
                 sig = data(ch, :);
@@ -70,7 +90,7 @@ for k = 1 : length(filelist) % Sweep over all or specific records
                 noise = sd * randn(size(sig));
                 x = sig + noise;
 
-                if 0
+                if 1
                     f0 = 1.0; % approximate heart rate (in Hz) used for R-peak detection
                     [peaks, peaks_indexes] = PeakDetection(sig, f0/fs);                  % peak detection
                 else
@@ -80,8 +100,7 @@ for k = 1 : length(filelist) % Sweep over all or specific records
                     peak_detector_params.filter_type = 'MULT_MATCHED_FILTER';%'BANDPASS_FILTER', 'MATCHED_FILTER', 'MULT_MATCHED_FILTER'
                     [peaks, peaks_indexes] = PeakDetectionProbabilistic(sig, fs, peak_detector_params);
                 end
-
-                GPfilterparams.bins = 300; % number of phase domain bins
+                GPfilterparams.bins = 350               ;              %300; % number of phase domain bins
                 GPfilterparams.BEAT_AVG_METHOD = 'MEAN'; % 'MEAN' or 'MEDIAN'
                 GPfilterparams.NOISE_VAR_EST_METHOD = 'AVGLOWER'; %'MIN', 'AVGLOWER', 'MEDLOWER', 'PERCENTILE'
                 GPfilterparams.p = 0.5;
@@ -93,7 +112,17 @@ for k = 1 : length(filelist) % Sweep over all or specific records
                 %                 GPfilterparams.wlen_time = 3;
                 GPfilterparams.plotresults = 0;
                 GPfilterparams.nvar_factor = 1.0; % noise variance over/under estimation factor (1 by default)
-                %                 GPfilterparams.nvar = var(noise)
+
+
+
+
+
+                GPfilterparams.nvar = var(noise);
+
+
+
+
+
                 [data_posterior_est_phase_based, data_prior_est_phase_based] = ECGPhaseDomainMAPFilter(x, peaks, GPfilterparams);
                 [data_posterior_est_phase_based_fullcov, data_prior_est_phase_based_fullcov] = ECGPhaseDomainMAPFilterFullCovariances(x, peaks, GPfilterparams);
                 [data_posterior_est_time_based, data_prior_est_time_based] = ECGTimeDomainMAPFilter(x, peaks, GPfilterparams);
@@ -147,7 +176,7 @@ for k = 1 : length(filelist) % Sweep over all or specific records
                     set(gca, 'fontsize', 16)
                 end
 
-                if 1
+                if 0
                     lg = {};
                     t = (0 : length(x) - 1)/fs;
                     figure
@@ -182,5 +211,5 @@ for k = 1 : length(filelist) % Sweep over all or specific records
         end
     end
 end
-writetable(ResultsTable, ['../../../DataFiles/' ofname])
+writetable(ResultsTable, ['../../../../DataFiles/' ofname])
 
