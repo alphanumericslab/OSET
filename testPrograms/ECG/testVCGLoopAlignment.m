@@ -18,7 +18,7 @@ S = fft(data,L,1);
 S(1,:) = 0;
 k1 = 2:ceil(0.5*L/fs);
 S(k1,:) = 0; S(L-k1+2,:) = 0;
-for i = 1:9,
+for i = 1:9
     k = floor((i*50-.3)*L/fs):ceil((i*50+.3)*L/fs);
     S(k,:) = 0; S(L-k+2,:) = 0;
 end
@@ -30,7 +30,7 @@ clear S*; clear k*
 phase = zeros(1,length(data));
 cntr = 0;
 for i = 2:length(data)-1
-    if(data(i,1)>1 & max(data(i-1:i+1,1))==data(i,1))
+    if(data(i,1)>1 && max(data(i-1:i+1,1))==data(i,1))
     %if(data(i,2)>400 & max(data(i-1:i+1,2))==data(i,2))
     %if(data(i,7)>400 & max(data(i-1:i+1,7))==data(i,7))
         phase(i) = 1;

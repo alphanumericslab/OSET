@@ -70,6 +70,7 @@ phaseshift = pi/params.bins;
 pphase = PhaseShifting(phase, phaseshift); % phase shifting to compensate half a bin shift
 
 M = ECGPhaseToMatrix(pphase, params.bins); % Convert ECG phase into a (phase x time) matrix
+
 data_prior_est = zeros(size(data));
 data_posterior_est = zeros(size(data));
 for ch = 1 : size(data, 1)

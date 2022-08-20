@@ -1,4 +1,4 @@
-function [DIP teta]= DipoleGeneratorAbnormal(N,fs,f,alphai,bi,tetai,teta0,STM,S0);
+function [DIP, teta]= DipoleGeneratorAbnormal(N,fs,f,alphai,bi,tetai,teta0,STM,S0)
 %
 % [DIP teta]= DipoleGenerator(N,fs,f,alphai,bi,tetai,teta0)
 % Synthetic cardiac dipole generator using the 'differential form' of the
@@ -58,7 +58,7 @@ L = size(STM,1);
 
 teta(1) = teta0;
 state = S0;
-for i = 1:N-1;
+for i = 1:N-1
     teta(i+1) = teta(i) + w*dt;
     if(teta(i+1)>pi) % beat transition
         teta(i+1) = teta(i+1) - 2*pi;
@@ -68,7 +68,7 @@ for i = 1:N-1;
         if(a < CSTM(state,1))
             state = 1;
         else
-            for j = 2:L,
+            for j = 2:L
                 if(a >= CSTM(state,j-1) && a < CSTM(state,j))
                     state = j;
                     break;
@@ -81,7 +81,7 @@ for i = 1:N-1;
     dtetaiy = mod(teta(i) - tetai(state).y + pi , 2*pi) - pi;
     dtetaiz = mod(teta(i) - tetai(state).z + pi , 2*pi) - pi;
 
-    if(i==1),
+    if(i==1)
         X(i) = sum(alphai(state).x .* exp(-dtetaix .^2 ./ (2*bi(state).x .^ 2)));
         Y(i) = sum(alphai(state).y .* exp(-dtetaiy .^2 ./ (2*bi(state).y .^ 2)));
         Z(i) = sum(alphai(state).z .* exp(-dtetaiz .^2 ./ (2*bi(state).z .^ 2)));
