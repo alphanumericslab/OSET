@@ -6,7 +6,7 @@
 % corresponding reconstructed ecg. The two are compared numerically in 
 % testTikhonovRegularization.ipynb
 
-
+% By: Mircea Dumitru (mircea.dumitru@dbmi.emory.edu), Aug 2022
 
 datafilepath = fullfile('dataTikhonov.csv')
 data = readtable(datafilepath);
