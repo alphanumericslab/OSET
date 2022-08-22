@@ -1,3 +1,6 @@
+# The .py implementation of TikhonovRegularization.mat (from OSET/Tools/Generic) that matches numerically the reconstruction.
+# For very long signals, the processing speed can be increased by decression the lsqr tolerance. In the current setting it is chosen to match Matlab.
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
