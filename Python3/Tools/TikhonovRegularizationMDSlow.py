@@ -1,8 +1,8 @@
 import numpy as np
-from scipy import sparse
+#from scipy.linalg import toeplitz, 
 from scipy import linalg
-from scipy.sparse.linalg import lsqr
-def TikhonovRegularizationMD(x, DiffOrderOrFilterCoefs, Lambda):
+from scipy import sparse
+def TikhonovRegularizationMDSlow(x, DiffOrderOrFilterCoefs, Lambda):
     x = np.array(x)
     if(np.isscalar(DiffOrderOrFilterCoefs) == True):
         l = np.zeros(DiffOrderOrFilterCoefs, dtype=int).tolist()
@@ -18,14 +18,12 @@ def TikhonovRegularizationMD(x, DiffOrderOrFilterCoefs, Lambda):
     a.insert(0, h[0])
     b = h.copy()
     b.extend(np.zeros(N-L, dtype=int).tolist())
-
-    #from scipy import linalg
-    from scipy import sparse
-    from scipy.sparse.linalg import lsqr
-    #from scipy.sparse.linalg import inv
-
-    D = sparse.csc_matrix(linalg.toeplitz(a,b)) 
-    F = sparse.csc_matrix(Lambda*(D.T*D) + np.eye(N))
-
-    y = lsqr(F.T, x.T, btol = 1e-14,atol = 1e-14)[0].T
+    
+    D = sparse.csr_matrix(linalg.toeplitz(a,b)) 
+    F = (Lambda*(D.T*D) + np.eye(N))
+    
+    # Both ways of performing the matrix right division are equally efficient to my knowledge.
+    # If there is any reason to chose one, go for it.
+    #y = np.linalg.lstsq(F.T,x.T,rcond=None)[0].T
+    y = np.dot(x, linalg.pinv(F)) 
     return y
