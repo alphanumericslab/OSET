@@ -24,7 +24,7 @@ if(iscolumn(x))
     x = x';
 end
 
-method = 'ACOS_FORMULATION'; % 'ACOT_FORMULATION'. The ACOT algorithm has sign issues.
+method = 'ACOS_FORMULATION'; % 'ACOT_FORMULATION'. TODO: The ACOT algorithm has sign issues.
 if(isequal(mode, 'SPHRtoCART'))
     y = zeros(size(x));
     r = x(:, 1);
@@ -49,14 +49,35 @@ elseif(isequal(mode, 'CARTtoSPHR'))
         end
         sgn = x(:, end) < 0;
         y(sgn, end) = - y(sgn, end);
-        
+
+    end
+elseif(isequal(mode, 'CARTtoSPHR-ISO'))
+    if size(x, 2) == 3 % CARTtoSPHR-ISO mode is only available for 3-vectors
+        y = zeros(size(x));
+        y(:, 1) = sqrt(sum(x .^ 2, 2)); %
+        y(:, 2) = acos(x(:, 3) ./ y(:, 1)); % theta
+        for m = 1 : size(x, 1) % phi
+            if x(m, 1) ~= 0
+                y(m, 3) = atan2(x(m, 2), x(m, 1));
+            else
+                if x(m, 2) > 0
+                    y(m, 3) = pi/2;
+                elseif x(m, 2) < 0
+                    y(m, 3) = -pi/2;
+                else
+                    y(m, 3) = nan;
+                end
+            end
+        end
+    else
+        error('CARTtoSPHR-ISO mode is only available for 3-vectors')
     end
 else
     error('Undefined transformation mode.');
 end
 
 % Correct y dim if x was a single row-wise vector
-if(iscolumn(x)) 
+if(iscolumn(x))
     y = y';
 end
 
