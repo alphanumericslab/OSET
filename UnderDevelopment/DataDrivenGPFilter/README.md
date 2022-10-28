@@ -27,7 +27,7 @@ The script generating the CSV files corresponding to the Prof. Sameni GP impleme
 The script generating the CSV files corresponding to the QT estimations:
 *QTEstimationForGPFilter.m*
 - implemented to execute over all levels of noise and all repetitions, for GP filtered signals, wavelet filtered signals and pure ECG signals (in order to compute the differences);
- - it is using as the core function  Prof. Li’s QT detection function: *QT_analysis_single_lead.m*
+ - it is using as the core function  Prof. Li’s QT detection function: [QT_analysis_single_lead.m](QT_analysis_single_lead.m)
 
 FIG3: the script generating the individual ECG comparisons (measurements vs. filter) for Prior, Posterior and Wavelet filtered signals
 *ArticleECGFigsGeneration2*
