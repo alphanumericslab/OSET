@@ -7,6 +7,8 @@ function baseline = BaselineEstimator(x_raw, baseline_removal_method, params)
 switch baseline_removal_method
     case 'BYPASS' % bypass baseline wander (zero baseline)
         baseline = zeros(size(x_raw));
+    case 'LP'
+        baseline = LPFilter(x_raw, params.fc/params.fs);
     case 'MNMN' % two-stage moving average
         baseline = BaseLine2(x_raw, params.wlen1, params.wlen2, 'mn');
     case 'MDMN' % two-stage moving median plus moving average

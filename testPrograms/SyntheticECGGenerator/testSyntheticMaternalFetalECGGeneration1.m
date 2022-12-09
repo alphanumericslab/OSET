@@ -8,8 +8,8 @@ fs = 500;
 N = 10000;
 dim1 = 8;
 
-SIR = -20;
-SNR = -15;
+SIR = -10;
+SNR = 30;
 % beta = 2;
 beta = 1.5;     % noise color (for noisetype = 1)
 

@@ -10,7 +10,7 @@ function [s,peaksm,peaksf] = PiCA3(dat,refm,refframem,thm,wlen1m,wlen2m,reff,ref
 % % % refframe = dat(2,t0-w:t0+w);
 
 N = size(dat,2);
-for k = 1:Itr,
+for k = 1:Itr
     % first subspace
     w = floor(length(refframem)/2);
     r = xcorr(refframem,refm);
@@ -21,9 +21,9 @@ for k = 1:Itr,
     r(r < thm*max(r)) = 0;
     peaksm = zeros(1,N);
     I = find(r>0);
-    for i = I,
+    for i = I
         ind = max(1,i-wlen2m):min(N,i+wlen2m);
-        if (max(r(ind))==r(i)),
+        if (max(r(ind))==r(i))
             peaksm(i) = 1;
         end
     end
@@ -38,14 +38,14 @@ for k = 1:Itr,
     r(r < thf*max(r)) = 0;
     peaksf = zeros(1,N);
     I = find(r>0);
-    for i = I,
+    for i = I
         ind = max(1,i-wlen2f):min(N,i+wlen2f);
-        if (max(r(ind))==r(i)),
+        if (max(r(ind))==r(i))
             peaksf(i) = 1;
         end
     end
     
-    [s,W,A] = PiCA(dat,peaksm,peaksf);
+    [s, ~, ~] = PiCA(dat,peaksm,peaksf);
     refm = s(1,:);
     reff = s(end,:);
 end

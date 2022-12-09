@@ -22,7 +22,7 @@ clear;
 
 %//////////////////////////////////////////////////////////////////////////
 % General parameters
-N = 6000;       % # of signal samples
+N = 60000;       % # of signal samples
 fs = 500;       % desired sampling rate
 
 % Noise parameters

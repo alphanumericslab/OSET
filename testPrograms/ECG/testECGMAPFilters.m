@@ -81,8 +81,8 @@ for k = 1 : length(filelist) % Sweep over all or specific records
             warning('Unknown method. Bypassing baseline wander removal.');
     end
 
-    for SNR_pre_set = 25 : 5 : 30 % the desired input SNR
-    % for SNR_pre_set = 55 : 5 : 60 % the desired input SNR
+    for SNR_pre_set = 30 : 5 : 50 % the desired input SNR
+        % for SNR_pre_set = 55 : 5 : 60 % the desired input SNR
         for ch = 1 : size(data, 1) % sweep over all or a single desired channel
             for itr = 1 : 5 % number of repeated runs
                 sig = data(ch, :);
@@ -122,9 +122,11 @@ for k = 1 : length(filelist) % Sweep over all or specific records
 
 
 
+                [data_posterior_est_phase_based_fullcov, data_prior_est_phase_based_fullcov] = ECGPhaseDomainGPFilter(x, peaks, GPfilterparams);
+                %                 [data_posterior_est_phase_based_fullcov, data_prior_est_phase_based_fullcov] = ECGPhaseDomainMAPFilterFullCovariances(x, peaks, GPfilterparams);
 
                 [data_posterior_est_phase_based, data_prior_est_phase_based] = ECGPhaseDomainMAPFilter(x, peaks, GPfilterparams);
-                [data_posterior_est_phase_based_fullcov, data_prior_est_phase_based_fullcov] = ECGPhaseDomainMAPFilterFullCovariances(x, peaks, GPfilterparams);
+
                 [data_posterior_est_time_based, data_prior_est_time_based] = ECGTimeDomainMAPFilter(x, peaks, GPfilterparams);
 
                 s_power = mean(sig.^2);

@@ -1,6 +1,6 @@
 function [A,B] = PiCAMatrixes1(x,peaks)
 
-[phase pphase] = PhaseCalculation(peaks);
+[phase, ~] = PhaseCalculation(peaks);
 
 
 % PM time calculation
@@ -12,9 +12,9 @@ wlen = max(n1)-min(n1);
 N0 = length(x);
 T1 = zeros(length(peaks)-prd-wlen,1);
 NN = length(T1);
-for t = 1:NN,
+for t = 1:NN
     df = abs(phase(t) - phase(max(t+prd-wlen,1):min(t+prd+wlen,N0)));
-    [Y,I] = min(df);
+    [~, I] = min(df);
     T1(t) = t + prd + I - wlen -1;
 end
 T1 = max(T1,1);

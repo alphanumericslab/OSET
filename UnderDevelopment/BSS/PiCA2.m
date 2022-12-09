@@ -1,5 +1,4 @@
-function [s,peaks] = PiCA2(dat,ref,refframe,th,wlen1,wlen2,Itr)
-
+function [s, peaks] = PiCA2(dat,ref,refframe,th,wlen1,wlen2,Itr)
 
 % % % t0 = 90;    % reference frame center
 % % % w = 5;      % reference frame half width
@@ -11,7 +10,7 @@ function [s,peaks] = PiCA2(dat,ref,refframe,th,wlen1,wlen2,Itr)
 
 N = length(ref);
 w = floor(length(refframe)/2);
-for k = 1:Itr,
+for k = 1:Itr
     % % %     if k == 1,
     % % %         peaks = zeros(1,N);
     % % %         peaks(1:250/2:end) = 1;
@@ -25,15 +24,15 @@ for k = 1:Itr,
     r(r < th*max(r)) = 0;
     peaks = zeros(1,N);
     I = find(r>0);
-    for i = I,
+    for i = I
         ind = max(1,i-wlen2):min(N,i+wlen2);
-        if (max(r(ind))==r(i)),
+        if (max(r(ind))==r(i))
             peaks(i) = 1;
         end
     end
     
     % % %     end
 
-    [s,W,A] = PiCA(dat,peaks);
+    [s, ~, ~] = PiCA(dat,peaks);
     ref = s(1,:);
 end
