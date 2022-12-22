@@ -5,27 +5,23 @@
 
 ## INTRODUCTION
 
-OSET is a collection of electrophysiological data and open source codes for biological signal generation, modeling, processing, and filtering, originally released in June 2006. The toolbox is distributed under the BSD License and may be freely used or modified under the specified terms of use. The source codes have been mainly developed in Matlab and partially in C++; but contributions in other languages are welcome. Please feel free to contact us in case of any comments or questions.
+OSET is a collection of electrophysiological data and open source codes for biological signal generation, modeling, processing, and filtering, originally released in June 2006. The toolbox is distributed under the BSD License and may be freely used or modified under the specified terms of use. The source codes have been mainly developed in MATLAB and partially in C++; but contributions in other languages are welcome. Please feel free to contact us in case of any comments or questions.
 Starting from Version 3.14 released on June 2018, OSET is accessible and will be updated on the mirror public Git repositories:
 - GitHub: [https://github.com/alphanumericslab/OSET.git](https://github.com/alphanumericslab/OSET.git)
 - Gitlab: [https://gitlab.com/rsameni/OSET.git](https://gitlab.com/rsameni/OSET.git)
 
 ## INSTALLATION
-
-* For beginners:
-1- Download the entire OSET package in zip or other forms.
-2- Extract the package
-3- Add the extracted folder and its subfolders to your Matlab path
-4- Start working with the toolbox!
-
-* For advanced users:
 1- Clone the repository on your computer
-2- Add the repository and its subfolders to your Matlab path
+
+2- Add the main folder and its subfolders to your MATLAB path
+
 3- Start working with the toolbox!
 
-*ATTENTION:*
-1- The source codes and folder structures may change in the future. Repeat items 1 and 2 after each re-download or re-fetch of the repository.
-2- Remember to compile the C and C++ MEX-files according to your OS and Matlab version before using them
+**NOTES:**
+
+1- The source codes and folder structures may change. Please rememeber to update your MATLAB path upon each update
+
+2- The C and C++ MEX-files neeed to be recompiled on your system. Make sure that you recompile them if you use them in your codes
 
 ## HISTORY
 * Version 1.0 (June 2006): Initial release
