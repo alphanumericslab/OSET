@@ -20,6 +20,7 @@ function [data_posterior_est, data_prior_est, n_var] = ECGTimeDomainMAPFilter(da
 %       params.wlen_phase: smoothing phase window for params.SMOOTH_PHASE='MA'
 %       params.nvar: stationary noise variance (if available). Estimated internally, if not given as input
 %       params.nvar_factor: noise variance over/under estimation factor. Default = 1
+%       params.avg_beat_shaping_window: window length used to shape the average beat with a hamming window.
 %       params.plotresults: plot results or not (true or false)
 %
 % Outputs:
@@ -92,11 +93,11 @@ data_prior_est = zeros(size(data));
 data_posterior_est = zeros(size(data));
 for ch = 1 : size(data, 1)
     x = data(ch, :); % the active channel
-    
+
     stacked_beats = EventStacker(x, peak_indexes, event_width);
     [ECG_mean, ECG_var_mn, ECG_median, ECG_var_md] = RWAverage(stacked_beats);
     sample_indexes = (0 : size(stacked_beats, 2) - 1) - (size(stacked_beats, 2)/2);
-    
+
     switch params.BEAT_AVG_METHOD
         case 'MEAN'
             ECG_avg = ECG_mean;
@@ -105,7 +106,67 @@ for ch = 1 : size(data, 1)
             ECG_avg = ECG_median;
             ECG_std = sqrt(ECG_var_md);
     end
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    % Under-development. For QRS and ventricular wave supression (useful for P-wave detection)
+    % if isfield(params, 'avg_beat_shaping_window') && ~isempty(params.avg_beat_shaping_window)
+    if isfield(params, 'Q_onset_lead') && ~isempty(params.Q_onset_lead) && ...
+       isfield(params, 'T_offset_lag') && ~isempty(params.T_offset_lag)
+
+        %{
+        if(mod(params.avg_beat_shaping_window, 2) == 0)
+            params.avg_beat_shaping_window = params.avg_beat_shaping_window + 1;
+        end
+        %}
+
+        %{
+        params.avg_beat_shaping_window = min(event_width, params.avg_beat_shaping_window);
+        zero_padding_wings = (event_width - params.avg_beat_shaping_window) / 2;
+        window = hamming(params.avg_beat_shaping_window);
+        shape_window = [zeros(1, zero_padding_wings), window', zeros(1, zero_padding_wings)];
+        %}
+
+        %{
+        nn_ = (1:length(ECG_avg));
+        shape_window = exp(-(nn_ - ceil(length(ECG_avg)/2)).^2/(2*params.avg_beat_shaping_window^2));
+        %}
+        shape_window = SigmoidFunction(length(ECG_avg), ceil(length(ECG_avg)/2) - params.Q_onset_lead, 2.0) - ...
+                       SigmoidFunction(length(ECG_avg), ceil(length(ECG_avg)/2) + params.T_offset_lag, 0.5);
+
+        % figure
+        % plot(ECG_avg)
+        % hold on
+        % plot(shape_window*200)
+        
+%         first_few_samples = 3;
+%         ECG_avg = 0        *      mean(ECG_avg(1:first_few_samples)) + ECG_avg .* shape_window;
+
+        ECG_avg = ECG_avg .* shape_window;
+    end
+    % plot(ECG_avg)
+    % grid
+
+
+
+
+
+
+
+
+
+
+
     switch params.NOISE_VAR_EST_METHOD
         case 'MIN' % Method 1: min std
             noise_std_est = min(ECG_std);
@@ -133,17 +194,17 @@ for ch = 1 : size(data, 1)
         otherwise
             error('Undefined noise variance estimation method');
     end
-    
+
     if ~isfield(params, 'nvar')
         n_var = params.nvar_factor * noise_std_est^2; % noise variance estimate
     else
         n_var = params.nvar;
     end
-    
+
     % disp(['nvar estimate = ' num2str(sqrt(n_var))])
-    
+
     ECG_intrinsic_var = max(0, ECG_std.^2 - n_var); % average beat variance estimate
-    
+
     s_equiv_vars = zeros(1, SignalLen);
     for nn = 1 : SignalLen
         non_zeros_bins = find(M(:, nn));
@@ -168,21 +229,21 @@ for ch = 1 : size(data, 1)
                 s_equiv_vars(nn) = 0;
             end
         end
-        
+
     end
-    
-    
+
+
     %     data_prior_est(ch, :) = (ECG_avg * M) ./ (ones(1, event_width) * M);
-    
-    
-    
-    
+
+
+
+
     %%%s_var = ECG_intrinsic_var * M_smoothed; % ECG beat variance estimate repeated over time
-    
+
     % MAP estimate of each ECG sample assuming a Gaussian distribution for
     % the ECG samples and the noise (derived theoretically)
     data_posterior_est(ch, :) = (s_equiv_vars .* (x - params.n_mean) + n_var * data_prior_est(ch, :)) ./ (s_equiv_vars + n_var);
-    
+
     if isfield(params, 'plotresults')
         if params.plotresults == true
             % if ch == 1
@@ -193,7 +254,7 @@ for ch = 1 : size(data, 1)
             %     grid
             %     legend('phase', 'pphase');
             % end
-            
+
             figure
             errorbar(sample_indexes, ECG_avg, ECG_std/2);
             hold on
@@ -204,7 +265,7 @@ for ch = 1 : size(data, 1)
             xlabel('Phase (rad)');
             ylabel('Amplitude');
             set(gca, 'fontsize', 16)
-            
+
             figure
             plot(sample_indexes, ECG_std);
             hold on
@@ -216,7 +277,7 @@ for ch = 1 : size(data, 1)
             xlabel('Phase (rad)');
             ylabel('Amplitude');
             set(gca, 'fontsize', 16)
-            
+
             figure
             plot(sort(ECG_std));
             grid
@@ -224,7 +285,7 @@ for ch = 1 : size(data, 1)
             xlabel('Sorted bin index');
             ylabel('STDd');
             set(gca, 'fontsize', 16)
-            
+
             figure
             plot(x)
             hold on
@@ -240,3 +301,11 @@ for ch = 1 : size(data, 1)
         end
     end
 end
+end
+
+function y = SigmoidFunction(len, center, alpha)
+n = (1 : len);
+y = 1 ./ (1 + exp(-alpha*(n-center)));
+end
+
+

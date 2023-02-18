@@ -38,13 +38,14 @@ ECG_mean_robust = zeros(params.width, size(data, 1));
 ECG_median_robust = zeros(params.width, size(data, 1));
 ECG_cov = zeros(params.width, params.width, size(data, 1));
 beats_sqi = zeros(n_beats, size(data, 1));
+stacked_beats = zeros(n_beats, params.width, size(data, 1));
 for ch = 1 : size(data, 1)
-    stacked_beats = EventStacker(data(ch, :), I_peaks, params.width);
+    stacked_beats(:, :, ch) = EventStacker(data(ch, :), I_peaks, params.width);
 
-    ECG_mean(:, ch) = mean(stacked_beats, 1);
-    ECG_median(:, ch) = median(stacked_beats, 1);
-    ECG_cov(:, :, ch) = cov(stacked_beats .* (ones(n_beats, 1) * window));
-    [ECG_mean_robust(:, ch), ~, ECG_median_robust(:, ch), ~] = RWAverage(stacked_beats);
+    ECG_mean(:, ch) = mean(stacked_beats(:, :, ch), 1);
+    ECG_median(:, ch) = median(stacked_beats(:, :, ch), 1);
+    ECG_cov(:, :, ch) = cov(stacked_beats(:, :, ch) .* (ones(n_beats, 1) * window));
+    [ECG_mean_robust(:, ch), ~, ECG_median_robust(:, ch), ~] = RWAverage(stacked_beats(:, :, ch));
 
     switch params.BEAT_AVG_METHOD
         case 'MEAN'
@@ -60,7 +61,7 @@ for ch = 1 : size(data, 1)
     end
 
     for kk = 1 : n_beats
-        r = corrcoef(stacked_beats(kk, :) .* window, ECG_avg .* window);
+        r = corrcoef(stacked_beats(kk, :, ch) .* window, ECG_avg .* window);
         beats_sqi(kk, ch) = abs(r(1, 2));
     end
 end

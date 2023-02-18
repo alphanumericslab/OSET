@@ -1,4 +1,4 @@
-function [ECG_mean, ECG_median, ECG_cov, ECG_mean_robust, ECG_median_robust, stacked_beats, beats_sqi] = PhaseDomainECGFeatures(data, peaks, params)
+function [ECG_mean, ECG_median, ECG_cov, ECG_mean_robust, ECG_median_robust, stacked_beats_all_channels, beats_sqi] = PhaseDomainECGFeatures(data, peaks, params)
 % Extracting phase-domain ECG mean and median beats, and beat covariance matrix.
 %
 % Usage:
@@ -30,6 +30,7 @@ ECG_mean_robust = zeros(params.bins, size(data, 1));
 ECG_median_robust = zeros(params.bins, size(data, 1));
 ECG_cov = zeros(params.bins, params.bins, size(data, 1));
 beats_sqi = zeros(n_full_beats, size(data, 1));
+stacked_beats_all_channels = zeros(n_full_beats, params.bins, size(data, 1));
 for ch = 1 : size(data, 1)
     stacked_beats = zeros(n_full_beats, params.bins);
     for k = 2 : n_full_beats + 1
@@ -46,7 +47,8 @@ for ch = 1 : size(data, 1)
     ECG_cov(:, :, ch) = cov(stacked_beats .* (ones(n_full_beats, 1) * window));
     [ECG_mean_robust(:, ch), ~, ECG_median_robust(:, ch), ~] = RWAverage(stacked_beats);
 
-
+    stacked_beats_all_channels(:, :, ch) = stacked_beats;
+    
     switch params.BEAT_AVG_METHOD
         case 'MEAN'
             ECG_avg = ECG_mean(:, ch)';
