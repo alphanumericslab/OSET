@@ -1,4 +1,4 @@
-% Test script for SpatioTemporalInnovationFilterDesigner, which estimates an innovation filter from ensembles of multichannel random
+% Test script for SpatioTemporalInnovationsFilterDesigner, which estimates an innovations filter from ensembles of multichannel random
 % processes.
 %
 % The Open-Source Electrophysiological Toolbox (OSET)
@@ -49,7 +49,7 @@ params.normalize_records = true; % true/false
 params.fs = fs; % sampling frequency
 params.keep_mean = true; % true/false
 params.spectral_len = 513; % number of frequency bins for spectral estimation
-params.filter_len = params.spectral_len; % innovation process filter length (best practice to set equal to params.spectral_len)
+params.filter_len = params.spectral_len; % innovations filter length (best practice to set equal to params.spectral_len)
 params.smooth_spectrum = false; % true/false smooth the spectrum before spectral factorization
 if params.smooth_spectrum
     params.lambda = 10000.0; % Tikhonov regularization factor used for spectral smoothing
@@ -58,18 +58,18 @@ params.spectral_averaging_method = 'MEDIAN'; % 'MEDIAN', 'MEAN', 'MAX', 'MIN', '
 params.innovation_filter_type = 'LINEAR_PHASE'; % 'LINEAR_PHASE', 'MIN_PHASE';
 params.plot_results = true; % true/false plot results
 
-% Design the innovation filter
-[h_innovation, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalInnovationFilterDesigner(sample_data, params);
+% Design the innovations filter
+[h_innovations, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalInnovationsFilterDesigner(sample_data, params);
 
 
-% Test the innovation filter
+% Test the innovations filter
 dat = sample_data{1};
 syn_signal_len = size(dat, 2);
-x = randn(length(h_innovation), syn_signal_len);
-y = randn(length(h_innovation), syn_signal_len);
-for ch = 1 : length(h_innovation)
-    y(ch, :) = filter(h_innovation{ch}, 1, x(ch, :));
-    [H,F] = freqz(h_innovation{ch}, 1, [], fs);
+x = randn(length(h_innovations), syn_signal_len);
+y = randn(length(h_innovations), syn_signal_len);
+for ch = 1 : length(h_innovations)
+    y(ch, :) = filter(h_innovations{ch}, 1, x(ch, :));
+    [H,F] = freqz(h_innovations{ch}, 1, [], fs);
 
     figure
     subplot(411)
@@ -83,23 +83,23 @@ for ch = 1 : length(h_innovation)
     plot((0 : length(y(ch, :)) - 1)/fs, y(ch, :));
     grid
     xlabel('time(s)');
-    ylabel('innovation process');
+    ylabel('innovations process');
     set(gca, 'fontsize', 18)
 
     subplot(413)
     plot(F, 20*log10(abs(H)));
     grid
     xlabel('frequency(Hz)');
-    ylabel('innovation filter magnitude');
+    ylabel('innovations filter magnitude');
     set(gca, 'fontsize', 18)
 
     subplot(414)
     plot(F, unwrap(angle(H)));
     grid
     xlabel('frequency(Hz)');
-    ylabel('innovation filter phase');
+    ylabel('innovations filter phase');
     set(gca, 'fontsize', 18)
-    sgtitle('Real data vs synthetic innovation process', 'fontsize', 18);
+    sgtitle('Real data vs synthetic innovations process', 'fontsize', 18);
 end
 
-% save InnovationFilterDesign h
+% save InnovationsFilterDesign h

@@ -1,10 +1,10 @@
-function [h, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalInnovationFilterDesigner(template_records, varargin)
+function [h, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalInnovationsFilterDesigner(template_records, varargin)
 
-% [h, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalInnovationFilterDesigner(template_records, params)
-% Estimates an innovation filter from ensembles of multichannel random
+% [h, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalInnovationsFilterDesigner(template_records, params)
+% Estimates an innovations filter from ensembles of multichannel random
 % processes.
 %
-% Usage: innovation filters can be used to generate random processes that
+% Usage: innovations filters can be used to generate random processes that
 % resemble a training dataset, when fed by input white noise.
 %
 % Inputs:
@@ -12,12 +12,12 @@ function [h, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalI
 %       estimation. Each element of the cell array is considered as an ensemble
 %       of the multichannel random process of interest.
 %   params: a structure with the followoing fields
-%         params.spatial_filter_type = 'BY_PASS', 'PCA' or 'ICA': spatial filter applied before innovation filter design
+%         params.spatial_filter_type = 'BY_PASS', 'PCA' or 'ICA': spatial filter applied before innovations filter design
 %         params.normalize_records = true/false: normalize channels or not
 %         params.fs: sampling frequency in Hz
 %         params.keep_mean = true/false: keep or remove the channel-wise means
 %         params.spectral_len: number of spectral estimation bins (512 by default)
-%         params.filter_len: innovation filter length (512 by default). Best practice to set filter_len = spectral_len (but may result in long impulse responses)
+%         params.filter_len: innovations filter length (512 by default). Best practice to set filter_len = spectral_len (but may result in long impulse responses)
 %         params.smooth_spectrum = true/false: smooth the estimated spectrum before filter design or not
 %         params.lambda: Tikhonov regularization parameter used for spectral smoothing 10000.0
 %         params.spectral_averaging_method: spectral averaging method 'MEAN', 'MEDIAN', 'MAX', 'MIN' or 'MAX_MIN_AVG'. Default: 'MEDIAN'
@@ -28,7 +28,7 @@ function [h, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalI
 %
 % Algorithm: the spectrum of the multichannel data is estimated per
 % channel, uisng the Welch spectral estimation algorithm with a Hamming
-% window. An innovation filter is designed by factorizing the estimated
+% window. An  innovations filter is designed by factorizing the estimated
 % spectra into linear or minimum phase factors.
 %
 % The Open-Source Electrophysiological Toolbox (OSET)
@@ -211,7 +211,7 @@ switch params.innovation_filter_type
             h(ch) = {firminphase(r)};
         end
     otherwise
-        error('Undefined innovation filter type');
+        error('Undefined innovations filter type');
 end
 
 % PLOT RESULTS
@@ -252,10 +252,10 @@ if params.plot_results
         hold on
         plot(params.fs * F/2/pi, 20*log10(abs(H)));
         grid
-        legend('Data spectrum', 'Innovation filter''s squared magnitude response');
+        legend('Data spectrum', 'Innovations filter''s squared magnitude response');
         xlabel('frequency(Hz)');
         ylabel('Magnitude response (dB)');
-        sgtitle(['Innovation filter''s impulse response in Channel ' num2str(ch)], 'fontsize', 18);
+        sgtitle(['Innovations filter''s impulse response in Channel ' num2str(ch)], 'fontsize', 18);
         set(gca, 'fontsize', 18)
     end
 end
