@@ -11,7 +11,7 @@ clc
 
 case_study = 'EEG'; % 'EEG' or 'PCG'
 switch case_study
-    case 'PCG'
+    case 'PCG' % The CirCor PCG dataset on PhysioNet
         datafilepath = '../../../DataFiles/physionet.org/files/circor-heart-sound/1.0.3/'; % Change this path to where you have the .wav data files
         filelist = dir(fullfile([datafilepath, '**/*.wav']));  % get list of all mat files of interest
         %     filelist = filelist(1:100);
@@ -31,11 +31,11 @@ switch case_study
             disp(k)
         end
 
-    case 'EEG'
+    case 'EEG' % A sample EEG from OSET
         load EEGdata.mat
-        fs = 250;
-        num_segments = 5;
-        wlen = round(fs * 10.0);
+        fs = 250; % Sampling frequency
+        num_segments = 5; % Number of segments used to split the large data matrix
+        wlen = round(fs * 10.0); % length of each segment
         sample_data = cell(1, num_segments);
         for k = 1 : num_segments
             sample_data{k} = data((k-1)*wlen + 1 : k*wlen, :)';
