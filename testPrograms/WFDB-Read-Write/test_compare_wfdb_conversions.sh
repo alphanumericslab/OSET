@@ -4,11 +4,11 @@ wfdbcheck -r sample_wfdbpython
 wfdbcheck -r sample_wrsamp
 wfdbcheck -r sample_wrsampNG # -v
 
-rdsamp -r sample_mat2wfdb_digital -c > sample_mat2wfdb_digital_rec.csv
-rdsamp -r sample_mat2wfdb -c > sample_mat2wfdb_rec.csv
-rdsamp -r sample_wfdbpython -c > sample_wfdbpython_rec.csv
-rdsamp -r sample_wrsamp -c > sample_wrsamp_rec.csv
-rdsamp -r sample_wrsampNG -c > sample_wrsampNG_rec.csv
+rdsamp -r sample_mat2wfdb_digital -c -H > sample_mat2wfdb_digital_rec.csv
+rdsamp -r sample_mat2wfdb -c -H > sample_mat2wfdb_rec.csv
+rdsamp -r sample_wfdbpython -c -H > sample_wfdbpython_rec.csv
+rdsamp -r sample_wrsamp -c -H > sample_wrsamp_rec.csv
+rdsamp -r sample_wrsampNG -c -H > sample_wrsampNG_rec.csv
 
 # diff sample_mat2wfdb_rec.csv $raw_data_file > raw_mat2wfdb_diff.txt
 # diff sample_wfdbpython_rec.csv $raw_data_file > raw_wfdbpython_diff.txt
