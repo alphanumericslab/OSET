@@ -29,10 +29,12 @@ function [GaussParams, varargout]=qtParamsGausFit(ecg, fs, varargin)
 %   [a1 b1 c1 a2 b2 c2 ...]' where ai, bi and ci are respectively the i-th 
 %   Gaussians' amplitudes, widths (sec), and centers (sec). R peak is the reference time
 %   for c.
-% soi: segments-of-interest start and end time, in a structure format in 
-%   which soi.q = [q_start  t_start] and soi.t = [q_end  t_end]. R peak is the 
-%   reference time in each beat. rpeaks must be provided in inputs when you
-%   use soi.
+% soi: segments-of-interest start and end time (sec), in a structure format in 
+%   which soi.q = [q_start  q_end] and soi.t = [t_start  t_end]. R peak is the 
+%   reference time (=0) in each beat. rpeaks must be provided in inputs when you
+%   use soi. Also, soi.q and soi.t can be a Nx2 matrix where N is the
+%   number of beats (length of rpeaks), in which each row contains the soi
+%   of each beat.
 % lb: lower bound for Gaussians parameters with the same format as p0.
 % ub: upper bound for Gaussians parameters with the same format as p0.
 % beta: (scalar) constant coefficient in (wave width)=2*beta*(Gaussian width), and 
@@ -84,6 +86,7 @@ function [GaussParams, varargout]=qtParamsGausFit(ecg, fs, varargin)
 options=struct; rPeaks=[]; p0.q=[]; p0.t=[]; soi.q=[]; soi.t=[]; 
 lb.q=[]; lb.t=[]; ub.q=[]; ub.t=[]; beta.q=[]; beta.t=[]; Bys=false;
 hr= 70/60; % Hz, heart rate used in r peak detector
+autoInit.q=false; autoInit.t=false;
 
 nChannels=size(ecg,2);
 %% inputs or default values:
@@ -92,8 +95,11 @@ if nargin>=3 && ~isscalar(varargin{1})
 elseif nargin>=3 && isscalar(varargin{1})
     hr=varargin{1};
 end
+if length(rPeaks) == size(ecg,1)
+    rPeaks = find(rPeaks);
+end
 if isempty(rPeaks)
-    rPeaks = find(PeakDetection(mean(ecg,2),hr/fs));  % R peaks position
+    rPeaks = find(PeakDetection20(mean(ecg,2),hr/fs, .6));  % R peaks position
 end
 nBeats=length(rPeaks); 
 
@@ -102,40 +108,39 @@ if nargin>=4
     p0=varargin{2};
 end
 if isempty(p0)
-    p0.q=[0; .02;  -.05];
-    p0.t=[0; .05; .25];
+    p0.q = zeros(3,0);
+    p0.t = zeros(3,0);
 end
 if isempty(p0.q)
-    p0.q=[0; .02;  -.05];
+    autoInit.q = true;
+    p0.q = zeros(3,0);
 end
 if isempty(p0.t)
-    p0.t=[0; .05; .25];
+    autoInit.t = true;
+    p0.t = zeros(3,0);
 end
 %%%%%%%%
 if nargin>=5
     soi=varargin{3};
 end
 if isempty(soi)
-    soi.q(1)=-.08;
-    soi.q(2)=-.01;
-    soi.t(1)=.1;
-    soi.t(2)=.5;
+    soi.q = ones(nBeats,1).*[-.05 -.015];
+    soi.t = ones(nBeats,1).*[.1 .5];
 end
 if isempty(soi.q)
-    soi.q(1)=-.08;
-    soi.q(2)=-.01;
+    soi.q = ones(nBeats,1).*[-.05 -.015];
 end
 if isempty(soi.t)
-    soi.t(1)=.1;
-    soi.t(2)=.5;
+    soi.t = ones(nBeats,1).*[.1 .5];
 end
-qOn=floor(soi.q(1)*fs);
-qOff=ceil(soi.q(2)*fs);
-tOn=floor(soi.t(1)*fs);
-tOff=ceil(soi.t(2)*fs);
-%%% correct out of range values
-% qOn(qOn<1)=1; 
-% tOff(tOff>size(ecg,1))=size(ecg,1);
+
+if isvector(soi.q)
+    soi.q = ones(nBeats,1).*soi.q(:)';
+end
+if isvector(soi.t)
+    soi.t = ones(nBeats,1).*soi.t(:)';
+end
+
 
 %%%%%%%%
 if nargin>=6
@@ -145,23 +150,23 @@ if isempty(lb)
     lb.q=zeros(size(p0.q));
     lb.q(1:3:end,:)=-inf;
     lb.q(2:3:end,:)=.001;
-    lb.q(3:3:end,:)=soi.q(1);
+    lb.q(3:3:end,:)=min(soi.q(:,1));
     lb.t=zeros(size(p0.t));
     lb.t(1:3:end,:)=-inf;
     lb.t(2:3:end,:)=.001;
-    lb.t(3:3:end,:)=soi.t(1);
+    lb.t(3:3:end,:)=min(soi.t(:,1));
 end
 if isempty(lb.q)
     lb.q=zeros(size(p0.q));
     lb.q(1:3:end,:)=-inf;
     lb.q(2:3:end,:)=.001;
-    lb.q(3:3:end,:)=soi.q(1);
+    lb.q(3:3:end,:)=min(soi.q(:,1));
 end
 if isempty(lb.t)
     lb.t=zeros(size(p0.t));
     lb.t(1:3:end,:)=-inf;
     lb.t(2:3:end,:)=.001;
-    lb.t(3:3:end,:)=soi.t(1);
+    lb.t(3:3:end,:)=min(soi.t(:,1));
 end
 %%%%%%%
 if nargin>=7
@@ -171,23 +176,23 @@ if isempty(ub)
     ub.q=zeros(size(p0.q));
     ub.q(1:3:end,:)=inf;
     ub.q(2:3:end,:)=inf;
-    ub.q(3:3:end,:)=soi.q(2);
+    ub.q(3:3:end,:)=max(soi.q(:,2));
     ub.t=zeros(size(p0.t));
     ub.t(1:3:end,:)=inf;
     ub.t(2:3:end,:)=inf;
-    ub.t(3:3:end,:)=soi.t(2);
+    ub.t(3:3:end,:)=max(soi.t(:,2));
 end
 if isempty(ub.q)
     ub.q=zeros(size(p0.q));
     ub.q(1:3:end,:)=inf;
     ub.q(2:3:end,:)=inf;
-    ub.q(3:3:end,:)=soi.q(2);
+    ub.q(3:3:end,:)=max(soi.q(:,2));
 end
 if isempty(ub.t)
     ub.t=zeros(size(p0.t));
     ub.t(1:3:end,:)=inf;
     ub.t(2:3:end,:)=inf;
-    ub.t(3:3:end,:)=soi.t(2);
+    ub.t(3:3:end,:)=max(soi.t(:,2));
 end
 %%%%%%%%%%%
 if nargin>=8
@@ -198,6 +203,7 @@ if isempty(beta)
     beta.t=3;
 elseif ~isstruct(beta)
     Beta=beta;
+    beta=struct;
     beta.q=Beta;
     beta.t=Beta;    
 end
@@ -226,8 +232,18 @@ GaussParams.q=nan(size(p0.q,1),nBeats,nChannels);
 GaussParams.t=nan(size(p0.t,1),nBeats,nChannels);
 
 for i=1:nBeats
+    qOn=floor(soi.q(i,1)*fs);
+    qOff=ceil(soi.q(i,2)*fs);
+    tOn=floor(soi.t(i,1)*fs);
+    tOff=ceil(soi.t(i,2)*fs);
     if rPeaks(i) +  qOn >= 1
         for j=1:nChannels
+            %%%% setting initial point 
+            if autoInit.q
+                [qp, qpi] = min(ecg(rPeaks(i)+ (qOn:qOff) ,j));
+                p0.q = [qp; .02;  soi.q(i,1) + qpi/fs];
+            end
+            %%%% gauss fitting
             if Bys
                 GaussParams.q(:, i, j)=GausFit((qOn:qOff)/fs, ...
                     ecg(rPeaks(i)+ (qOn:qOff) ,j), p0.q, lb.q, ub.q, PrMu.q(:,j), ...
@@ -240,6 +256,16 @@ for i=1:nBeats
     end
     if rPeaks(i) +  tOff <= size(ecg,1)
         for j=1:nChannels
+            %%%% setting initial point 
+            if autoInit.t
+                if abs(max(ecg(rPeaks(i)+ (tOn:tOff) ,j))) > abs(min(ecg(rPeaks(i)+ (tOn:tOff) ,j))) % upward T wave
+                    [tp, tpi] = max(ecg(rPeaks(i)+ (tOn:tOff) ,j));
+                else % downward T wave
+                    [tp, tpi] = min(ecg(rPeaks(i)+ (tOn:tOff) ,j));
+                end
+                p0.t = [tp; .05; soi.t(i,1) + tpi/fs];
+            end
+            %%%% gauss fitting
             if Bys
                 GaussParams.t(:, i, j)=GausFit((tOn:tOff)/fs, ...
                     ecg(rPeaks(i)+(tOn:tOff),j), p0.t, lb.t, ub.t, PrMu.t(:,j), ...
@@ -261,6 +287,5 @@ varargout{2}=soi;
 varargout{3}=waveParams;
 varargout{4}=(GaussParams.t(end,:,:) + beta.t*GaussParams.t(end-1,:,:)) - ...
       (GaussParams.q(3,:,:) - beta.q*GaussParams.q(2,:,:));
-
-
-
+end
+  

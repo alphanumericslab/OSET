@@ -1,0 +1,28 @@
+
+ExtractfECGecgca771SNR10.mat:
+Typical segment of ecgca771 record data of non-invasive fetal electrocardiogram (NIFECG) database
+
+SQI1.m:
+Channel selection based on Pseudo-periodicity
+
+SQI2.m:
+Channel selection based on R-peak amplitude constancy
+
+SQI3.m:
+Channel selection based on measure of non-gaussianity
+
+SQI4.m:
+Channel selection based on spectral energy ratio
+
+SQI5.m:
+Channel selection based on channel power in sliding window
+
+SQI6.m:
+Channel selection based on measure of PICA periodicity
+
+testSQIs.m:
+A test code for Signal quality indexes based on different methods
+
+VotingSQIs.m:
+Voting between different SQIs
+

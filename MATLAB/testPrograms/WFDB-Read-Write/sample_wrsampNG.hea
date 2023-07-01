@@ -1,0 +1,23 @@
+sample_wrsampNG 22 256 10000
+sample_wrsampNG.dat 16 1/mV 16 0 -22 30524 0 C3
+sample_wrsampNG.dat 16 1/mV 16 0 -33 30154 0 C4
+sample_wrsampNG.dat 16 1/mV 16 0 -50 -29042 0 O1
+sample_wrsampNG.dat 16 1/mV 16 0 -47 -4983 0 O2
+sample_wrsampNG.dat 16 1/mV 16 0 -27 20762 0 Cz
+sample_wrsampNG.dat 16 1/mV 16 0 -9 -6046 0 F3
+sample_wrsampNG.dat 16 1/mV 16 0 6 23601 0 F4
+sample_wrsampNG.dat 16 1/mV 16 0 45 -29037 0 F7
+sample_wrsampNG.dat 16 1/mV 16 0 26 -5045 0 F8
+sample_wrsampNG.dat 16 1/mV 16 0 13 -16439 0 Fz
+sample_wrsampNG.dat 16 1/mV 16 0 28 -6064 0 Fp1
+sample_wrsampNG.dat 16 1/mV 16 0 16 21192 0 Fp2
+sample_wrsampNG.dat 16 1/mV 16 0 65 12161 0 Fpz
+sample_wrsampNG.dat 16 1/mV 16 0 -48 -24614 0 P3
+sample_wrsampNG.dat 16 1/mV 16 0 -27 -19522 0 P4
+sample_wrsampNG.dat 16 1/mV 16 0 -51 -5933 0 Pz
+sample_wrsampNG.dat 16 1/mV 16 0 -33 -1035 0 T3
+sample_wrsampNG.dat 16 1/mV 16 0 22 -23698 0 T4
+sample_wrsampNG.dat 16 1/mV 16 0 -36 -23551 0 T5
+sample_wrsampNG.dat 16 1/mV 16 0 -32 20168 0 T6
+sample_wrsampNG.dat 16 1/mV 16 0 6 4719 0 ECGL
+sample_wrsampNG.dat 16 1/mV 16 0 -16 11584 0 ECGR

@@ -1,4 +1,4 @@
-function [p]=GausFit(t, x, p0, lb, ub, varargin)
+function [p, varargout]=GausFit(t, x, p0, lb, ub, varargin)
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Fit sum of Gaussian functions on the data.
@@ -34,6 +34,7 @@ function [p]=GausFit(t, x, p0, lb, ub, varargin)
 % fattahi.d@gmail.com
 % Developed as a part of implementation in https://doi.org/10.36227/techrxiv.15176139.v2
 % 
+% update 14/02/2022: the p values are sorted based on ascending gaussian centers. - Davood Fattahi
 % 
 % This program is free software; you can redistribute it and/or modify it
 % under the terms of the GNU General Public License as published by the
@@ -65,6 +66,10 @@ if nargin==5 || nargin==8
 elseif nargin==6 || nargin==9
     options0=varargin{end};
 end
+if isempty(options0)
+    options0=struct;
+end
+    
 
 
 %%% Gaussfit
@@ -76,8 +81,12 @@ elseif Bys % Bys
 end
 options = optimoptions(@lsqnonlin,'Display','off');
 options=optionsmerge(options, options0);
-p = lsqnonlin(fun,p0,lb,ub,options);
+[p, varargout{1:6}] = lsqnonlin(fun, p0, lb, ub, options);
 
+%% sorting based on ascending centers
+p = reshape(p,3,[]); 
+[~,I] = sort(p(3,:));
+p=p(:,I); p=p(:);
 end
 
 %% \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

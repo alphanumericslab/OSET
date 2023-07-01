@@ -1,7 +1,7 @@
 
 %% clear
-clear all
-close all
+clear 
+% close all
 clc
 
 %% load ecg
@@ -17,24 +17,54 @@ ecg=ecg-(BaseLine1(BaseLine1(ecg', round(w1*fs), 'md'), round(w2*fs), 'mn'))'; %
 chnl=2;
 
 
-%% set the input values
-soi.q=[-0.045; -0.015];
-soi.t=[.1; .5];
+rPeaks = find(PeakDetection20(ecg(:,chnl),70/60/fs,.6));
 
+%% set the input values
+soi1.q=[-0.080; -0.020];
+soi1.t=[.1; .5];
+
+[~, Q,~, ~, T] = ecgWavesSoI_RR(ecg(:,chnl), rPeaks, 1);
+soi2.q = Q(:,[1,3])/fs;
+soi2.t = T(:,[1,3])/fs;
+
+[~, Q,~, ~, T] = ecgWavesSoI_k(ecg(:,chnl), rPeaks, 1);
+soi3.q = Q(:,[1,3])/fs;
+soi3.t = T(:,[1,3])/fs;
+%% initial params
+% p0.q=[0; .02;  -.05];
+% p0.t=[0; .05; .25];
+p0=[];
+
+%% bounds
+lb=[]; ub=[];
+
+%% beta
+beta = 3;
+
+%% optimization setting
+options = struct('SpecifyObjectiveGradient',true);
+
+
+%% qt interval estimation
+qtInt1=qtIntGausFit_v1(ecg(:,chnl), fs, rPeaks, 3, 3);
+qtInt2=qtIntGausFit_v2(ecg(:,chnl), fs, rPeaks, 3, 3);
+qtInt3=qtIntGausFit_v3(ecg(:,chnl), fs, rPeaks, 3, 3);
 
 %% ml framework
-[mlGaussParams, rPeaks, soi,  waveParams, qtInt]=qtParamsGausFit(ecg, fs, [],[],soi);
+soi=soi1;
+[mlGaussParams, rPeaks, soi,  waveParams, qtInt]=qtParamsGausFit_cl(ecg(:,chnl), fs, rPeaks, p0, soi, lb, ub, beta, options);
 
 % polt the evaluated gaussians on the signal
 figure; p1=plot(tst,ecg(:,chnl)); % plot the channel
 hold on
-tq=soi.q(1):1/fs:soi.q(2);
-tt=soi.t(1):1/fs:soi.t(2);
+
 for j=1:length(rPeaks)
-    p2=plot(tq+rPeaks(j)/fs,GausVal(tq,mlGaussParams.q(:,j,chnl)),'r-');
-    p3=plot(tt+rPeaks(j)/fs,GausVal(tt,mlGaussParams.t(:,j,chnl)),'r-');
-    p4=plot([waveParams.q(1,chnl) waveParams.t(2,chnl)]+rPeaks(j)/fs, ...
-        ecg(floor(fs*[waveParams.q(1,chnl) waveParams.t(2,chnl)])+rPeaks(j),chnl),'c*');
+    tq=soi.q(j,1):1/fs:soi.q(j,2);
+    tt=soi.t(j,1):1/fs:soi.t(j,2);
+    p2=plot(tq+rPeaks(j)/fs,GausVal(tq,mlGaussParams.q(:,j)),'r-');
+    p3=plot(tt+rPeaks(j)/fs,GausVal(tt,mlGaussParams.t(:,j)),'r-');
+    p4=plot([waveParams.q(1,j) waveParams.t(2,j)]+rPeaks(j)/fs, ...
+        ecg(floor(fs*[waveParams.q(1,j) waveParams.t(2,j)])+rPeaks(j),chnl),'c*');
 end
 legend([p1 p2 p4],'ecg', 'Gaussians', 'q/t onset/offset')
 title 'ML framework'
@@ -46,24 +76,25 @@ varNoise=var(ecg(:,chnl))/snr;
 rng(1); % fix the seed for noise generating
 ecgn=ecg + randn(size(ecg)).*sqrt(varNoise); % adding noise to the signal;
 
-PrMu.q=mean(mlGaussParams.q(:,:,chnl),2);
-PrCov.q=cov(mlGaussParams.q(:,:,chnl)');
+PrMu.q=mean(mlGaussParams.q(:,:),2);
+PrCov.q=cov(mlGaussParams.q(:,:)');
 
-PrMu.t=mean(mlGaussParams.t(:,:,chnl),2);
-PrCov.t=cov(mlGaussParams.t(:,:,chnl)');
+PrMu.t=mean(mlGaussParams.t(:,:),2);
+PrCov.t=cov(mlGaussParams.t(:,:)');
 
-[bysGaussParams, rPeaks, soi, waveParams, qtInt]=qtParamsGausFit(ecgn(:,chnl), fs, [], [], soi, [], [], [], PrMu, PrCov, varNoise);
+[bysGaussParams, rPeaks, soi, waveParams, qtInt]=qtParamsGausFit_cl(ecgn(:,chnl), fs, rPeaks, p0, soi, lb, ub, beta, PrMu, PrCov, varNoise);
 
 % polt the evaluated gaussians on the signal
 figure; p1=plot(tst,ecgn(:,chnl)); % plot the channel
 hold on
-tq=soi.q(1):1/fs:soi.q(2);
-tt=soi.t(1):1/fs:soi.t(2);
+
 for j=1:length(rPeaks)
+    tq=soi.q(j,1):1/fs:soi.q(j,2);
+    tt=soi.t(j,1):1/fs:soi.t(j,2);
     p2=plot(tq+rPeaks(j)/fs,GausVal(tq,bysGaussParams.q(:,j)),'r-');
     p3=plot(tt+rPeaks(j)/fs,GausVal(tt,bysGaussParams.t(:,j)),'r-');
-    p4=plot([waveParams.q(1,chnl) waveParams.t(2,chnl)]+rPeaks(j)/fs, ...
-        ecgn(floor(fs*[waveParams.q(1,chnl) waveParams.t(2,chnl)])+rPeaks(j),chnl),'c*');
+    p4=plot([waveParams.q(1,j) waveParams.t(2,j)]+rPeaks(j)/fs, ...
+    ecg(floor(fs*[waveParams.q(1,j) waveParams.t(2,j)])+rPeaks(j),chnl),'c*');
 end
 legend([p1 p2 p4],'ecg', 'Gaussians', 'q/t onset/offset')
 title 'BYS framework'

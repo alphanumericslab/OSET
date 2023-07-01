@@ -1,2 +1,0 @@
-# OSET testPrograms in Python
-

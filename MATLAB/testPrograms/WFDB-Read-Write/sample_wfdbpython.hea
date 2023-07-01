@@ -1,0 +1,23 @@
+sample_wfdbpython 22 256 10000
+sample_wfdbpython.dat 16 1169.2853(146)/mV 16 0 -195794 46586 0 C3
+sample_wfdbpython.dat 16 623.5733(37)/mV 16 0 -43895 42376 0 C4
+sample_wfdbpython.dat 16 606.739(217)/mV 16 0 -161650 25330 0 O1
+sample_wfdbpython.dat 16 599.6823(216)/mV 16 0 -157389 53178 0 O2
+sample_wfdbpython.dat 16 2050.5455(359)/mV 16 0 -792119 45459 0 Cz
+sample_wfdbpython.dat 16 978.1121(107)/mV 16 0 -112866 21236 0 F3
+sample_wfdbpython.dat 16 1340.904(38)/mV 16 0 -42236 3529 0 F4
+sample_wfdbpython.dat 16 675.7573(-210)/mV 16 0 171787 24109 0 F7
+sample_wfdbpython.dat 16 721.4834(-23)/mV 16 0 35489 21607 0 F8
+sample_wfdbpython.dat 16 1636.7501(-41)/mV 16 0 87585 42148 0 Fz
+sample_wfdbpython.dat 16 761.963(-141)/mV 16 0 128993 10784 0 Fp1
+sample_wfdbpython.dat 16 827.1539(8)/mV 16 0 6413 51228 0 Fp2
+sample_wfdbpython.dat 16 97.9593(41)/mV 16 0 2344 21348 0 Fpz
+sample_wfdbpython.dat 16 436.8645(-27)/mV 16 0 -9130 9771 0 P3
+sample_wfdbpython.dat 16 724.5705(84)/mV 16 0 -80558 42670 0 P4
+sample_wfdbpython.dat 16 991.2768(273)/mV 16 0 -320662 11541 0 Pz
+sample_wfdbpython.dat 16 252.3887(-29)/mV 16 0 -937 10591 0 T3
+sample_wfdbpython.dat 16 653.6862(-2)/mV 16 0 15866 61128 0 T4
+sample_wfdbpython.dat 16 334.3704(88)/mV 16 0 -41530 14644 0 T5
+sample_wfdbpython.dat 16 584.9177(92)/mV 16 0 -72312 3342 0 T6
+sample_wfdbpython.dat 16 191.8075(-110)/mV 16 0 22201 28413 0 ECGL
+sample_wfdbpython.dat 16 336.283(121)/mV 16 0 -45808 55850 0 ECGR
