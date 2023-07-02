@@ -37,12 +37,12 @@ function y = BPFilter2(x,fl,fu,N)
 S = fft(x,N,2);
 
 k = 1:ceil(fl*N);
-if(~isempty(k)),
+if(~isempty(k))
     S(:,[k N-k(2:end)+2]) = 0;
 end
 
 k = floor(fu*N):ceil(N/2)+1;
-if(~isempty(k)),
+if(~isempty(k))
     S(:,[k N-k(1:end-1)+2]) = 0;
 end
 

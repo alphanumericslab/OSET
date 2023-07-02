@@ -1,12 +1,12 @@
-function [data, name, T] = load_MATv4(filename)
+function [data, name, T] = load_mat_v4(filename)
     % LOAD_MATV4 Read and extract data from a MAT-4 file.
     %
-    %   [DATA, NAME] = load_MATv4(FILENAME) reads a MAT-4 file specified by
+    %   [DATA, NAME] = load_mat_v4(FILENAME) reads a MAT-4 file specified by
     %   FILENAME and extracts the data stored in the file. It returns the
     %   extracted matrix data in DATA and the name of the matrix in NAME.
     %
     %   Example:
-    %   [data, name] = load_MATv4('0284_001_004_ECG.mat');
+    %   [data, name] = load_mat_v4('0284_001_004_ECG.mat');
     %
     %   Reference:
     %   The function is based on the Level 4 MAT-File Matrix Header Format.

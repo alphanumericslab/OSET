@@ -41,13 +41,13 @@ function [y1,y2,Pbar,Phat,PSmoothed,Kgain] = KFNotch2(x,f0,fs,varargin)
 
 %//////////////////////////////////////////////////////////////////////////
 % input arguments
-if(nargin>3  && ~isempty(varargin{1})),
+if(nargin>3  && ~isempty(varargin{1}))
     Qbar = varargin{1};
 else
     Qbar = 1e-4*max(abs(x));
 end
 
-if(nargin>4  && ~isempty(varargin{2})),
+if(nargin>4  && ~isempty(varargin{2}))
     Wlen = varargin{2};
 else
     Wlen = ceil(0.1*fs);
@@ -84,7 +84,7 @@ B = [1 0]';
 
 %//////////////////////////////////////////////////////////////////////////
 % Forward Filtering Stage
-for k = 1 : Samples,
+for k = 1 : Samples
     % Store results
     Xbar(:,k) = Xminus';
     Pbar(:,:,k) = Pminus';
@@ -125,7 +125,7 @@ X = zeros(size(Xhat));
 PSmoothed(:,:,Samples) = Phat(:,:,Samples);
 X(:,Samples) = Xhat(:,Samples);
 for k = Samples-1 : -1 : 1
-    S = Phat(:,:,k) * A' * inv(Pbar(:,:,k+1));
+    S = Phat(:,:,k) * A' / Pbar(:,:,k+1);
     X(:,k) = Xhat(:,k) + S * (X(:,k+1) - Xbar(:,k+1));
     PSmoothed(:,:,k) = Phat(:,:,k) - S * (Pbar(:,:,k+1) - PSmoothed(:,:,k+1)) * S';
     

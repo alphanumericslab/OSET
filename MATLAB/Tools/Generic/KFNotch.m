@@ -53,19 +53,19 @@ function [y1,y2,Pbar,Phat,PSmoothed,Kgain] = KFNotch(x,f0,fs,varargin)
 
 %//////////////////////////////////////////////////////////////////////////
 % input arguments
-if(nargin>3  && ~isempty(varargin{1})),
+if(nargin>3  && ~isempty(varargin{1}))
     Q = varargin{1};
 else
     Q = 1e-4*max(abs(x));
 end
 
-if(nargin>4 && ~isempty(varargin{2})),
+if(nargin>4 && ~isempty(varargin{2}))
     R = varargin{2};
 else
     R = var(x);
 end
 
-if(nargin>5  && ~isempty(varargin{3})),
+if(nargin>5  && ~isempty(varargin{3}))
     gamma = varargin{3};
 else
     gamma = 1;
