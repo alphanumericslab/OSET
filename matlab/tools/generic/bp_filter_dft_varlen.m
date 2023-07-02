@@ -1,12 +1,13 @@
-function y = bp_filter_fft(x, fl, fu)
-% bp_filter_fft - Bandpass filter using FFT filtering.
+function y = bp_filter_dft_varlen(x, fl, fu, N)
+% bp_filter_dft_varlen - Bandpass filter using discrete Fourier transform (DFT) filtering with variable DFT points.
 %
-% Syntax: y = bp_filter_fft(x, fl, fu)
+% Syntax: y = bp_filter_dft_varlen(x, fl, fu, N)
 %
 % Inputs:
 %   x: Vector or matrix of input data (channels x samples).
 %   fl: Normalized lower frequency.
 %   fu: Normalized upper frequency.
+%   N: Number of DFT points.
 %
 % Output:
 %   y: Vector or matrix of filtered data (channels x samples).
@@ -18,24 +19,22 @@ function y = bp_filter_fft(x, fl, fu)
 %
 %   Revision History:
 %       2008: First release
-%       2023: Renamed from deprecated version BPFilter()
+%       2023: Debugged and renamed from deprecated version BPFilter2()
 %
 %   Reza Sameni, 2008-2023
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 
-N = size(x, 2);
-
 S = fft(x, N, 2);
 
-k = 1 : ceil(fl * N);
-if (~isempty(k))
-    S(:, [k, N - k + 2]) = 0;
+k_cut_low = floor(fl * N);
+S(:, [1 : k_cut_low, (N - k_cut_low + 2) : N]) = 0;
+
+k_cut_high = ceil(fu * N);
+if k_cut_high > 0
+    S(:, k_cut_high + 1 : N - k_cut_high + 1) = 0;
+else
+    S = 0;
 end
 
-k = floor(fu * N) : ceil(N / 2) + 1;
-if (~isempty(k))
-    S(:, [k, N - k + 2]) = 0;
-end
-
-y = real(ifft(S, N, 2));
+y = real(ifft(S,size(x,2),2));
