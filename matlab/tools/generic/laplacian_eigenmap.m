@@ -14,13 +14,8 @@ function [V, d, delta, similarity, epsilon] = laplacian_eigenmap(C, kappa)
 %   similarity: Eigen-map similarity matrix.
 %   epsilon: kappa times the median of delta.
 %
-% Reference:
-%   Reza Sameni, 2020, The Open-Source Electrophysiological Toolbox, 
-%   https://github.com/alphanumericslab/OSET.git
-%
-%   Revision History:
+%   Revision History:generalized
 %       2020: First release
-%       2023: Updated
 %       2023: Renamed from deprecated version LaplacianEigenmap()
 %
 %   Reza Sameni, 2020-2023

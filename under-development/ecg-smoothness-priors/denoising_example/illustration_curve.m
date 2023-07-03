@@ -1,3 +1,10 @@
+% A script for generating illustrations in the following publication: 
+%   Sameni, R. (2017). Online filtering using piecewise smoothness priors: 
+%       Application to normal and abnormal electrocardiogram denoising. In 
+%       Signal Processing (Vol. 133, pp. 52–63). Elsevier BV.
+%       https://doi.org/10.1016/j.sigpro.2016.10.019
+
+
 close all
 clc
 clear
