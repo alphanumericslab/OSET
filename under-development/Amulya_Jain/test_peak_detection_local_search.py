@@ -1,7 +1,7 @@
 import scipy.io
 import numpy as np
 import matplotlib.pyplot as plt
-import PeakDetection
+import peak_detection_local_search
 
 # Load the MATLAB .mat file
 mat = scipy.io.loadmat('SampleECG1.mat')['data'][0]
@@ -11,7 +11,7 @@ f = 1
 
 # Assuming PeakDetection is a function that returns peaks
 # You need to implement PeakDetection separately or use an existing library for peak detection
-peaks1 = PeakDetection.peak_detection(mat, f / fs)[0]
+peaks1 = peak_detection_local_search.peak_detection(mat, f / fs)[0]
 print(np.where(peaks1))
 # Plotting
 plt.figure()
