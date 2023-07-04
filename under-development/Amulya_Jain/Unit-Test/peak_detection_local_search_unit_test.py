@@ -1,8 +1,7 @@
-# for this you need matlab and the new requirements.txt
+# For this you need matlab and the new requirements.txt
 import matlab.engine
 import matlab
 import scipy.io
-import numpy as np
 import peak_detection_local_search
 
 mat = scipy.io.loadmat('SampleECG1.mat')['data'][0]
@@ -15,8 +14,8 @@ def main():
     mlnew = runMatLaboldnew()
     py = runPython()
     print(compare_outputs(py[0], mlnew[0][0]))
-    #print(compare_outputs(py[0], mlold[0][0]))
-    #print(compare_outputs(mlold[0][0], mlnew[0][0]))
+    print(compare_outputs(py[0], mlold[0][0]))
+    print(compare_outputs(mlold[0][0], mlnew[0][0]))
 
 
 def runMatLaboldnew():
