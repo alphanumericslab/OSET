@@ -3,7 +3,7 @@ import numpy as np
 
 def peak_detection(x, ff, *args):
     """
-    peaks = PeakDetection(x,f,flag, num_rounds),
+    peaks, peak_indexes = PeakDetection(x,f,flag, num_rounds),
     R-peak detector based on max search
 
     inputs:
