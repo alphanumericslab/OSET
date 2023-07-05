@@ -10,24 +10,15 @@ fs = 1000
 
 
 def main():
-    mlold = runMatLabold()
-    mlnew = runMatLaboldnew()
+    ml = runMatLab()
     py = runPython()
-    print(compare_outputs(py[0], mlnew[0][0]))
-    print(compare_outputs(py[0], mlold[0][0]))
-    print(compare_outputs(mlold[0][0], mlnew[0][0]))
+    return compare_outputs(py[0], ml[0][0]) and compare_outputs(py[1], ml[1][0])
 
 
-def runMatLaboldnew():
+def runMatLab():
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    return eng.peak_detection_local_search(x, f / fs, nargout=2)
-
-
-def runMatLabold():
-    eng = matlab.engine.start_matlab()
-    x = matlab.double(mat.tolist())
-    return eng.PeakDetection(x, f / fs, nargout=2)
+    return eng.peak_detection_local_search(x, f / fs, [], [], [], 1, nargout=2)
 
 
 def runPython():
@@ -40,7 +31,7 @@ def compare_outputs(a, b):
         if a == b:
             return True
     except:
-        print('iterating through the entire array')
+        print('Iterating through the entire array')
     if not len(a) == len(b):
         raise Exception('lengths of both inputs have to be the same')
     for i in range(len(a)):
@@ -53,4 +44,4 @@ def compare_outputs(a, b):
 
 
 if __name__ == "__main__":
-    main()
+    print(main())
