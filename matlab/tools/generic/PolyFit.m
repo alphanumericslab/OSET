@@ -19,8 +19,7 @@ function [y, p] = PolyFit(x, fs, N)
 x = x(:)';
 
 L = length(x);
-n = 0 : L-1;
-t = n / fs;
+t = (0 : L-1) / fs;
 
 T = zeros(N, L);
 TX = zeros(N, 1);
@@ -28,8 +27,9 @@ for i = 1 : N
     T(i,:) = t.^(i-1);
     TX(i) = x * T(i,:)';
 end
-TT = T * T';
 
-p = pinv(TT) * TX;
+% TT = T * T';
+% p = pinv(TT) * TX;
+p = (T * T') \ TX;
 
 y = p' * T;

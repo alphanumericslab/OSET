@@ -6,9 +6,7 @@
 ## INTRODUCTION
 
 OSET is a collection of electrophysiological data and open source codes for biological signal generation, modeling, processing, and filtering, originally released in June 2006. The toolbox is distributed under the BSD License and may be freely used or modified under the specified terms of use. The source codes have been mainly developed in MATLAB and partially in C++; but contributions in other languages are welcome. Please feel free to contact us in case of any comments or questions.
-Starting from Version 3.14 released on June 2018, OSET is accessible and will be updated on the mirror public Git repositories:
-- GitHub: [https://github.com/alphanumericslab/OSET.git](https://github.com/alphanumericslab/OSET.git)
-- Gitlab: [https://gitlab.com/rsameni/OSET.git](https://gitlab.com/rsameni/OSET.git)
+Starting from Version 3.14 released on June 2018, OSET is accessible and will be updated on GitHub: [https://github.com/alphanumericslab/OSET.git](https://github.com/alphanumericslab/OSET.git)
 
 ## INSTALLATION
 1- Clone the repository on your computer
@@ -30,7 +28,7 @@ Starting from Version 3.14 released on June 2018, OSET is accessible and will be
 * Version 3.14 (June 2018): Git repository public release
 
 ## CITATION
-Please cite OSET as follows: R. Sameni, OSET: The open-source electrophysiological toolbox. Version 3.14, URL: [http://www.oset.ir](http://www.oset.ir)
+Please cite OSET as follows: R. Sameni, OSET: The open-source electrophysiological toolbox. Version 3.14, URL: [https://github.com/alphanumericslab/OSET.git](https://github.com/alphanumericslab/OSET.git)
 
 ## CONTACT
 - Reza Sameni, Emory University Department of Biomedical Informatics. Web: [https://sameni.info](https://sameni.info)

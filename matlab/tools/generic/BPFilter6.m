@@ -45,14 +45,14 @@ w = exp(-1j*2*pi*fc*n);
 v = exp(1j*2*pi*fc*n);
 x1 = x.*w(ones(M,1),:);
 y1 = zeros(M,N);
-for i = 1:M,
+for i = 1:M
     y1(i,:) = filter(h,1,x1(i,:));
 end
 z1 = y1.*v(ones(M,1),:);
 
 x2 = x.*v(ones(M,1),:);
 y2 = zeros(M,N);
-for i = 1:M,
+for i = 1:M
     y2(i,:) = filter(h,1,x2(i,:));
 end
 z2 = y2.*w(ones(M,1),:);
