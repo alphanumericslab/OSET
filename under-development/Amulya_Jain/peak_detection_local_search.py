@@ -3,31 +3,27 @@ import numpy as np
 
 def peak_detection(x, ff, *args):
     """
- peak_detection_local_search - R-peak detector based on local max/min search
+    peaks = PeakDetection(x,f,flag, num_rounds),
+    R-peak detector based on max search
 
-   [peaks, peak_indexes] = peak_detection_local_search(x, f, flag, num_rounds, hr_update_fraction, omit_close_peaks)
+    inputs:
+    x: vector of input data
+    f: approximate ECG beat-rate in Hertz, normalized by the sampling frequency
+    flag: search for positive (flag=1) or negative (flag=0) peaks. By default
+    the maximum absolute value of the signal, determines the peak sign.
+    num_rounds: the number of iterations to find the R-peaks, up to 3
+    (everytime updating the expected R-peak rates). Default = 1 (no iterations)
 
-   Inputs:
-       x: Vector of input data
-       f: Approximate ECG beat-rate in Hertz, normalized by the sampling frequency
-       flag: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
-             By default, the maximum absolute value of the signal determines the peak sign.
-       num_rounds: Optional. Number of iterations to find the R-peaks, up to 3.
-                   Default is 1 (run peak detection only once).
-       hr_update_fraction: Optional. median HR is multiplied by this
-                   fraction in each iteration, if num_rounds > 1. Default
-                   is 1.05
-       omit_close_peaks: omit 'too-close' peaks after main peak detection (true/1) or not(false/0) (Default is false)
+    output:
+    peaks: vector of R-peak impulse train
+    peak_indexes: vector of R-peak indexes
 
-   Outputs:
-       peaks: Vector of R-peak impulse train
-       peak_indexes: Vector of R-peak indexes
-
-   Notes:
-       - The R-peaks are found from a peak search in windows of length N, where
-         N corresponds to the R-peak period calculated from the given f. R-peaks
-         with periods smaller than N/2 or greater than N are not detected.
-       - It is recommended to remove the signal baseline wander before R-peak detection.
+    Notes:
+    - The R-peaks are found from a peak search in windows of length N; where
+    N corresponds to the R-peak period calculated from the given f. R-peaks
+    with periods smaller than N/2 or greater than N are not detected.
+    - The signal baseline wander is recommended to be removed before the
+    R-peak detection
     """
 
     def peak_detection_internal(x, ff, flag):
