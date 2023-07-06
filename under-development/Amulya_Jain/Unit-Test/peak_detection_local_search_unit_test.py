@@ -2,7 +2,7 @@
 import matlab.engine
 import matlab
 import scipy.io
-import peak_detection_local_search
+from peak_detection_local_search import peak_detection_local_search
 
 mat = scipy.io.loadmat('SampleECG1.mat')['data'][0]
 f = 1
@@ -18,11 +18,11 @@ def main():
 def runMatLab():
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    return eng.peak_detection_local_search(x, f / fs, [], [], [], 1, nargout=2)
+    return eng.peak_detection_local_search(x, f / fs, nargout=2)
 
 
 def runPython():
-    return peak_detection_local_search.peak_detection(mat, f / fs)
+    return peak_detection_local_search(mat, f / fs)
 
 
 def compare_outputs(a, b):
