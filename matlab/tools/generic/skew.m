@@ -24,4 +24,4 @@ m = mean(data, 2);      % Compute the mean along the second dimension
 sd = std(data, [], 2);  % Compute the standard deviation along the second dimension
 m3 = mean(data.^3, 2);  % Compute the mean of data^3 along the second dimension
 
-skw = (m3 - 3*m1.*s.^2 - m1.^3) ./ s.^3;  % Calculate the skewness
+skw = (m3 - 3*m.*sd.^2 - m.^3) ./ sd.^3;  % Calculate the skewness
