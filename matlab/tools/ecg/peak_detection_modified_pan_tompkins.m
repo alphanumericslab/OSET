@@ -1,8 +1,10 @@
-function [peaks, peak_indexes] = peak_detection_modified_pan_tompkins(data, fs, varargin)
+function [peaks, peak_indexes, width] = peak_detection_modified_pan_tompkins(data, fs, varargin)
 %
-% peak_detection_modified_pan_tompkins - R-peak detector based on modified Pan-Tompkins method.
+% peak_detection_modified_pan_tompkins - R-peak detector based on modified
+%   Pan-Tompkins method. The filters and post-detection R-peak selection
+%   logic differ from the original algorithm
 %
-%   [peaks, peak_indexes] = peak_detection_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, flag)
+%   [peaks, peak_indexes, width] = peak_detection_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
 %
 %   Inputs:
 %       data: Vector of input data
@@ -11,16 +13,18 @@ function [peaks, peak_indexes] = peak_detection_modified_pan_tompkins(data, fs, 
 %       fp1: Optional. Lower cut-off frequency (default = 10Hz)
 %       fp2: Optional. Upper cut-off frequency (default = 33.3Hz)
 %       th: Optional. Detection threshold (default = 0.2)
+%       ksigma: Optional. Saturates peaks at ksigma x STD of the signal after energy envelope calculation (default = 12)
 %       flag: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
 %             By default, the maximum absolute value of the signal determines the peak sign.
 %
 %   Outputs:
 %       peaks: Vector of R-peak impulse train
 %       peak_indexes: Vector of R-peak indexes
+%       width: Rise to fall width of the signal's peak bump (in samples)
 %
 %   Revision History:
 %       2006: First release
-%       2023: Renamed from deprecated version PeakDetection2()
+%       2023: Added ksigma saturation feature, removed a bug in baseline wander remover filter and renamed from deprecated version PeakDetection2()
 % 
 %   Reference:
 %       Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans
@@ -61,22 +65,27 @@ else
     flag = abs(max(data)) > abs(min(data));
 end
 
+if nargin > 7 && ~isempty(varargin{6})
+    ksigma = varargin{6};
+else
+    ksigma = 12;
+end
+
 N = length(data);
 data = data(:)';
 
 L1 = round(fs / fp2); 
 L2 = round(fs / fp1); 
 
-% x0 = data - Median(data',N,round(fs*winlen/3));
-x0 = data - LPFilter(data, 0.05 * fs);
+x0 = data - lp_filter_zero_phase(data, 0.05 / fs);
 
 % LP filter
-x = filter([1 zeros(1, L1 - 1) -1], [L1 -L1], x0);
-x = filter([1 zeros(1, L1 - 1) -1], [L1 -L1], x);
+x = filter([1, zeros(1, L1 - 1), -1], [L1, -L1], x0);
+x = filter([1, zeros(1, L1 - 1), -1], [L1, -L1], x);
 x = [x(L1:end), zeros(1, L1 - 1) + x(end)]; % Lag compensation
 
 % HP filter
-y = filter([L2 - 1 -L2 zeros(1, L2 - 2) 1], [L2 -L2], x);
+y = filter([L2 - 1, -L2, zeros(1, L2 - 2), 1], [L2, -L2], x);
 
 % Differentiation
 z = diff([y(1) y]);
@@ -86,11 +95,12 @@ w = z .^ 2;
 
 % Moving average
 L3 = round(fs * wlen);
-v = filter([1 zeros(1, L3 - 1) -1], [L3 -L3], w);
+v = filter([1, zeros(1, L3 - 1), -1], [L3, -L3], w);
 v = [v(round(L3 / 2):end), zeros(1, round(L3 / 2) - 1) + v(end)]; % Group-delay lag compensation
 
-vmax = max(v);
-p = v > (th * vmax);
+v_sat = tanh_saturation(v, ksigma); % Saturate peaks
+
+p = v_sat > (th * max(v_sat)); % Potential peaks
 
 % Edge detection
 rising = find(diff([0, p]) == 1);      % Rising edges
@@ -107,13 +117,13 @@ width = zeros(length(rising), 1);
 
 if flag
     for i = 1:length(rising)
-        [~, mx] = max(data(rising(i):falling(i)));
+        [~, mx] = max(data(rising(i) : falling(i)));
         peak_indexes(i) = mx - 1 + rising(i);
         width(i) = falling(i) - rising(i);
     end
 else
     for i = 1:length(rising)
-        [~, mn] = min(data(rising(i):falling(i)));
+        [~, mn] = min(data(rising(i) : falling(i)));
         peak_indexes(i) = mn - 1 + rising(i);
         width(i) = falling(i) - rising(i);
     end
