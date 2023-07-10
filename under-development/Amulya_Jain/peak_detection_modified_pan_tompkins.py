@@ -27,6 +27,7 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
           Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
 
     """
+
     nargin = len(args) + 2
 
     if nargin > 2 and args[0] is not None:
@@ -56,18 +57,15 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
 
     N = len(data)
     data = np.array(data).flatten()
-
     L1 = round(fs / fp2)
     L2 = round(fs / fp1)
 
     # TODO: implement LPFilter
     # x0 = data - LPFilter(data, 0.05 * fs);
-
     # TODO: Remove this line
-    x0 = data
 
     # LP filter
-
+    x0 = np.array(data, dtype=np.float64)
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x0)
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x)
     x = np.concatenate((x[L1 - 1:], np.zeros(L1 - 1) + x[-1]))  # Lag compensation
@@ -84,8 +82,7 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
     # Moving average
     L3 = round(fs * wlen)
     v = lfilter(np.concatenate(([1], np.zeros(L3 - 1), [-1])), [L3, -L3], w)
-    v = np.concatenate([v[int(L3 / 2):], np.zeros(round(L3 / 2) - 1) + v[-1]])  # Group-delay lag compensation
-
+    v = np.concatenate([v[round(L3 / 2) - 1:], np.zeros(round(L3 / 2) - 1) + v[-1]])  # Group-delay lag compensation
     vmax = np.max(v)
     p = v > (th * vmax)
 
@@ -103,14 +100,15 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
 
     if flag:
         for i in range(len(rising)):
-            mx = np.argmax(data[rising[i]:falling[i]])
-            peak_indexes[i] = mx + rising[i]
+            mx = np.argmax(data[rising[i] - 1:falling[i]])
+            peak_indexes[i] = mx - 1 + rising[i]
             width[i] = falling[i] - rising[i]
     else:
         for i in range(len(rising)):
-            mn = np.argmin(data[rising[i]:falling[i]])
-            peak_indexes[i] = mn + rising[i]
+            mn = np.argmin(data[rising[i] - 1:falling[i]])
+            peak_indexes[i] = mn - 1 + rising[i]
             width[i] = falling[i] - rising[i]
+
 
     peaks = np.zeros(N)
     peaks[peak_indexes.astype(int)] = 1
