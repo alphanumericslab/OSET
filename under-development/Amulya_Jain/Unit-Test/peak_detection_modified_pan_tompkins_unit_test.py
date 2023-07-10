@@ -13,10 +13,10 @@ th = 0.10  # an arbitrary value for testing
 def main():
     ml = runMatLab()
     py = runPython()
-    print(py[1])
-    x=compare_outputs(py[0], ml[0][0])
-    y=compare_outputs1(py[1], ml[1])
+    x = compare_outputs(py[0], ml[0][0])
+    y = compare_outputs1(py[1], ml[1])
     return x and y
+
 
 def runMatLab():
     eng = matlab.engine.start_matlab()
@@ -44,6 +44,7 @@ def compare_outputs(a, b):
             print(b[i - 2:i + 3], "matlab")
             x = False
     return x
+
 
 def compare_outputs1(a, b):
     x = True
