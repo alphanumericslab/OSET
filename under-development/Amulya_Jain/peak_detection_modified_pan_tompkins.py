@@ -69,10 +69,10 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
     L1 = round(fs / fp2)
     L2 = round(fs / fp1)
 
-    # TODO: implement LPFilter
+    # TODO implement LPFilter
     # x0 = data - LPFilter(data, 0.05 * fs);
-    # TODO: Remove this line
 
+    # TODO Remove this line
     x0 = np.array(data, dtype=np.float64)
 
     # LP filter
