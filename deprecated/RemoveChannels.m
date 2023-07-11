@@ -1,5 +1,7 @@
-function data = RemoveChannels(data,I);
-%
+function data = RemoveChannels(data, I)
+% RemoveChannels has been deprecated. May be removed in future updates.
+warning('RemoveChannels has been deprecated. May be removed in future updates.');
+% 
 % y = RemoveChannels(x,I);
 % Eliminate unwanted channels
 %
@@ -31,7 +33,7 @@ end
 
 % this is definitely not the best way to solve this problem!
 I_ = [];
-for i = 1:size(data,1),
+for i = 1:size(data,1)
     if(isempty(find(I==i)))
         I_ = [I_ i];
     end
