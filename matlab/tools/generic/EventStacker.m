@@ -9,6 +9,7 @@ function [stacked_events, num_non_zeros] = EventStacker(signal, event_indexes, e
 %   signal: the input signal in vector form
 %   event_indexes: a vector or event indexes
 %   event_width: the time width of the stacked events (must be odd valued)
+%   method: 
 %
 % output:
 %   stacked_events: a matrix of the form N x event_width, where N = length(event_indexes)
