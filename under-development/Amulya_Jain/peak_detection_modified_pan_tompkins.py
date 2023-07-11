@@ -1,12 +1,15 @@
 import numpy as np
 from scipy.signal import lfilter
+from tanh_saturation import tanh_saturation
 
 
 def peak_detection_modified_pan_tompkins(data, fs, *args):
     """
-    peak_detection_modified_pan_tompkins - R-peak detector based on modified Pan-Tompkins method.
+    peak_detection_modified_pan_tompkins - R-peak detector based on modified
+      Pan-Tompkins method. The filters and post-detection R-peak selection
+      logic differ from the original algorithm
 
-      peaks, peak_indexes = peak_detection_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, flag)
+      peaks, peak_indexes, width = peak_detection_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
 
       Inputs:
           data: Vector of input data
@@ -15,17 +18,18 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
           fp1: Optional. Lower cut-off frequency (default = 10Hz)
           fp2: Optional. Upper cut-off frequency (default = 33.3Hz)
           th: Optional. Detection threshold (default = 0.2)
+          ksigma: Optional. Saturates peaks at ksigma x STD of the signal after energy envelope calculation (default = 12)
           flag: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
                 By default, the maximum absolute value of the signal determines the peak sign.
 
       Outputs:
           peaks: Vector of R-peak impulse train
           peak_indexes: Vector of R-peak indexes
+          width: Rise to fall width of the signal's peak bump (in samples)
 
       Reference:
           Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans
           Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
-
     """
 
     nargin = len(args) + 2
@@ -54,9 +58,14 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
         flag = args[4]
     else:
         flag = np.abs(np.max(data)) > np.abs(np.min(data))
+    if nargin > 7 and args[5] is not None:
+        ksigma = args[5]
+    else:
+        ksigma = 12
 
     N = len(data)
     data = np.array(data).flatten()
+
     L1 = round(fs / fp2)
     L2 = round(fs / fp1)
 
@@ -64,8 +73,9 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
     # x0 = data - LPFilter(data, 0.05 * fs);
     # TODO: Remove this line
 
-    # LP filter
     x0 = np.array(data, dtype=np.float64)
+
+    # LP filter
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x0)
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x)
     x = np.concatenate((x[L1 - 1:], np.zeros(L1 - 1) + x[-1]))  # Lag compensation
@@ -83,8 +93,10 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
     L3 = round(fs * wlen)
     v = lfilter(np.concatenate(([1], np.zeros(L3 - 1), [-1])), [L3, -L3], w)
     v = np.concatenate([v[round(L3 / 2) - 1:], np.zeros(round(L3 / 2) - 1) + v[-1]])  # Group-delay lag compensation
-    vmax = np.max(v)
-    p = v > (th * vmax)
+
+    v_sat = tanh_saturation(v, ksigma)
+
+    p = v_sat > (th * np.max(v_sat))
 
     # Edge detection
     rising = np.where(np.diff(np.concatenate(([0], p))) == 1)[0] + 1
@@ -109,8 +121,7 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
             peak_indexes[i] = mn - 1 + rising[i]
             width[i] = falling[i] - rising[i]
 
-
     peaks = np.zeros(N)
     peaks[peak_indexes.astype(int)] = 1
     peak_indexes += 1
-    return peaks, peak_indexes
+    return peaks, peak_indexes, width
