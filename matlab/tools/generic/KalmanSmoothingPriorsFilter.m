@@ -163,7 +163,7 @@ Kgain = zeros(order,N);
 Q0 = Q;
 %//////////////////////////////////////////////////////////////////////////
 % Forward Filtering Stage
-for k = 1 : N,
+for k = 1 : N
     % Store results
     Xbar(:,k) = Xminus;
     Pbar(:,:,k) = Pminus;
@@ -207,7 +207,7 @@ PSmoothed = zeros(size(Phat));
 X = zeros(size(Xhat));
 PSmoothed(:,:,N) = Phat(:,:,N);
 X(:,N) = Xhat(:,N);
-for k = N-1 : -1 : 1,
+for k = N-1 : -1 : 1
     S = Phat(:,:,k) * A' / Pbar(:,:,k+1);
     X(:,k) = Xhat(:,k) + S * (X(:,k+1) - Xbar(:,k+1));
     PSmoothed(:,:,k) = Phat(:,:,k) - S * (Pbar(:,:,k+1) - PSmoothed(:,:,k+1)) * S';
@@ -231,7 +231,7 @@ theta = 1;
 XX = [x(1) ; zeros(order-1,1)];
 P = 100*B*Q*B';
 margin = zeros(order,N);
-for k = 1 : N,
+for k = 1 : N
     if(gamma < 1)
         mem2 = [innovations(k).^2 ; mem2(1:end-1)];             % Observation covariance matrix update (for nonstationary signals)
         R = gamma*R + (1 - gamma)*mean(mem2);
