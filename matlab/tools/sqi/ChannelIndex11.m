@@ -29,7 +29,7 @@ ind = zeros(L1,1);
 xcore = zeros(L1,2*L2-1);
 
 for i = 1:L1
-    xcore(i,:) = xcorr(x(i,:))./[1:L2 L2-1:-1:1]; % calculate the auto-correlation of each channel normalized by the number of overlaping samples
+    xcore(i,:) = xcorr(x(i,:))./[1:L2, L2-1:-1:1]; % calculate the auto-correlation of each channel normalized by the number of overlaping samples
     px = PeakDetection(xcore(i,:),f0/fs,1); % find positive peaks
     ix = find(px(round(L2/2):round(3*L2/2)));
     ind(i) = std(diff(ix))/fs;

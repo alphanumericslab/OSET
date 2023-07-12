@@ -1,7 +1,7 @@
-function [y1, y2, Pbar, Phat, PSmoothed, Kgain] = kalman_ar_filter(x, b, a, varargin)
-% kalman_ar_filter - Removing lowpass noise using a first order linear Kalman filter and smoother.
+function [y1, y2, Pbar, Phat, PSmoothed, Kgain] = ar_filter_kalman(x, b, a, varargin)
+% ar_filter_kalman - Removing lowpass noise using a first order linear Kalman filter and smoother.
 %
-% Syntax: [y1, y2, Pbar, Phat, PSmoothed, Kgain] = kalman_ar_filter(x, b, a, q, r, gamma, wlen, mode)
+% Syntax: [y1, y2, Pbar, Phat, PSmoothed, Kgain] = ar_filter_kalman(x, b, a, q, r, gamma, wlen, mode)
 %
 % Inputs:
 %   x: Vector of noisy signals contaminated with lowpass noise.

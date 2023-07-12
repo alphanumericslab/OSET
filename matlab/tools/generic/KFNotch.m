@@ -86,38 +86,38 @@ L = 2;
 % % % B = [1 0]';
 A = [cos(w) -sin(w) ; sin(w) cos(w)];
 H = [1 1];
-B = [1 1]';
+% B = [1 1]';
 % BQBT = B*Q*B';
 BQBT = [Q 0 ; 0 Q];
 
 % for verification of the theoretical expansions:
 % result: verified OK (18/12/2010)
-p = dare(A',H',BQBT,R)
-sum(p')
-dt = det(p)/R
+p = dare(A',H',BQBT,R);
+% sum(p, 2)
+% dt = det(p)/R;
 p1 = p(1,1);
 p2 = p(1,2);
 p3 = p(2,1);
 p4 = p(2,2);
 c = A(1,1);
 s = A(2,1);
-pp1 = (det(p)*(1+2*c*s) + (c^2*p1-c*s*p2-c*s*p3+s^2*p4)*R)/(sum(sum(p))+R) + BQBT(1,1)
-pp2 = (det(p)*(s^2-c^2) + (c*s*p1+c^2*p2-s^2*p3-c*s*p4)*R)/(sum(sum(p))+R) + BQBT(1,2)
-pp3 = (det(p)*(s^2-c^2) + (c*s*p1+c^2*p3-s^2*p2-c*s*p4)*R)/(sum(sum(p))+R) + BQBT(2,1)
-pp4 = (det(p)*(1-2*c*s) + (s^2*p1+c*s*p2+c*s*p3+c^2*p4)*R)/(sum(sum(p))+R) + BQBT(2,2)
+pp1 = (det(p)*(1+2*c*s) + (c^2*p1-c*s*p2-c*s*p3+s^2*p4)*R)/(sum(sum(p))+R) + BQBT(1,1);
+pp2 = (det(p)*(s^2-c^2) + (c*s*p1+c^2*p2-s^2*p3-c*s*p4)*R)/(sum(sum(p))+R) + BQBT(1,2);
+pp3 = (det(p)*(s^2-c^2) + (c*s*p1+c^2*p3-s^2*p2-c*s*p4)*R)/(sum(sum(p))+R) + BQBT(2,1);
+pp4 = (det(p)*(1-2*c*s) + (s^2*p1+c*s*p2+c*s*p3+c^2*p4)*R)/(sum(sum(p))+R) + BQBT(2,2);
 
 % % % ppp1 = sqrt(Q^2+R*Q)
 % % % ppp2 = Q
 % % % g = Q/R;
 % % % kkk = (g + sqrt(g^2+g))/(1+2*g+2*sqrt(g^2+g))
 
-kkk = sum(p,2)/(R + sum(sum(p)))
+kkk = sum(p,2)/(R + sum(sum(p)));
 del = kkk(2) - kkk(1);
 sig = kkk(2) + kkk(1);
 tn = s/c;
-sym_res = (sig-del*tn)^2 + 4*del*tn
+sym_res = (sig-del*tn)^2 + 4*del*tn;
 alpha = 1 - sig;
-sym_res2 = ((alpha+1)/2 + del*tn/2)^2 - alpha
+sym_res2 = ((alpha+1)/2 + del*tn/2)^2 - alpha;
 
 Xminus = X0;
 Pminus = P0;

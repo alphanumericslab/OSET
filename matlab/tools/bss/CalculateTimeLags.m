@@ -9,9 +9,9 @@ wlen = max(n1)-min(n1);
 
 T1 = zeros(length(peaks)-prd-wlen,1);
 NN = length(T1);
-for t = 1:NN,
+for t = 1:NN
     df = abs(phase(t) - phase(t+prd-wlen:t+prd+wlen));
-    [Y,I] = min(df);
+    [~, I] = min(df);
     T1(t) = t + prd + I - wlen -1;
 end
 

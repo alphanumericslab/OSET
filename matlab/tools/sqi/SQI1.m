@@ -39,7 +39,7 @@ RWAmatrix = cell(CH);
 ind = zeros(1, CH);
 
 for ch = 1: CH
-    
+
     Peakloc{ch} = find(peaks{ch});
     i = 1;
     T = mean(diff(Peakloc{ch}));
@@ -61,7 +61,7 @@ for ch = 1: CH
         RWAmatrix{ch}(length(Peakloc{ch}), 1:2*winL) = x(ch, Peakloc{ch}(end)-winL+1:Peakloc{ch}(end)+winL);
     end
     mk{ch} = RWAverage(RWAmatrix{ch});
-    
+
     ind(ch) = mean(mean((RWAmatrix{ch} - ones(size(RWAmatrix{ch},1),1)* mk{ch}).^2));
 end
 
