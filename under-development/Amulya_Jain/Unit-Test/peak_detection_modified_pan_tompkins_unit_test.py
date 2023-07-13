@@ -1,6 +1,7 @@
 # For this you need matlab and the new requirements.txt
 import matlab.engine
 import matlab
+import numpy as np
 import scipy.io
 from peak_detection_modified_pan_tompkins import peak_detection_modified_pan_tompkins
 
@@ -15,13 +16,14 @@ def main():
     py = runPython()
     x = compare_outputs(py[0], ml[0][0])
     y = compare_outputs1(py[1], ml[1])
-    return x and y
+    z = compare_outputs1(py[2], ml[2])
+    return x and y and z
 
 
 def runMatLab():
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    return eng.peak_detection_modified_pan_tompkins(x, fs, nargout=2)
+    return eng.peak_detection_modified_pan_tompkins(x, np.double(fs), nargout=3)
 
 
 def runPython():
