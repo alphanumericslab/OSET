@@ -70,7 +70,7 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
     L1 = round(fs / fp2)
     L2 = round(fs / fp1)
 
-    x0 = data  # - lp_filter_zero_phase(data, 0.05 * fs)
+    x0 = data - lp_filter_zero_phase(data, 0.05 / fs)
 
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x0)
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x)
