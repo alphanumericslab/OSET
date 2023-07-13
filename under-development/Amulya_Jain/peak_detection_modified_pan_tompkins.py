@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import lfilter
 from tanh_saturation import tanh_saturation
+from lp_filter_zero_phase import lp_filter_zero_phase
 
 
 def peak_detection_modified_pan_tompkins(data, fs, *args):
@@ -69,13 +70,8 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
     L1 = round(fs / fp2)
     L2 = round(fs / fp1)
 
-    # TODO implement LPFilter
-    # x0 = data - LPFilter(data, 0.05 * fs);
+    x0 = data  # - lp_filter_zero_phase(data, 0.05 * fs)
 
-    # TODO Remove this line
-    x0 = np.array(data, dtype=np.float64)
-
-    # LP filter
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x0)
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x)
     x = np.concatenate((x[L1 - 1:], np.zeros(L1 - 1) + x[-1]))  # Lag compensation
