@@ -21,11 +21,11 @@ def main():
 def runMatLab():
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    return eng.lp_filter_zero_phase(x, np.double(fs), nargout=1)
+    return eng.lp_filter_zero_phase(x, np.double(1/fs), nargout=1)
 
 
 def runPython():
-    return lp_filter_zero_phase(mat, fs)
+    return lp_filter_zero_phase(mat, 1/fs)
 
 
 def compare_outputs(a, b):
