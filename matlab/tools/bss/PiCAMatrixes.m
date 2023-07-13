@@ -20,9 +20,7 @@ for t = 1:NN
 end
 T1 = max(T1,1);
 T1 = min(T1,N0);
-
 T0 = 1:NN;
-
 A = x(:,T0)*x(:,T1)';
 B = x(:,T0)*x(:,T0)';
 A = (A+A')/2;
