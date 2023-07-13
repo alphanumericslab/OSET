@@ -18,7 +18,7 @@ function [index, rank] = sqi_negentropy(x, varargin)
 %
 % Revision History:
 %   2008: First release
-%   2023: Corrected fnegentropy definition according to the reference and renamed from deprecated version ChannelIndex4 and added sorting mode
+%   2023: Corrected negentropy definition according to the reference and renamed from deprecated version ChannelIndex4 and added sorting mode
 %
 % Reza Sameni, 2008-2023
 % The Open-Source Electrophysiological Toolbox
