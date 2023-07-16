@@ -98,11 +98,11 @@ for i = 1:L
     end
 
     % nonstationary component analysis (GEVD over given windows)
-    [y, W, A, B, C] = NSCA(x,I,1:N);
+    [y, W, A, B, C] = nsca_source_separation(x,I,1:N);
 
     % estimate the EOG dimensions embedded in background EEG noise
     xx = (x - mean(x,2)*ones(1,size(x,2)))./(std(x(:,J),[],2)*ones(1,size(x,2))); % normalize data
-    [lambda, AIC, MDL, NEW, ENSTh, ENS] = EstimateDimension(xx(:,I), var(xx(1,J)), 1);
+    [lambda, AIC, MDL, NEW, ENSTh, ENS] = dimension_estimation(xx(:,I), var(xx(1,J)), 1);
 %     ENS
 
     % recalculate the reference channel
@@ -143,7 +143,7 @@ if(flagplot)
     % % % PlotECG(typical(:,:),4,'b',fs);
     L1 = size(typical,1);
     figure;
-    for i = 1:L1,
+    for i = 1:L1
         subplot(L1,1,i);
         plot(t,typical(i,:),'k','linewidth',1);
         axis([0 45 -100 100]);
@@ -154,7 +154,7 @@ if(flagplot)
         end
         %     ylabel(['IC_',num2str(i)],'FontSize',16);
         % % %     ylabel('Amplitude(mv)');
-        if (i==1),
+        if (i==1)
             ylabel('raw');
         else
             ylabel(num2str(i-1));

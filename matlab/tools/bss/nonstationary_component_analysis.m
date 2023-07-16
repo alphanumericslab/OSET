@@ -54,9 +54,7 @@ B = (B + B') / 2;
 [V, D] = eig(B, C, 'chol');
 
 % Sort eigenvalues in descending order
-d = diag(D);
-[~, II] = sort(d);
-II = II(end:-1:1);
+[~, II] = sort(diag(D), 'descend');
 
 % Extract separation filters
 W = V(:, II)';
@@ -64,4 +62,3 @@ A = pinv(W);
 
 % Apply separation filters to input signals
 y = real(W * x);
-end
