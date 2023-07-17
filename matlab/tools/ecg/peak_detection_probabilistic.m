@@ -1,8 +1,11 @@
-function [peaks, peak_indexes, qrs_likelihood] = PeakDetectionProbabilistic(signal, fs, varargin)
+function [peaks, peak_indexes, qrs_likelihood] = peak_detection_probabilistic(signal, fs, varargin)
+% function [peaks, peak_indexes, qrs_likelihood] = peak_detection_probabilistic(signal, fs, varargin)
 % A probabilistic R-peak detector based on local peaks sorting
+% 
+% Note: Under development
 %
 % Usage:
-%   [peaks, qrs_likelihood, peak_indexes] = PeakDetectionProbabilistic(signal, fs, params)
+%   [peaks, qrs_likelihood, peak_indexes] = peak_detection_probabilistic(signal, fs, params)
 %
 % Inputs:
 %   signal: single or multichannel ECG signal with row-wise channels
@@ -28,9 +31,13 @@ function [peaks, peak_indexes, qrs_likelihood] = PeakDetectionProbabilistic(sign
 %   qrs_likelihood: the R-peak likelihood vector (with maximums at the
 %       estimated R-peaks useful for classification and scoring purposes)
 %
-% Copyright Reza Sameni, Nov 2021
+% Revision History:
+%   2021: First release
+%   2023: Replaced deprecated function PeakDetectionProbabilistic
+%
+% Reza Sameni, 2009-2023
 % The Open-Source Electrophysiological Toolbox
-% (https://github.com/alphanumericslab/OSET)
+% https://github.com/alphanumericslab/OSET
 
 % use default values when no parameters are set
 if nargin > 2
