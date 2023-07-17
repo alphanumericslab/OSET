@@ -4,7 +4,7 @@ import matlab
 import scipy.io
 from peak_detection_local_search import peak_detection_local_search
 
-mat = scipy.io.loadmat('SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat('../SampleECG1.mat')['data'][0]
 f = 1
 fs = 1000
 

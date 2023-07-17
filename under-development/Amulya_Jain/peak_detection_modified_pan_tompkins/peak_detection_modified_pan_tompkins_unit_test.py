@@ -5,7 +5,7 @@ import numpy as np
 import scipy.io
 from peak_detection_modified_pan_tompkins import peak_detection_modified_pan_tompkins
 
-mat = scipy.io.loadmat('SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat('../SampleECG1.mat')['data'][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
