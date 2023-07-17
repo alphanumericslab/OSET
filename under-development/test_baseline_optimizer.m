@@ -5,10 +5,10 @@
 clear;
 close all;
 
-load patient165_s0323lre; data = data(1:10000, 3)'; fs = 1000;
-% load SampleECG128Hz; data = y(:, 2)' ; fs = 128;
+% load patient165_s0323lre; data = data(1:10000, 2)'; fs = 1000;
+load SampleECG128Hz; data = y(:, 2)' ; fs = 128;
 
-data = data - lp_filter_zero_phase(data, 0.01/fs);
+% data = data - lp_filter_zero_phase(data, 0.05/fs);
 
 data_hp = data - lp_filter_zero_phase(data, 2.0/fs);
 num_rounds = 3;
@@ -17,15 +17,16 @@ omit_close_peaks = true;
 [peaks, peak_indexes] = peak_detection_local_search(data_hp, 1.0/fs, [], num_rounds, hr_update_fraction, omit_close_peaks);
 
 
-mn_wlens = 0.1 : 0.05 : 2.0;
-md_wlens = 0.1 : 0.05 : 2.0;
+mn_wlens = 0.6 : 0.05 : 2.0;
+md_wlens = 0.6 : 0.05 : 1.5;
 sqi_index = zeros(length(md_wlens), length(mn_wlens));
 for i = 1 : length(md_wlens)
     for j = 1 : length(mn_wlens)
         % baseline = baseline_sliding_window(data, round(fs * mn_wlens(k)), method);
         % baseline = baseline_sliding_window(data, round(fs * 1.0), 'md');
 
-        bl = baseline_sliding_window(data, round(fs * md_wlens(i)), 'md');
+        %         bl = baseline_sliding_window(data, round(fs * md_wlens(i)), 'md');
+        bl = baseline_sliding_window_twice(data, round(fs * md_wlens(i)), round(fs * 2.1 * md_wlens(i)), 'md');
         baseline = baseline_sliding_window(bl, round(fs * mn_wlens(j)), 'mn');
 
         ecg = data - baseline;
@@ -37,7 +38,7 @@ for i = 1 : length(md_wlens)
         ecg_stacked = EventStacker(ecg, peak_indexes, event_width);
         baseline_stacked = EventStacker(baseline, peak_indexes, event_width);
         % baseline_stacked = EventStacker(data, peak_indexes, event_width);
-        
+
         ecg_beat_mean = mean(ecg_stacked, 1);
         %         ecg_stacked_demeaned = ecg_stacked - ecg_beat_mean;
         %         ecg_beat_std = std(ecg_stacked_demeaned, [], 1);
@@ -51,7 +52,7 @@ for i = 1 : length(md_wlens)
         baseline_snr = mean(baseline_beat_mean.^2) / mean(baseline_beat_std.^2);
 
         baseline_most_periodic_peak = max(mean(baseline_stacked.^2, 1)./var(baseline_stacked, [], 1));
-        
+
         %         cov_ecg = ecg_stacked * ecg_stacked';
         %         cov_baseline = baseline_stacked * baseline_stacked';
         %                         cov_ecg = ecg_stacked' * ecg_stacked;
@@ -59,10 +60,15 @@ for i = 1 : length(md_wlens)
         %         sqi_index(i, j) = eigs(cov_ecg, cov_baseline, 1);
         %         sqi_index(i, j) = trace(cov_ecg)/trace(cov_baseline);
 
-%         sqi_index(i, j) = ecg_snr / baseline_snr;
-%         sqi_index(i, j) = ecg_snr / baseline_most_periodic_peak;
-%         sqi_index(i, j) = ecg_snr / min(baseline_beat_std);
-        sqi_index(i, j) = mean(ecg_beat_mean.^2) / mean(baseline_beat_mean.^2);
+        %         sqi_index(i, j) = ecg_snr / baseline_snr;
+        %         sqi_index(i, j) = ecg_snr / baseline_most_periodic_peak;
+        %         sqi_index(i, j) = ecg_snr / min(baseline_beat_std);
+        %         sqi_index(i, j) = mean(ecg_beat_mean.^2) / mean(baseline_beat_mean.^2);
+
+        %         sqi_index(i, j) = (size(ecg_stacked, 1) * mean(ecg_beat_mean.^2) / trace(ecg_stacked*ecg_stacked') ) / ...
+        %                           (size(baseline_stacked, 1) * mean(baseline_beat_mean.^2) / trace(baseline_stacked*baseline_stacked') );
+
+        sqi_index(i, j) = size(ecg_stacked, 1) * mean(ecg_beat_mean.^2) / trace(ecg_stacked*ecg_stacked');
 
         disp([i, j])
     end
