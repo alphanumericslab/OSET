@@ -1,8 +1,15 @@
-function [ind, peaks] = ChannelIndex10(x,f,fs)
+function [ind, peaks, ch] = ChannelIndex10(x,f,fs, varargin)
 % Channel selection based on fixed template matched filter
 %
 % Reza Sameni
 % September 2010
+
+if nargin > 3 && ~isempty(varargin{1})
+    num_peak_detection_itr = varargin{1};
+else
+    num_peak_detection_itr = 1;
+end
+
 
 % % % th = 0.5;
 % % % h0 = load('BPFilter01.txt');
@@ -46,10 +53,10 @@ for i = 1:L
     r3 = r3(w3:N+w3-1);
 
     r = [r1 ; -r1 ; r2 ; -r2 ; r3 ; -r3];
-    for kk = 1:size(r,1)
+    for kk = 1 : size(r,1)
         % % %         ppeaks(kk,i,:) = PeakDetection6(r(kk,:),f/fs,.01,1); % search for positive peaks
 %         ppeaks(kk,i,:) = PeakDetectionFromC3(r(kk,:), f, fs, 1);
-        ppeaks(kk,i,:) = PeakDetection(r(kk,:), f/fs, 1);
+        ppeaks(kk,i,:) = peak_detection_local_search(r(kk,:), f/fs, 1, num_peak_detection_itr);
         I = find(ppeaks(kk,i,:));
         d = diff(I);
         score(kk,i) = std(d(3:end-2));
@@ -72,7 +79,7 @@ end
 
 [ind, I] = min(score,[],1);
 ind = ind';
-[val, ch] = min(ind);
+[~, ch] = min(ind);
 peaks = ppeaks(I(ch),ch,:);
 
 % % % peaks = squeeze(peaks); %%% ADDED TO WORK FOR SINGLE CHANNEL DATA

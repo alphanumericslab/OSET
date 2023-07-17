@@ -1,6 +1,6 @@
 function [score1, score2, peaks1, peaks2, rank1, rank2] = sqi_multi_matched_filter(x,f,fs, varargin)
 % sqi_multi_matched_filter - Signal quality index based on three fixed
-%   template matched filter outputs scatter and average waveform standard
+%   template matched filter output envelope scatter and average waveform standard
 %   deviation
 %
 % Usage:
