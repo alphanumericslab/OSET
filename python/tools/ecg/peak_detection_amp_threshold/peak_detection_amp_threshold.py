@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+
 sys.path.append('../peak_detection_simple')
 from peak_detection_simple import peak_detection_simple
 

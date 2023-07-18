@@ -1,5 +1,8 @@
+import sys
 import numpy as np
 from scipy.signal import lfilter
+
+sys.path.append('../../generic')
 from tanh_saturation import tanh_saturation
 from lp_filter_zero_phase import lp_filter_zero_phase
 
