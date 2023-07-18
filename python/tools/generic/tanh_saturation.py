@@ -12,10 +12,12 @@ def tanh_saturation(x, ksigma):
     Returns:
         ndarray: Saturated data with outliers replaced by the saturation level.
 
-    References:
-        Reza Sameni, 2020-2023
-        The Open-Source Electrophysiological Toolbox
-        https://github.com/alphanumericslab/OSET
+    Revision History:
+        2023: Translated to Python from Matlab
+
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """
     # Compute the scaling factor based on the standard deviation of each channel
     alpha = ksigma * np.std(x, axis=0, keepdims=True)

@@ -25,6 +25,13 @@ def peak_detection_local_search(x, ff, *args):
     with periods smaller than N/2 or greater than N are not detected.
     - The signal baseline wander is recommended to be removed before the
     R-peak detection
+
+    Revision History:
+        2023: Translated to Python from Matlab
+
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """
 
     # Set default values for optional arguments

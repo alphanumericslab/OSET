@@ -22,6 +22,12 @@ def lp_filter_zero_phase(x, fc):
       Read more:  Mitra, S. (2010). Digital signal processing (4th ed.)
                   New York, NY: McGraw-Hill Professional.
 
+    Revision History:
+        2023: Translated to Python from Matlab
+
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """
 
     if fc > 1:

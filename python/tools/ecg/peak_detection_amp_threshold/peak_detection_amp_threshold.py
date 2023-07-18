@@ -1,4 +1,6 @@
 import numpy as np
+import sys
+sys.path.append('../peak_detection_simple')
 from peak_detection_simple import peak_detection_simple
 
 
@@ -25,6 +27,13 @@ def peak_detection_amp_threshold(x, ff, th, *args):
       with periods smaller than N/2 or greater than N are not detected.
     - The signal baseline wander is recommended to be removed before the
       R-peak detection.
+
+    Revision History:
+        2023: Translated to Python from Matlab
+
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """
 
     omit_close_peaks = 0

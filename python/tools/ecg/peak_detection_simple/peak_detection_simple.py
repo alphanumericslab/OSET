@@ -18,6 +18,12 @@ def peak_detection_simple(x, ff, flag, *args):
           peaks: Vector of R-peak impulse train
           peak_indexes: Vector of R-peak indexes
 
+    Revision History:
+        2023: Translated to Python from Matlab
+
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """
 
     if len(args) > 0 and args[0] is not None:

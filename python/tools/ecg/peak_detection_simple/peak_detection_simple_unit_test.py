@@ -16,7 +16,7 @@ def main():
     py = runPython(0)
     w = compare_outputs(py[0], ml[0][0])
     x = compare_outputs(py[1], ml[1][0])
-    del ml,py
+    del ml, py
     ml = runMatLab(1)
     py = runPython(1)
     y = compare_outputs(py[0], ml[0][0])

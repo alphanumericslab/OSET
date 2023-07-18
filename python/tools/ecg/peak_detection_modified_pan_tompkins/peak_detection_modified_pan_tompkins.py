@@ -31,6 +31,13 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
       Reference:
           Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans
           Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
+
+    Revision History:
+        2023: Translated to Python from Matlab
+
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """
 
     nargin = len(args) + 2
