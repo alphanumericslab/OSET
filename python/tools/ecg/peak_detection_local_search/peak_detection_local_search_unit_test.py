@@ -8,7 +8,7 @@ from peak_detection_local_search import peak_detection_local_search
 sys.path.append('..')
 import Unit_test as testing
 
-mat = scipy.io.loadmat('../SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat('../../../../datasets/sample-data/SampleECG1.mat')['data'][0]
 f = 1
 fs = 1000
 
