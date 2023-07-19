@@ -1,6 +1,8 @@
 function phase = PhaseCalculation2(x, y, xi)
+% PhaseCalculation2 is incomplete and has been deprecated. Consider using phase_calculator instead.
+warning('PhaseCalculation2 is incomplete and has been deprecated. Consider using phase_calculator instead.');
 %
-% [phase phasepos] = PhaseCalculation(peaks)
+% [phase phasepos] = PhaseCalculation(x, y, xi)
 % ECG phase calculation from a given set of fiducial points
 %
 % input:
@@ -11,24 +13,7 @@ function phase = PhaseCalculation2(x, y, xi)
 % outputs:
 % phase: the calculated phases ranging from -pi to pi. The R-peaks are
 % located at phase = 0.
-% phasepos: the calculated phases ranging from 0 to 2*pi. The R-peaks are
-% again located at phasepos = 0.
 %
-%
-% Open Source Electrophysiological Toolbox, version 2.2, May 2015
-% Released under the GNU General Public License
-% Copyright (C) 2015  Reza Sameni
-% Shiraz University, Shiraz, Iran
-% reza.sameni@gmail.com
-
-% This program is free software; you can redistribute it and/or modify it
-% under the terms of the GNU General Public License as published by the
-% Free Software Foundation; either version 2 of the License, or (at your
-% option) any later version.
-% This program is distributed in the hope that it will be useful, but
-% WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-% Public License for more details.
 
 phase = interp1(x,y,xi);
 

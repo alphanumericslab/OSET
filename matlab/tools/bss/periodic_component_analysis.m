@@ -36,7 +36,8 @@ function [y, W, A] = periodic_component_analysis(x, peaks1, varargin)
 %       Transactions on Biomedical Engineering, 55(8):1935-1940, Aug. 2008.
 %
 % Revision History:
-%   2008: First release 2023: Renamed from deprecated version PiCA
+%   2008: First release
+%   2023: Renamed from deprecated version PiCA
 %
 % Reza Sameni, 2008-2023 The Open-Source Electrophysiological Toolbox
 % https://github.com/alphanumericslab/OSET
