@@ -31,7 +31,7 @@ def peak_detection_local_search(x, ff, *args):
     R-peak detection
 
     Revision History:
-        2023: Translated to Python from Matlab
+        July 2023: Translated to Python from Matlab (peak_detection_local_search.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox

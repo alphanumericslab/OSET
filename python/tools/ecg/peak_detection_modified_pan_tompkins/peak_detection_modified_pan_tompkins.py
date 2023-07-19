@@ -36,7 +36,7 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
           Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
 
     Revision History:
-        2023: Translated to Python from Matlab
+        July 2023: Translated to Python from Matlab (peak_detection_modified_pan_tompkins.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox

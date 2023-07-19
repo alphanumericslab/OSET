@@ -19,7 +19,7 @@ def peak_detection_simple(x, ff, flag, *args):
           peak_indexes: Vector of R-peak indexes
 
     Revision History:
-        2023: Translated to Python from Matlab
+        July 2023: Translated to Python from Matlab (peak_detection_simple.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox

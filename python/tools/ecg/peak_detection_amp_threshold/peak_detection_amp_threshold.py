@@ -30,7 +30,7 @@ def peak_detection_amp_threshold(x, ff, th, *args):
       R-peak detection.
 
     Revision History:
-        2023: Translated to Python from Matlab
+        July 2023: Translated to Python from Matlab (peak_detection_amp_threshold.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox
