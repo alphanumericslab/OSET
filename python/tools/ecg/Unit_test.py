@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 """
     Revision History:
         2023: Created
@@ -24,9 +26,8 @@ def compare_number_arrays(a, b, round_val: int = -1, debug: bool = False) -> boo
 
     """
     if round_val > -1:
-        for i in range(len(a)):
-            a[i] = round(a[i], round_val)
-            b[i] = round(b[i], round_val)
+        a = np.round(a, round_val)
+        b = np.round(b, round_val)
     if debug:
         logging.basicConfig(level=logging.DEBUG)
     x = True
@@ -40,12 +41,8 @@ def compare_number_arrays(a, b, round_val: int = -1, debug: bool = False) -> boo
     for i in range(len(a)):
         if not (a[i] == b[i]):
             print(i)
-            if i >= 2:
-                print(a[i - 2:i + 3], "python")
-                print(b[i - 2:i + 3], "matlab")
-            else:
-                print(a[:i + 3], "python")
-                print(b[:i + 3], "matlab")
+            print("python:", a[i])
+            print("matlab:", b[i])
             x = False
     return x
 
@@ -65,8 +62,8 @@ def compare_arrays(a, b, round_val: int = -1, debug: bool = False) -> bool:
 
     """
     if round_val > -1:
+        a = np.round(a, round_val)
         for i in range(len(a)):
-            a[i] = round(a[i], round_val)
             b[i][0] = round(b[i][0], round_val)
     if debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -81,12 +78,8 @@ def compare_arrays(a, b, round_val: int = -1, debug: bool = False) -> bool:
     for i in range(len(a)):
         if not (a[i] == b[i][0]):
             print(i)
-            if i >= 2:
-                print(a[i - 2:i + 3], "python")
-                print(b[i - 2:i + 3], "matlab")
-            else:
-                print(a[:i + 3], "python")
-                print(b[:i + 3], "matlab")
+            print("python:", a[i])
+            print("matlab:", b[i][0])
             x = False
     return x
 
