@@ -65,7 +65,7 @@ writematrix(gains_mat2wfdb, gain_csv);
 % Save the baseline to be used by the other tools (for exact comparison)
 bias_csv = [fname '_bias.csv'];
 % writematrix(baseline, bias_csv);
-writematrix(round(baseline_mat2wfdb/100), bias_csv);
+writematrix(baseline_mat2wfdb, bias_csv);
 
 % Plot results
 figure
