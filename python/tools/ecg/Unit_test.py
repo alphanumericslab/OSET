@@ -27,7 +27,7 @@ def compare_number_arrays(a, b, round_val: int = -1, debug: bool = False) -> boo
     """
     if round_val > -1:
         a = np.round(a, round_val)
-        b = np.round(b, round_val)
+        b = np.round(b, round_val)[0]
     if debug:
         logging.basicConfig(level=logging.DEBUG)
     x = True
@@ -37,6 +37,8 @@ def compare_number_arrays(a, b, round_val: int = -1, debug: bool = False) -> boo
     except:
         logging.debug('Iterating through the entire array')
     if not len(a) == len(b):
+        print("python length:", len(a))
+        print("matlab length:", len(b))
         raise Exception('lengths of both inputs have to be the same')
     for i in range(len(a)):
         if not (a[i] == b[i]):
@@ -74,6 +76,8 @@ def compare_arrays(a, b, round_val: int = -1, debug: bool = False) -> bool:
     except:
         logging.debug('Iterating through the entire array')
     if not len(a) == len(b):
+        print("python length:", len(a))
+        print("matlab length:", len(b))
         raise Exception('lengths of both inputs have to be the same')
     for i in range(len(a)):
         if not (a[i] == b[i][0]):
