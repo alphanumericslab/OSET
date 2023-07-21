@@ -1,20 +1,13 @@
-// A filter for moving averaging, median, trimmed mean, and weighted median filtering
+// A sorted list class used for trimmed mean and median filtering
 
 /*
-     Open Source ECG Toolbox, version 2.0, July 2008
- 	 Released under the GNU General Public License
- 	 Copyright (C) 2008  Reza Sameni
- 	 Sharif University of Technology, Tehran, Iran -- GIPSA-Lab, INPG, Grenoble, France
- 	 reza.sameni@gmail.com
- 	 
- 	 This program is free software; you can redistribute it and/or modify it
- 	 under the terms of the GNU General Public License as published by the
- 	 Free Software Foundation; either version 2 of the License, or (at your
- 	 option) any later version.
- 	 This program is distributed in the hope that it will be useful, but
- 	 WITHOUT ANY WARRANTY; without even the implied warranty of
- 	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- 	 Public License for more details.
+% Revision History:
+%   2008: First release
+%   2023: Renamed from deprecated version List.cpp
+%
+% Reza Sameni, 2022-2023 The Open-Source Electrophysiological Toolbox
+% https://github.com/alphanumericslab/OSET
+
 */
 
 #include<stdio.h>
@@ -22,7 +15,7 @@
 //#include <iostream>
 //using namespace std;
 
-#include "List.h"
+#include "list.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 list::list(int N,double init)
@@ -184,7 +177,7 @@ double list::wmedian(const double *weight, int m, int a) // neglects the first a
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-double list::medianOdd(void)
+double list::median_odd(void)
 {
 	int pntr = start;
 	int cntr = 0;
@@ -197,7 +190,7 @@ double list::medianOdd(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-double list::medianEven(void)
+double list::median_even(void)
 {
 	int pntr = start;
 	int cntr = 0;
@@ -209,4 +202,3 @@ double list::medianEven(void)
 	return (itmlist[pntr].value + itmlist[itmlist[pntr].from].value)/2.;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
