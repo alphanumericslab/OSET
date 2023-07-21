@@ -35,7 +35,7 @@ for i = 1 : Itr
     [V,D] = eig(A,B,'chol');
 
     d = diag(D);
-    [Y,I] = sort(d);
+    [~,I] = sort(d);
     I = I(end:-1:1);
 
     W = V(:,I)';
