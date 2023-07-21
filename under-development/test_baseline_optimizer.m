@@ -5,8 +5,8 @@
 clear;
 close all;
 
-load patient165_s0323lre; data = data(1:25000, 2)'; fs = 1000;
-% load SampleECG128Hz; data = y(:, 3)' ; fs = 128;
+% load patient165_s0323lre; data = data(1:25000, 2)'; fs = 1000;
+load SampleECG128Hz; data = y(:, 3)' ; fs = 128;
 
 % data = data - lp_filter_zero_phase(data, 0.05/fs);
 
