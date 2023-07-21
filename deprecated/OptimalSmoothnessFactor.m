@@ -1,0 +1,4 @@
+function [penalty_factor, cc, ee, L_curveC, L_curveE] = OptimalSmoothnessFactor(xx, bb, ss, mode, SmoothnessFactor, penalty_factor0, signorm, ACCURACY, MAX_ITERATION, FORGETTING_FACTOR, LCurveSweepLength, LCurveSweepFator)
+% OptimalSmoothnessFactor has been deprecated. Use optimal_smoothness_factor instead.
+warning('OptimalSmoothnessFactor has been deprecated. Use optimal_smoothness_factor instead.');
+[penalty_factor, cc, ee, L_curveC, L_curveE] = optimal_smoothness_factor(xx, bb, ss, mode, SmoothnessFactor, penalty_factor0, signorm, ACCURACY, MAX_ITERATION, FORGETTING_FACTOR, LCurveSweepLength, LCurveSweepFator);
