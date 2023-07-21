@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def peak_detection_simple(x, ff, flag, *args):
+def peak_detection_simple(x, ff, flag=0, *args):
     """
 
     peak_detection_simple - Internal R-peak detector function
