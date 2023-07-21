@@ -1,13 +1,14 @@
 # For this you need matlab and the new requirements.txt
 import sys
-import time
 import matlab.engine
 import matlab
 import numpy as np
 import scipy.io
 from peak_detection_pan_tompkins import peak_detection_pan_tompkins
+import os
 
-sys.path.append('..')
+module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(module_path)
 import Unit_test as testing
 
 mat = scipy.io.loadmat('../../../../datasets/sample-data/SampleECG1.mat')['data'][0]

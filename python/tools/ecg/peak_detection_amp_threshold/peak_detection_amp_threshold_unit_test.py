@@ -4,8 +4,10 @@ import matlab
 import scipy.io
 import sys
 from peak_detection_amp_threshold import peak_detection_amp_threshold
+import os
 
-sys.path.append('..')
+module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(module_path)
 import Unit_test as testing
 
 mat = scipy.io.loadmat('../../../../datasets/sample-data/SampleECG1.mat')['data'][0]

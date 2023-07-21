@@ -1,11 +1,13 @@
 # For this you need matlab and the new requirements.txt
+import os
 import sys
 import matlab.engine
 import matlab
 import scipy.io
 from peak_detection_local_search import peak_detection_local_search
 
-sys.path.append('..')
+module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(module_path)
 import Unit_test as testing
 
 mat = scipy.io.loadmat('../../../../datasets/sample-data/SampleECG1.mat')['data'][0]
