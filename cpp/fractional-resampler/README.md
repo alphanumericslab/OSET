@@ -70,24 +70,20 @@ To compile the sample test program (`resampler_test.cpp`) and the MATLAB mexFunc
 3. Use the following command to compile the `mexFunction` interface:
 
    ```matlab
-   mex resampler_mex.cpp resampler.cpp -output resampler
+   mex resampler_mex.cpp resampler.cpp
    ```
 
    This command will compile the C++ code into a MEX-file (`resampler_mex.mexa64` on Linux, `resampler_mex.mexmaci64` on macOS, or `resampler_mex.mexw64` on Windows).
+   
+   The compiled library name can be cnaged to an arbitrary name using the `-output` option in `mex`, e.g, 
+      ```matlab
+   mex resampler_mex.cpp resampler.cpp -output fractional_resampler
+   ```
+   which will change the compiled library names to `fractional_resampler.mexa64` on Linux, `fractional_resampler.mexmaci64` on macOS, or `fractional_resampler.mexw64` on Windows.
 
 ## MATLAB Usage
 
 After compiling the `resampler_mex.cpp` with `mex`, you can use the Resampler class in MATLAB:
-
-1. Open MATLAB.
-2. Load the resampler_mex MEX-file:
-
-   ```matlab
-   mex resampler_mex.cpp resampler.cpp
-   ```
-
-3. Now, you can use the `resampler_mex` function in MATLAB:
-
    ```matlab
    % Sample test of the Resampler class using the mexFunction interface
    inputSignal = sin(2 * pi * 2 * (0:0.01:1)); % 2 Hz sine wave
