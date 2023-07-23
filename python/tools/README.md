@@ -1,2 +1,0 @@
-# OSET Tools in Python
-

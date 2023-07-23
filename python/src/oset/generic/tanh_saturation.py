@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def tanh_saturation(x, ksigma):
     """
     Saturates outlier samples using a tanh shape function.
