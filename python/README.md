@@ -2,7 +2,7 @@
 
 ## Installing
 
-To use the OSET Python package, follow these steps according to your system's python release:
+To use the OSET Python package, follow these steps according to your system's Python release:
 
 ### Setting up a Virtual Environment using Conda
 
@@ -49,13 +49,17 @@ To use the OSET Python package, follow these steps according to your system's py
 ### Building the OSET package
 
 After activating the venv, make sure to have `poetry` installed. If not, run:
+
 ```bash
 pip install poetry
 ```
+
 Now build the OSET package:
+
 ```bash
 poetry build
 ```
+
 ### Installing OSET on the Virtual Environment
 
 With the virtual environment activated (as explained above), you can now install the OSET package using `pip`:
@@ -63,6 +67,7 @@ With the virtual environment activated (as explained above), you can now install
 ```bash
 pip install .
 ```
+
 After installation, you can check if the package is correctly installed in the virtual environment:
 
 ```bash
@@ -82,29 +87,34 @@ Replace `<venv_name>` with the name of the virtual environment where you install
 After uninstallation, verify that the package is fully removed by rechecking the installed packages using `pip list`. If you previously had a different version installed, uninstalling will revert to the previous version.
 
 The virtual environment can be deactivated as follows:
+
 ```bash
 conda deactivate
 ```
 
 And it can be deleted using:
+
 ```bash
 conda remove --name <venv_name> --all
 ```
 
-
 ## Jupyter
+
 Install Jupyter on the virtual environment:
+
 ```bash
 conda install jupyterlab
 ```
-After activating the created virtual environmnet, install its kernel:
+
+After activating the created virtual environment, install its kernel:
+
 ```bash
 ipython kernel install --user --name=<venv_name>
 ```
 
-Launch `jupyter-notebook` or `jupyter-lab` after activating the virtual environmnet. Select the `<venv_name>` kernel from the Kernels tab.
+Launch `jupyter-notebook` or `jupyter-lab` after activating the virtual environment. Select the `<venv_name>` kernel from the Kernels tab.
 
-Check in the Jupyter terminal to make sure that `oset` is installed (`pip list` or `conda list`). If not, install OSET from the Jupyter terminal. 
+Check in the Jupyter terminal to make sure that `oset` is installed (`pip list` or `conda list`). If not, install OSET from the Jupyter terminal.
 
 ## Usage
 
