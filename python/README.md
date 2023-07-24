@@ -46,7 +46,7 @@ To use the OSET Python package, follow these steps according to your system's Py
      source <venv_name>/bin/activate
      ```
 
-### Building the OSET package
+### Building and installing the OSET package on the Virtual Environment (tested on MacOS)
 
 After activating the venv, make sure to have `poetry` installed. If not, run:
 
@@ -60,8 +60,24 @@ Now build the OSET package:
 poetry build
 ```
 
-### Installing OSET on the Virtual Environment
+With the virtual environment activated (as explained above), you can now install the OSET package using `pip`:
 
+```bash
+pip install .
+```
+
+After installation, you can check if the package is correctly installed in the virtual environment:
+
+```bash
+pip list
+```
+
+### Building and installing the OSET package on the Virtual Environment (tested on Windows)
+Make sure all the package subfolders have a `__init__.py` file. Now build the OSET package:
+
+```bash
+python -m build
+```
 With the virtual environment activated (as explained above), you can now install the OSET package using `pip`:
 
 ```bash
