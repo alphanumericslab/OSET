@@ -1,12 +1,7 @@
-import sys
 import numpy as np
 from scipy.signal import lfilter
-import os
-
-module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-sys.path.append(module_path)
-from generic.tanh_saturation import tanh_saturation
-from generic.lp_filter_zero_phase import lp_filter_zero_phase
+from oset.generic.tanh_saturation import tanh_saturation
+from oset.generic.lp_filter.lp_filter_zero_phase import lp_filter_zero_phase
 
 
 def peak_detection_modified_pan_tompkins(data, fs, *args):

@@ -1,10 +1,5 @@
 import numpy as np
-import os
-import sys
-
-module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(module_path)
-from peak_detection_simple.peak_detection_simple import peak_detection_simple
+from oset.ecg.peak_detection.peak_detection_simple import peak_detection_simple
 
 
 def peak_detection_amp_threshold(x, ff, th, *args):
