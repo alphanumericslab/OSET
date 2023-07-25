@@ -5,7 +5,7 @@ import numpy as np
 import scipy.io
 from oset.ecg.peak_detection.peak_detection_pan_tompkins import peak_detection_pan_tompkins
 
-import Unit_test as testing
+import unit_test as testing
 
 mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
 f = 1

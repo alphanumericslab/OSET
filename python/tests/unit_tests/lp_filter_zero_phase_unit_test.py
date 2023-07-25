@@ -5,7 +5,7 @@ import numpy as np
 import scipy.io
 from oset.generic.lp_filter.lp_filter_zero_phase import lp_filter_zero_phase
 
-import Unit_test as testing
+import unit_test as testing
 
 mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
 f = 1
