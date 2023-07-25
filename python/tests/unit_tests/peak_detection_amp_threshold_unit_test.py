@@ -2,15 +2,10 @@
 import matlab.engine
 import matlab
 import scipy.io
-import sys
-from peak_detection_amp_threshold import peak_detection_amp_threshold
-import os
-
-module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(module_path)
+from oset.ecg.peak_detection.peak_detection_amp_threshold import peak_detection_amp_threshold
 import Unit_test as testing
 
-mat = scipy.io.loadmat('../../../../datasets/sample-data/SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
@@ -25,8 +20,8 @@ def peak_detection_amp_threshold_unit_test():
 def runMatLab():
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    eng.addpath('../../../../matlab/tools/ecg')
-    eng.addpath('../../../../matlab/tools/generic')
+    eng.addpath('../../../matlab/tools/ecg')
+    eng.addpath('../../../matlab/tools/generic')
     return eng.peak_detection_amp_threshold(x, f / fs, th, nargout=2)
 
 

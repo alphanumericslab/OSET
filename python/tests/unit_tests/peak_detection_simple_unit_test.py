@@ -1,16 +1,11 @@
 # For this you need matlab and the new requirements.txt
-import sys
 import matlab.engine
 import matlab
 import scipy.io
-from peak_detection_simple import peak_detection_simple
-import os
-
-module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(module_path)
+from oset.ecg.peak_detection.peak_detection_simple import peak_detection_simple
 import Unit_test as testing
 
-mat = scipy.io.loadmat('../../../../datasets/sample-data/SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
@@ -32,8 +27,8 @@ def peak_detection_simple_unit_test():
 def runMatLab(z):
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    eng.addpath('../../../../matlab/tools/ecg')
-    eng.addpath('../../../../matlab/tools/generic')
+    eng.addpath('../../../matlab/tools/ecg')
+    eng.addpath('../../../matlab/tools/generic')
     return eng.peak_detection_simple(x, f / fs, z, nargout=2)
 
 

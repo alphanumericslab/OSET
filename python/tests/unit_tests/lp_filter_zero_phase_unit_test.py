@@ -3,9 +3,10 @@ import matlab.engine
 import matlab
 import numpy as np
 import scipy.io
-from lp_filter_zero_phase import lp_filter_zero_phase
+import Unit_test as testing
+from oset.generic.lp_filter.lp_filter_zero_phase import lp_filter_zero_phase
 
-mat = scipy.io.loadmat('SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
@@ -14,12 +15,14 @@ th = 0.10  # an arbitrary value for testing
 def main():
     ml = runMatLab()
     py = runPython()
-    x = compare_outputs(py, ml[0])
+    x = testing.compare_number_arrays(py, ml[0])
     return x
 
 
 def runMatLab():
     eng = matlab.engine.start_matlab()
+    eng.addpath('../../../matlab/tools/ecg')
+    eng.addpath('../../../matlab/tools/generic')
     x = matlab.double(mat.tolist())
     return eng.lp_filter_zero_phase(x, np.double(f / fs), nargout=1)
 
