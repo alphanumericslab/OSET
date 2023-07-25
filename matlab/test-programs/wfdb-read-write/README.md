@@ -1,6 +1,4 @@
 # Comparing different tools for reading and writing WFDB compatible data files in C, MATLAB and Python
-## Reza Sameni, Emory University
-### June 21, 2023
 
 ### Requirements
 1. The WFDB software package in C: https://physionet.org/content/wfdb/10.7.0/ (https://github.com/bemoody/wfdb)
@@ -32,4 +30,10 @@
 7. The checksum value is not matching across MATLAB and python: this is because [in the python script when calculating the checksum value](https://github.com/MIT-LCP/wfdb-python/blob/2cdb44ad0d4dbdfe5109a360a2e4d0ea4453b9f4/wfdb/io/_signal.py#L893), the script does not take into consideration the sign of the checksum. It computes the `mod` with only the positive 2^16 instead of the negative one, which is not identical to the design C feature that would result in an overflow of the checksum counter after exceeding the min and max of 16-bit integers [-2^15, 2^15).
 8. All the values (except the adc_gain) won’t match with the header file generated through C because it has no baseline flag.
 9. The `mat2wfdb` function does not have any adc_zero argument, it is assumed to be zero by the function definition (as highlighted in the function's description). The python funciton `csv_to_wfdb` has the adc_zero argument.
+
+### Contact
+[Reza Sameni](mailto:rsameni@dbmi.emory.edu) and Deepanshi, 2003
+
+[The Open-Source Electrophysiological Toolbox](https://github.com/alphanumericslab/OSET)
+
 
