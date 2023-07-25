@@ -1,10 +1,12 @@
 # For this you need matlab and the new requirements.txt
+import argparse
+
 import matlab
 import matlab.engine
 import numpy as np
 import scipy.io
-import argparse
 from oset.generic.lp_filter.lp_filter_zero_phase import lp_filter_zero_phase
+
 import unit_test as testing
 
 mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]

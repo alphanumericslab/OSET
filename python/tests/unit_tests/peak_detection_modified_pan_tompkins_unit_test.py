@@ -1,4 +1,6 @@
 # For this you need matlab and the new requirements.txt
+import argparse
+
 import matlab
 import matlab.engine
 import numpy as np
@@ -35,4 +37,8 @@ def run_python():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="""This is a unit test for peak_detection_modified_pan_tompkins"""
+    )
+    args = parser.parse_args()
     print(peak_detection_modified_pan_tompkins_unit_test())

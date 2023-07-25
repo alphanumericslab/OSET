@@ -1,4 +1,6 @@
 # For this you need matlab and the new requirements.txt
+import argparse
+
 import matlab
 import matlab.engine
 import numpy as np
@@ -13,7 +15,7 @@ fs = 1000
 th = 0.10  # an arbitrary value for testing
 
 
-def main():
+def peak_detection_pan_tompkins_unit_test():
     ml = runMatLab()
     py = runPython()
     x = testing.compare_number_arrays(py[0], ml[0][0])
@@ -34,4 +36,8 @@ def runPython():
 
 
 if __name__ == "__main__":
-    print(main())
+    parser = argparse.ArgumentParser(
+        description="""This is a unit test for peak_detection_pan_tompkins"""
+    )
+    args = parser.parse_args()
+    print(peak_detection_pan_tompkins_unit_test())

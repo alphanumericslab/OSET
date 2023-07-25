@@ -1,4 +1,6 @@
 # For this you need matlab and the new requirements.txt
+import argparse
+
 import matlab
 import matlab.engine
 import scipy.io
@@ -31,4 +33,8 @@ def runPython():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="""This is a unit test for peak_detection_amp_threshold"""
+    )
+    args = parser.parse_args()
     print(peak_detection_amp_threshold_unit_test())
