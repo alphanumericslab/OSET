@@ -1,8 +1,9 @@
 # For this you need matlab and the new requirements.txt
-import matlab.engine
 import matlab
+import matlab.engine
 import scipy.io
 from oset.ecg.peak_detection.peak_detection_simple import peak_detection_simple
+
 import Unit_test as testing
 
 mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]

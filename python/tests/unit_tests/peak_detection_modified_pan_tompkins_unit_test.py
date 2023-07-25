@@ -1,9 +1,10 @@
 # For this you need matlab and the new requirements.txt
-import matlab.engine
 import matlab
+import matlab.engine
 import numpy as np
 import scipy.io
 from oset.ecg.peak_detection.peak_detection_modified_pan_tompkins import peak_detection_modified_pan_tompkins
+
 import Unit_test as testing
 
 mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]

@@ -1,7 +1,7 @@
 import numpy as np
-from scipy.signal import lfilter
-from oset.generic.tanh_saturation import tanh_saturation
 from oset.generic.lp_filter.lp_filter_zero_phase import lp_filter_zero_phase
+from oset.generic.tanh_saturation import tanh_saturation
+from scipy.signal import lfilter
 
 
 def peak_detection_modified_pan_tompkins(data, fs, *args):
