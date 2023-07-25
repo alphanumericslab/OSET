@@ -13,7 +13,7 @@ fs = 1000
 th = 0.10  # an arbitrary value for testing
 
 
-def main():
+def lp_filter_zero_phase_unit_test():
     ml = runMatLab()
     py = runPython()
     x = testing.compare_number_arrays(py, ml[0])
@@ -37,4 +37,4 @@ if __name__ == "__main__":
         description="""This is a unit test for lp_filter_zero_phase"""
     )
     args = parser.parse_args()
-    print(main())
+    print(lp_filter_zero_phase_unit_test())
