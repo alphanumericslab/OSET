@@ -1,10 +1,7 @@
-import os
-import sys
-import numpy as np
+import argparse
 
-module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(module_path)
-from peak_detection_simple.peak_detection_simple import peak_detection_simple
+import numpy as np
+from oset.ecg.peak_detection.peak_detection_simple import peak_detection_simple
 
 
 def peak_detection_local_search(x, ff, *args):
@@ -72,3 +69,37 @@ def peak_detection_local_search(x, ff, *args):
             ff = hr_update_fraction / np.median(rr_intervals)  # refined heart rate (in Hz) used for R-peak detection
             peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
     return peaks, peak_indexes
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="""
+    peak_detection_local_search - R-peak detector based on local max/min search
+    peaks, peak_indexes = PeakDetection(x,f,flag, num_rounds),
+
+    inputs:
+    x: vector of input data
+    f: approximate ECG beat-rate in Hertz, normalized by the sampling frequency
+    flag: search for positive (flag=1) or negative (flag=0) peaks. By default
+    the maximum absolute value of the signal, determines the peak sign.
+    num_rounds: the number of iterations to find the R-peaks, up to 3
+    (everytime updating the expected R-peak rates). Default = 1 (no iterations)
+
+    output:
+    peaks: vector of R-peak impulse train
+    peak_indexes: vector of R-peak indexes
+
+    Notes:
+    - The R-peaks are found from a peak search in windows of length N; where
+    N corresponds to the R-peak period calculated from the given f. R-peaks
+    with periods smaller than N/2 or greater than N are not detected.
+    - The signal baseline wander is recommended to be removed before the
+    R-peak detection
+
+    Revision History:
+        July 2023: Translated to Python from Matlab (peak_detection_local_search.m)
+
+    """,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    args = parser.parse_args()

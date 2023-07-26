@@ -1,4 +1,6 @@
+import argparse
 import numpy as np
+
 
 def tanh_saturation(x, ksigma):
     """
@@ -27,3 +29,24 @@ def tanh_saturation(x, ksigma):
     # Scale the input data and apply the tanh function to saturate outliers
     y = (np.diag(alpha) * np.tanh(np.diag(1. / alpha) * x))[0]
     return y
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="""
+    Saturates outlier samples using a tanh shape function.
+
+    Args:
+        x (ndarray): Input data, can be a vector or a matrix (channels x time).
+        ksigma (float): Scaling factor for the saturation level.
+
+    Returns:
+        ndarray: Saturated data with outliers replaced by the saturation level.
+
+    Revision History:
+        2023: Translated to Python from Matlab
+
+    """,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    args = parser.parse_args()

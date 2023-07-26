@@ -1,23 +1,21 @@
 # For this you need matlab and the new requirements.txt
-import sys
-import matlab.engine
+import argparse
+
 import matlab
+import matlab.engine
 import numpy as np
 import scipy.io
-from peak_detection_pan_tompkins import peak_detection_pan_tompkins
-import os
+from oset.ecg.peak_detection.peak_detection_pan_tompkins import peak_detection_pan_tompkins
 
-module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(module_path)
-import Unit_test as testing
+import unit_test as testing
 
-mat = scipy.io.loadmat('../../../../datasets/sample-data/SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
 
 
-def main():
+def peak_detection_pan_tompkins_unit_test():
     ml = runMatLab()
     py = runPython()
     x = testing.compare_number_arrays(py[0], ml[0][0])
@@ -28,8 +26,8 @@ def main():
 def runMatLab():
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    eng.addpath('../../../../matlab/tools/ecg')
-    eng.addpath('../../../../matlab/tools/generic')
+    eng.addpath('../../../matlab/tools/ecg')
+    eng.addpath('../../../matlab/tools/generic')
     return eng.peak_detection_pan_tompkins(x, np.double(fs), nargout=2)
 
 
@@ -38,4 +36,8 @@ def runPython():
 
 
 if __name__ == "__main__":
-    print(main())
+    parser = argparse.ArgumentParser(
+        description="""This is a unit test for peak_detection_pan_tompkins"""
+    )
+    args = parser.parse_args()
+    print(peak_detection_pan_tompkins_unit_test())

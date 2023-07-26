@@ -1,12 +1,9 @@
-import sys
-import numpy as np
-from scipy.signal import lfilter
-import os
+import argparse
 
-module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-sys.path.append(module_path)
-from generic.tanh_saturation import tanh_saturation
-from generic.lp_filter_zero_phase import lp_filter_zero_phase
+import numpy as np
+from oset.generic.lp_filter.lp_filter_zero_phase import lp_filter_zero_phase
+from oset.generic.tanh_saturation import tanh_saturation
+from scipy.signal import lfilter
 
 
 def peak_detection_modified_pan_tompkins(data, fs, *args):
@@ -133,3 +130,41 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
     peaks[peak_indexes.astype(int)] = 1
     peak_indexes += 1
     return peaks, peak_indexes, width
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="""
+      peak_detection_modified_pan_tompkins - R-peak detector based on modified
+      Pan-Tompkins method. The filters and post-detection R-peak selection
+      logic differ from the original algorithm
+
+      peaks, peak_indexes, width = peak_detection_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
+
+      Inputs:
+          data: Vector of input data
+          fs: Sampling rate
+          wlen: Optional. Moving average window length (default = 150ms)
+          fp1: Optional. Lower cut-off frequency (default = 10Hz)
+          fp2: Optional. Upper cut-off frequency (default = 33.3Hz)
+          th: Optional. Detection threshold (default = 0.2)
+          ksigma: Optional. Saturates peaks at ksigma x STD of the signal after energy envelope calculation (default = 12)
+          flag: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
+                By default, the maximum absolute value of the signal determines the peak sign.
+
+      Outputs:
+          peaks: Vector of R-peak impulse train
+          peak_indexes: Vector of R-peak indexes
+          width: Rise to fall width of the signal's peak bump (in samples)
+
+      Reference:
+          Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans
+          Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
+
+    Revision History:
+        July 2023: Translated to Python from Matlab (peak_detection_modified_pan_tompkins.m)
+
+    """,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    args = parser.parse_args()
