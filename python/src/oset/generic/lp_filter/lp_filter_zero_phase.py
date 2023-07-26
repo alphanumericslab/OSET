@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 from scipy.signal import filtfilt
 
@@ -40,3 +41,33 @@ def lp_filter_zero_phase(x, fc):
     for i in range(x.shape[0]):
         y[i, :] = filtfilt([1 - alpha], [1, -alpha], x[i, :], padlen=3)
     return y[0]
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="""
+    lp_filter_zero_phase - Second-order zero-phase Lowpass filter.
+
+    Syntax: y = lp_filter_zero_phase(x, fc)
+
+    Inputs:
+      x: Vector or matrix of input data (channels x samples).
+      fc: -3dB cut-off frequency normalized by the sampling frequency.
+
+    Output:
+      y: Vector or matrix of filtered data (channels x samples).
+
+      Revision History:
+          2006: First release
+          2023: Renamed from deprecated version LPFilter()
+
+      Read more:  Mitra, S. (2010). Digital signal processing (4th ed.)
+                  New York, NY: McGraw-Hill Professional.
+
+    Revision History:
+        2023: Translated to Python from Matlab
+
+    """,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    args = parser.parse_args()
