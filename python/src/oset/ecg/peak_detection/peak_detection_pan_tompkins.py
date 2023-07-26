@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 from scipy.signal import butter, filtfilt, convolve
 
@@ -88,3 +90,34 @@ def peak_detection_pan_tompkins(data, fs, *args):
     peak_indexes = np.nonzero(peaks)[0] + 1
 
     return peaks, peak_indexes
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="""
+    peak_detection_pan_tompkins - R-peak detector based on Pan-Tompkins method.
+
+    Args:
+        data (numpy.ndarray): Vector of input ECG data
+        fs (float): Sampling rate in Hz
+        fc_low (float, optional): BP filter lower cutoff frequency in Hz (default: 5.0 Hz)
+        fc_high (float, optional): BP filter upper cutoff frequency in Hz (default: 15.0 Hz)
+        window_length (float, optional): Integration window length in seconds (default: 0.150 s)
+        threshold_ratio (float, optional): Threshold ratio for peak detection (default: 0.2)
+        refractory_period (float, optional): Refractory period in seconds (default: 0.2 s)
+
+    Returns:
+        peaks (numpy.ndarray): Vector of R-peak impulse train
+        peak_indexes (numpy.ndarray): Vector of R-peak indexes
+
+    References:
+        Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans
+        Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
+
+    Revision History:
+        July 2023: Translated to Python from Matlab (peak_detection_pan_tompkins.m)
+
+    """,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    args = parser.parse_args()
