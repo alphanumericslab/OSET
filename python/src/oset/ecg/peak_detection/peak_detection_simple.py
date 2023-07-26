@@ -1,9 +1,10 @@
+import argparse
+
 import numpy as np
 
 
 def peak_detection_simple(x, ff, flag=0, *args):
     """
-
     peak_detection_simple - Internal R-peak detector function
     Syntax: peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
 
@@ -65,3 +66,29 @@ def peak_detection_simple(x, ff, flag=0, *args):
         peaks[(I[np.where(d < rng)[0]])] = 0
     peak_indexes = np.where(peaks)[0] + 1
     return peaks, peak_indexes
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="""
+    peak_detection_simple - Internal R-peak detector function
+    Syntax: peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
+
+      Inputs:
+          x: Vector of input data
+          ff: Approximate ECG beat-rate in Hertz
+          flag: Search for positive (flag=1) or negative (flag=0) peaks
+          omit_close_peaks: omit close peaks after main peak detection
+          (true/1) or not(false/0). Default is 0
+
+      Outputs:
+          peaks: Vector of R-peak impulse train
+          peak_indexes: Vector of R-peak indexes
+
+    Revision History:
+        July 2023: Translated to Python from Matlab (peak_detection_simple.m)
+
+    """,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    args = parser.parse_args()
