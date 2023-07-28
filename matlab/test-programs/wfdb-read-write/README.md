@@ -31,6 +31,12 @@
 8. All the values (except the adc_gain) won’t match with the header file generated through C because it has no baseline flag.
 9. The `mat2wfdb` function does not have any adc_zero argument, it is assumed to be zero by the function definition (as highlighted in the function's description). The python funciton `csv_to_wfdb` has the adc_zero argument.
 
+### Checksum calculation: wfdb-python
+1. The checksum value is not matching across MATLAB and python: this is because [in the python script when calculating the checksum value](https://github.com/MIT-LCP/wfdb-python/blob/2cdb44ad0d4dbdfe5109a360a2e4d0ea4453b9f4/wfdb/io/_signal.py#L893), the script does not take into consideration the sign of the checksum. It computes the `mod` with only the positive 2^16 instead of the negative one, which is not identical to the design C feature that would result in an overflow of the checksum counter after exceeding the min and max of 16-bit integers [-2^15, 2^15).
+2. the corrected logic for checksum calculation can be found here [_signal_modified.py](_signal_modified.py) 
+3. The function computes the sum of the signal across all the channels and then normalizes the values with the maximum of the 16 bit signed range (2^15).
+4. Then based on the sign of the channel sum the function computes the modulus of the values and takes care of the overflow condition.
+
 ### Contact
 [Reza Sameni](mailto:rsameni@dbmi.emory.edu) and Deepanshi, 2003
 
