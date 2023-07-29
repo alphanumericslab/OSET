@@ -22,7 +22,7 @@ def peak_detection_simple_unit_test():
     del ml, py
     ml = runMatLab(1)
     py = runPython(1)
-    y = testing.compare_number_arrays(py[0], ml[0][0], )
+    y = testing.compare_number_arrays(py[0], ml[0][0])
     z = testing.compare_number_arrays(py[1], ml[1][0])
     return w and x and y and z
 
