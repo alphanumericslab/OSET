@@ -30,30 +30,31 @@ def peak_detection_simple(x, ff, flag=0, omit_close_peaks=0):
     n = len(x)
     peaks = np.zeros(n)
     rng = int(np.floor(0.5 / ff))
+
     if flag:
-        for j in range(n):
+        for j in range(1, n + 1):
             # Determine the index range for peak search
             if rng < j < n - rng:
-                index = slice(j - rng - 1, j + rng + 1)
+                index = slice(j - rng - 1, j + rng)
             elif j > rng:
-                index = slice((n - 2 * rng) - 1, n + 1)
+                index = slice((n - 2 * rng) - 1, n)
             else:
-                index = slice(0, 2 * rng + 1)
+                index = slice(0, 2 * rng)
 
-            if np.max(x[index]) == x[j]:
-                peaks[j] = 1
+            if np.max(x[index]) == x[j - 1]:
+                peaks[j - 1] = 1
     else:
-        for j in range(n):
+        for j in range(1, n + 1):
             # Determine the index range for peak search
             if rng < j < n - rng:
-                index = slice(j - rng - 1, j + rng + 1)
+                index = slice(j - rng - 1, j + rng)
             elif j > rng:
-                index = slice(n - 2 * rng - 1, n + 1)
+                index = slice(n - 2 * rng - 1, n)
             else:
-                index = slice(0, 2 * rng + 1)
+                index = slice(0, 2 * rng)
 
-            if np.min(x[index]) == x[j]:
-                peaks[j] = 1
+            if np.min(x[index]) == x[j - 1]:
+                peaks[j - 1] = 1
 
     if omit_close_peaks:
         I = np.where(peaks)[0]
