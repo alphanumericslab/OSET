@@ -6,6 +6,7 @@ from peak_detection_local_search_unit_test import peak_detection_local_search_un
 from peak_detection_modified_pan_tompkins_unit_test import peak_detection_modified_pan_tompkins_unit_test
 from peak_detection_pan_tompkins_unit_test import peak_detection_pan_tompkins_unit_test
 from peak_detection_simple_unit_test import peak_detection_simple_unit_test
+from peak_detection_matched_filter_robust_unit_test import peak_detection_matched_filter_robust_unit_test
 
 
 class TestMyFunctions(unittest.TestCase):
@@ -26,6 +27,9 @@ class TestMyFunctions(unittest.TestCase):
 
     def test_peak_detection_simple(self):
         self.assertTrue(peak_detection_simple_unit_test())
+
+    def test_peak_detection_matched_filter_robust(self):
+        self.assertTrue(peak_detection_matched_filter_robust_unit_test())
 
 
 if __name__ == '__main__':
