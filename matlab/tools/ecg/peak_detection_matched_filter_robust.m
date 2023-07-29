@@ -8,7 +8,7 @@ function [peaks, r] = peak_detection_matched_filter_robust(ref, fs, h, fmax, var
 %   fs:     Sampling rate.
 %   h:      Template waveform.
 %   fmax:   Maximum expected frequency of the R-peaks.
-%   itr:    Number of iterations to run the post-matched filter peak detector (Default: 1, run peakk detector only once)
+%   itr:    Number of iterations to run the post-matched filter peak detector (Default: 1, run peak detector only once)
 %
 % Outputs:
 %   peaks:  Vector of R-peak impulse train.
