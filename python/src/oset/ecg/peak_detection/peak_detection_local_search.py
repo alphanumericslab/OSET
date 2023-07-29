@@ -60,7 +60,7 @@ def peak_detection_local_search(x, ff, *args):
         omit_close_peaks = 0
 
     # Perform peak detection
-    peaks, peak_indexes = peak_detection_simple(x, ff, flag)
+    peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
 
     # Perform additional iterations if specified
     if num_rounds > 1:
