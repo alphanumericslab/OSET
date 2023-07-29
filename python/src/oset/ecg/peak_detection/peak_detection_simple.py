@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 
 
-def peak_detection_simple(x, ff, flag=0, *args):
+def peak_detection_simple(x, ff, flag=0, omit_close_peaks=0):
     """
     peak_detection_simple - Internal R-peak detector function
     Syntax: peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
@@ -26,11 +26,6 @@ def peak_detection_simple(x, ff, flag=0, *args):
     The Open-Source Electrophysiological Toolbox
     https://github.com/alphanumericslab/OSET
     """
-
-    if len(args) > 0 and args[0] is not None:
-        omit_close_peaks = args[0]
-    else:
-        omit_close_peaks = 0
 
     n = len(x)
     peaks = np.zeros(n)
