@@ -14,10 +14,9 @@ fs = 1000
 th = 0.10  # an arbitrary value for testing
 
 
-def peak_detection_simple_unit_test():
+def peak_detection_matched_filter_robust_unit_test():
     ml = runMatLab()
     py = runPython()
-    print(ml[0])
     x = testing.compare_number_arrays(py[0], ml[0][0])
     y = testing.compare_number_arrays(py[1], ml[1][0])
     return x and y
@@ -41,4 +40,4 @@ if __name__ == "__main__":
         description="""This is a unit test for peak_detection_matched_filter_robust"""
     )
     args = parser.parse_args()
-    print(peak_detection_simple_unit_test())
+    print(peak_detection_matched_filter_robust_unit_test())
