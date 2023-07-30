@@ -15,24 +15,32 @@ th = 0.10  # an arbitrary value for testing
 
 
 def peak_detection_matched_filter_robust_unit_test():
-    ml = runMatLab()
-    py = runPython()
-    x = testing.compare_number_arrays(py[0], ml[0][0])
-    y = testing.compare_number_arrays(py[1], ml[1][0])
-    return x and y
+    ml = runMatLab(1)
+    py = runPython(1)
+    a = testing.compare_number_arrays(py[0], ml[0][0])
+    b = testing.compare_number_arrays(py[1], ml[1][0])
+    ml = runMatLab(2)
+    py = runPython(2)
+    c = testing.compare_number_arrays(py[0], ml[0][0])
+    d = testing.compare_number_arrays(py[1], ml[1][0])
+    ml = runMatLab(3)
+    py = runPython(3)
+    e = testing.compare_number_arrays(py[0], ml[0][0])
+    f = testing.compare_number_arrays(py[1], ml[1][0])
+    return a and b and c and d and e and f
 
 
-def runMatLab():
+def runMatLab(itr):
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
     y = matlab.double([1, 2, 3, 4])
     eng.addpath('../../../matlab/tools/ecg')
     eng.addpath('../../../matlab/tools/generic')
-    return eng.peak_detection_matched_filter_robust(x, f / fs, y, 60, nargout=2)
+    return eng.peak_detection_matched_filter_robust(x, f / fs, y, 60, itr, nargout=2)
 
 
-def runPython():
-    return peak_detection_matched_filter_robust(mat, f / fs, [1, 2, 3, 4], 60)
+def runPython(itr):
+    return peak_detection_matched_filter_robust(mat, f / fs, [1, 2, 3, 4], 60, itr)
 
 
 if __name__ == "__main__":
