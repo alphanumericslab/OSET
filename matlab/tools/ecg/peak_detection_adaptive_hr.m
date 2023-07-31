@@ -92,8 +92,8 @@ end
 % Smooth the RR intervals
 II = find(peaks0);
 RR_intervals = diff(II);
-RR_intervals_smoothed = BaseLine1(RR_intervals, 3, 'md');
-RR_intervals_smoothed2 = BaseLine1(RR_intervals_smoothed, 3, 'mn');
+RR_intervals_smoothed = baseline_sliding_window(RR_intervals, 3, 'md');
+RR_intervals_smoothed2 = baseline_sliding_window(RR_intervals_smoothed, 3, 'mn');
 ff = fs ./ [RR_intervals_smoothed2(1), RR_intervals_smoothed2];
 
 % Handle edge cases
