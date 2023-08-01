@@ -27,7 +27,7 @@ end
 N = length(x);
 I = find(abs(x-med)>=ExcludedHR);
 y = x;
-for j = 1:length(I),
+for j = 1:length(I)
     index = max(I(j)-wlen,1):min(I(j)+wlen,N);
     y(I(j)) = median(x(index));
 end
