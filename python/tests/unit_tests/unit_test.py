@@ -1,4 +1,5 @@
 import logging
+import typing
 
 import numpy as np
 
@@ -12,7 +13,12 @@ import numpy as np
 """
 
 
-def compare_number_arrays(python, matlab, round_val: int = -1, debug: bool = False) -> bool:
+def compare_number_arrays(
+    python: typing.Iterable,
+    matlab: typing.Iterable,
+    round_val: int = -1,
+    debug: bool = False,
+) -> bool:
     """
     Compares 2 number arrays
     Args:
@@ -35,11 +41,11 @@ def compare_number_arrays(python, matlab, round_val: int = -1, debug: bool = Fal
         if python == matlab:
             return True
     except:
-        logging.debug('Iterating through the entire array')
+        logging.debug("Iterating through the entire array")
     if not len(python) == len(matlab):
         print("python length:", len(python))
         print("matlab length:", len(matlab))
-        raise Exception('lengths of both inputs have to be the same')
+        raise Exception("lengths of both inputs have to be the same")
     for i in range(len(python)):
         if not (python[i] == matlab[i]):
             print(i)
@@ -49,7 +55,12 @@ def compare_number_arrays(python, matlab, round_val: int = -1, debug: bool = Fal
     return x
 
 
-def compare_arrays(python, matlab, round_val: int = -1, debug: bool = False) -> bool:
+def compare_arrays(
+    python: typing.Iterable,
+    matlab: typing.Iterable,
+    round_val: int = -1,
+    debug: bool = False,
+) -> bool:
     """
     Compares an array of numbers ('a') against an array of arrays, where each sub-array contains only one number.
     For example, it compares [1, 2, 3] against [[1], [2], [3]].
@@ -74,11 +85,11 @@ def compare_arrays(python, matlab, round_val: int = -1, debug: bool = False) -> 
         if python == matlab:
             return True
     except:
-        logging.debug('Iterating through the entire array')
+        logging.debug("Iterating through the entire array")
     if not len(python) == len(matlab):
         print("python length:", len(python))
         print("matlab length:", len(matlab))
-        raise Exception('lengths of both inputs have to be the same')
+        raise Exception("lengths of both inputs have to be the same")
     for i in range(len(python)):
         if not (python[i] == matlab[i][0]):
             print(i)
