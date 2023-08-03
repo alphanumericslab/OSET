@@ -45,7 +45,7 @@ def peak_detection_local_search(x, ff, *args):
     if len(args) > 1 and args[1] is not None:
         num_rounds = args[1]
         if num_rounds > 3:
-            raise ValueError('Number of R-peak detections not supported')
+            raise ValueError("Number of R-peak detections not supported")
     else:
         num_rounds = 1
 
@@ -66,7 +66,9 @@ def peak_detection_local_search(x, ff, *args):
     if num_rounds > 1:
         for k in range(1, num_rounds):
             rr_intervals = np.diff(peak_indexes)
-            ff = hr_update_fraction / np.median(rr_intervals)  # refined heart rate (in Hz) used for R-peak detection
+            ff = hr_update_fraction / np.median(
+                rr_intervals
+            )  # refined heart rate (in Hz) used for R-peak detection
             peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
     return peaks, peak_indexes
 
@@ -100,6 +102,6 @@ if __name__ == "__main__":
         July 2023: Translated to Python from Matlab (peak_detection_local_search.m)
 
     """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()

@@ -32,11 +32,19 @@ def lp_filter_zero_phase(x, fc):
     """
 
     if fc > 1:
-        raise ValueError('fc must be less than 1')
+        raise ValueError("fc must be less than 1")
     x = np.array([x], dtype=np.double)
     k = 0.7071  # Cut-off value of 1/sqrt(2) or -6dB amplitude attenuation
-    alpha = (1 - k * np.cos(2 * np.pi * fc) - np.sqrt(
-        (2 * k * (1 - np.cos(2 * np.pi * fc)) - k ** 2 * np.sin(2 * np.pi * fc) ** 2))) / (1 - k)
+    alpha = (
+        1
+        - k * np.cos(2 * np.pi * fc)
+        - np.sqrt(
+            (
+                2 * k * (1 - np.cos(2 * np.pi * fc))
+                - k**2 * np.sin(2 * np.pi * fc) ** 2
+            )
+        )
+    ) / (1 - k)
     y = np.zeros_like(x)
     for i in range(x.shape[0]):
         y[i, :] = filtfilt([1 - alpha], [1, -alpha], x[i, :], padlen=3)
@@ -68,6 +76,6 @@ if __name__ == "__main__":
         2023: Translated to Python from Matlab
 
     """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()

@@ -1,7 +1,9 @@
 import argparse
 
 import numpy as np
-from oset.ecg.peak_detection.peak_detection_local_search import peak_detection_local_search
+from oset.ecg.peak_detection.peak_detection_local_search import (
+    peak_detection_local_search,
+)
 from scipy.signal import lfilter
 
 
@@ -35,15 +37,14 @@ def peak_detection_matched_filter_robust(ref, fs, h, fmax, itr=1):
     h = np.flip(h)  # Reverse the template waveform
     w = int(np.floor(length / 2))
     r = lfilter(h, 1, np.concatenate((ref, np.zeros(w - 1))))
-    r = r[w - 1: w + n]
+    r = r[w - 1 : w + n]
     peaks = peak_detection_local_search(r, fmax / fs, 1, itr)[0]
     return peaks, r
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=
-        """
+        description="""
         peak_detection_matched_filter_robust: R-peak detector based on a matched filter
 
         Syntax: peaks, r = peak_detection_matched_filter_robust(ref, fs, h, fmax, itr)
@@ -66,6 +67,6 @@ if __name__ == "__main__":
             The Open-Source Electrophysiological Toolbox
             https://github.com/alphanumericslab/OSET
         """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()

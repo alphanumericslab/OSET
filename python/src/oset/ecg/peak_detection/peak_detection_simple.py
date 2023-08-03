@@ -85,6 +85,6 @@ if __name__ == "__main__":
         July 2023: Translated to Python from Matlab (peak_detection_simple.m)
 
     """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()

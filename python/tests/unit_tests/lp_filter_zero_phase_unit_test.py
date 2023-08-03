@@ -9,7 +9,7 @@ from oset.generic.lp_filter.lp_filter_zero_phase import lp_filter_zero_phase
 
 import unit_test as testing
 
-mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat("../../../datasets/sample-data/SampleECG1.mat")["data"][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
@@ -24,8 +24,8 @@ def lp_filter_zero_phase_unit_test():
 
 def runMatLab():
     eng = matlab.engine.start_matlab()
-    eng.addpath('../../../matlab/tools/ecg')
-    eng.addpath('../../../matlab/tools/generic')
+    eng.addpath("../../../matlab/tools/ecg")
+    eng.addpath("../../../matlab/tools/generic")
     x = matlab.double(mat.tolist())
     return eng.lp_filter_zero_phase(x, np.double(f / fs), nargout=1)
 

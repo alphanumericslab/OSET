@@ -3,11 +3,13 @@ import argparse
 import matlab
 import matlab.engine
 import scipy.io
-from oset.ecg.peak_detection.peak_detection_matched_filter_robust import peak_detection_matched_filter_robust
+from oset.ecg.peak_detection.peak_detection_matched_filter_robust import (
+    peak_detection_matched_filter_robust,
+)
 
 import unit_test as testing
 
-mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat("../../../datasets/sample-data/SampleECG1.mat")["data"][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
@@ -15,6 +17,7 @@ th = 0.10  # an arbitrary value for testing
 
 def peak_detection_matched_filter_robust_unit_test():
     import warnings
+
     warnings.warn("This unit test has not yet been deployed")
     ml = runMatLab(1)
     py = runPython(1)
@@ -35,8 +38,8 @@ def runMatLab(itr):
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
     y = matlab.double([1, 2, 3, 4])
-    eng.addpath('../../../matlab/tools/ecg')
-    eng.addpath('../../../matlab/tools/generic')
+    eng.addpath("../../../matlab/tools/ecg")
+    eng.addpath("../../../matlab/tools/generic")
     return eng.peak_detection_matched_filter_robust(x, f / fs, y, 60, itr, nargout=2)
 
 

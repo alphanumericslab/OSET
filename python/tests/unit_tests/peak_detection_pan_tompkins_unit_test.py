@@ -5,11 +5,13 @@ import matlab
 import matlab.engine
 import numpy as np
 import scipy.io
-from oset.ecg.peak_detection.peak_detection_pan_tompkins import peak_detection_pan_tompkins
+from oset.ecg.peak_detection.peak_detection_pan_tompkins import (
+    peak_detection_pan_tompkins,
+)
 
 import unit_test as testing
 
-mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat("../../../datasets/sample-data/SampleECG1.mat")["data"][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
@@ -26,8 +28,8 @@ def peak_detection_pan_tompkins_unit_test():
 def runMatLab():
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    eng.addpath('../../../matlab/tools/ecg')
-    eng.addpath('../../../matlab/tools/generic')
+    eng.addpath("../../../matlab/tools/ecg")
+    eng.addpath("../../../matlab/tools/generic")
     return eng.peak_detection_pan_tompkins(x, np.double(fs), nargout=2)
 
 

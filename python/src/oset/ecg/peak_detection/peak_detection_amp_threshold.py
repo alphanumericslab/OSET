@@ -79,6 +79,6 @@ if __name__ == "__main__":
     Revision History:
         July 2023: Translated to Python from Matlab (peak_detection_amp_threshold.m)
     """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()
