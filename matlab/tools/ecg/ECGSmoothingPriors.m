@@ -12,7 +12,7 @@ end
 
 % first round
 x_filtered1 = zeros(size(x));
-for n = 1 : length(knots1) - 1,
+for n = 1 : length(knots1) - 1
     i = knots1(n) : knots1(n+1);
     ll = length(i);
     I = speye(ll);
@@ -43,7 +43,7 @@ if(knots2(end) < length(x))
 end
 
 x_filtered2 = zeros(size(x));
-for n = 1 : length(knots1) - 1,
+for n = 1 : length(knots1) - 1
     i = knots2(n) : knots2(n+1); % I used this line to preserve the continuity of the curves
     
     ll = length(i);
