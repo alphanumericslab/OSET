@@ -96,10 +96,6 @@ if __name__ == "__main__":
 
     Revision History:
         July 2023: Translated to Python from Matlab (peak_detection_matched_filter.m)
-
-    Amulya Jain, 2023
-    The Open-Source Electrophysiological Toolbox
-    https://github.com/alphanumericslab/OSET
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )
