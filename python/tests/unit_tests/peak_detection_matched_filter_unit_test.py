@@ -17,13 +17,11 @@ th = 0.90  # an arbitrary value for testing
 
 
 def peak_detection_matched_filter_unit_test():
+    import warnings
+
+    warnings.warn("This unit test has not yet been deployed")
     ml = runMatLab()
     py = runPython()
-    """    for i in range(len(py)):
-        if not testing.compare_number_arrays(py[i], ml[0][i], round_val=12):
-            print(i)
-            return False
-    return True"""
     x = testing.compare_number_arrays(py[0], ml[0][0])
     y = testing.compare_number_arrays(py[1], ml[1][0], round_val=12)
     z = testing.compare_number_arrays(py[2], ml[2][0])
