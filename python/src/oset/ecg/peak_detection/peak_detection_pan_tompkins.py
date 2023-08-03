@@ -34,11 +34,11 @@ def peak_detection_pan_tompkins(data, fs, *args):
     """
 
     default_params = {
-        'fc_low': 5.0,
-        'fc_high': 15,
-        'window_length': 0.150,
-        'threshold_ratio': 0.2,
-        'refractory_period': 0.200
+        "fc_low": 5.0,
+        "fc_high": 15,
+        "window_length": 0.150,
+        "threshold_ratio": 0.2,
+        "refractory_period": 0.200,
     }
 
     def fill_default_params(params, default_params):
@@ -55,36 +55,48 @@ def peak_detection_pan_tompkins(data, fs, *args):
         params = fill_default_params(args[0], default_params)
 
     # High-pass filter
-    b_hp, a_hp = butter(5, params['fc_low'] / (fs / 2), 'high')
-    filtered_data_hp = filtfilt(b_hp, a_hp, data, padlen=3 * (max(len(b_hp), len(a_hp)) - 1), axis=-1)
+    b_hp, a_hp = butter(5, params["fc_low"] / (fs / 2), "high")
+    filtered_data_hp = filtfilt(
+        b_hp, a_hp, data, padlen=3 * (max(len(b_hp), len(a_hp)) - 1), axis=-1
+    )
 
     # Low-pass filter
-    b_lp, a_lp = butter(5, params['fc_high'] / (fs / 2), 'low')
-    filtered_data = filtfilt(b_lp, a_lp, filtered_data_hp, padlen=3 * (max(len(b_lp), len(a_lp)) - 1), axis=-1)
+    b_lp, a_lp = butter(5, params["fc_high"] / (fs / 2), "low")
+    filtered_data = filtfilt(
+        b_lp,
+        a_lp,
+        filtered_data_hp,
+        padlen=3 * (max(len(b_lp), len(a_lp)) - 1),
+        axis=-1,
+    )
 
     # Differentiation to enhance R-peaks
     diff_data = np.diff(filtered_data, prepend=0)
 
     # Squaring to further emphasize R-peaks
-    squared_data = diff_data ** 2
+    squared_data = diff_data**2
 
     # Moving average integration
-    window_length = round(params['window_length'] * fs)
+    window_length = round(params["window_length"] * fs)
     window = np.ones(window_length) / window_length
-    integrated_data = convolve(squared_data, window, mode='same')
+    integrated_data = convolve(squared_data, window, mode="same")
 
     # Amplitude thresholding
-    threshold = params['threshold_ratio'] * np.max(integrated_data)
+    threshold = params["threshold_ratio"] * np.max(integrated_data)
 
     # Refractory period to avoid detecting multiple peaks within a short duration
-    refractory_half_period = round(params['refractory_period'] * fs / 2)
+    refractory_half_period = round(params["refractory_period"] * fs / 2)
 
     # Find the local peaks that satisfy both amplitude and width condition
     peaks = np.zeros(data.shape[0])
     for k in range(1, data.shape[0] + 1):
         search_win_start = max(1, k - refractory_half_period)
         search_win_stop = min(data.shape[0], k + refractory_half_period + 1)
-        if threshold < integrated_data[k - 1] == np.max(integrated_data[search_win_start:search_win_stop]):
+        if (
+            threshold
+            < integrated_data[k - 1]
+            == np.max(integrated_data[search_win_start:search_win_stop])
+        ):
             peaks[k - 2] = 1
     # Get peak indexes
     peak_indexes = np.nonzero(peaks)[0] + 1
@@ -118,6 +130,6 @@ if __name__ == "__main__":
         July 2023: Translated to Python from Matlab (peak_detection_pan_tompkins.m)
 
     """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()

@@ -83,7 +83,7 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
 
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x0)
     x = lfilter(np.concatenate(([1], np.zeros(L1 - 1), [-1])), [L1, -L1], x)
-    x = np.concatenate((x[L1 - 1:], np.zeros(L1 - 1) + x[-1]))  # Lag compensation
+    x = np.concatenate((x[L1 - 1 :], np.zeros(L1 - 1) + x[-1]))  # Lag compensation
 
     # HP filter
     y = lfilter(np.concatenate(([L2 - 1, -L2], np.zeros(L2 - 2), [1])), [L2, -L2], x)
@@ -97,7 +97,9 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
     # Moving average
     L3 = round(fs * wlen)
     v = lfilter(np.concatenate(([1], np.zeros(L3 - 1), [-1])), [L3, -L3], w)
-    v = np.concatenate([v[round(L3 / 2) - 1:], np.zeros(round(L3 / 2) - 1) + v[-1]])  # Group-delay lag compensation
+    v = np.concatenate(
+        [v[round(L3 / 2) - 1 :], np.zeros(round(L3 / 2) - 1) + v[-1]]
+    )  # Group-delay lag compensation
 
     v_sat = tanh_saturation(v, ksigma)
 
@@ -117,12 +119,12 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
 
     if flag:
         for i in range(len(rising)):
-            mx = np.argmax(data[rising[i] - 1:falling[i]])
+            mx = np.argmax(data[rising[i] - 1 : falling[i]])
             peak_indexes[i] = mx - 1 + rising[i]
             width[i] = falling[i] - rising[i]
     else:
         for i in range(len(rising)):
-            mn = np.argmin(data[rising[i] - 1:falling[i]])
+            mn = np.argmin(data[rising[i] - 1 : falling[i]])
             peak_indexes[i] = mn - 1 + rising[i]
             width[i] = falling[i] - rising[i]
 
@@ -165,6 +167,6 @@ if __name__ == "__main__":
         July 2023: Translated to Python from Matlab (peak_detection_modified_pan_tompkins.m)
 
     """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()

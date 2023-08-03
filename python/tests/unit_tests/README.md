@@ -15,5 +15,5 @@ This requires having MatLab on path and an extra package.
 To install the extra Python package:
 
 ```
-python -m pip install matlabengine
+python -m pip install -r requirements.txt
 ```

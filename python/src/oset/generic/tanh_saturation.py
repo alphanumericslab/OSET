@@ -27,7 +27,7 @@ def tanh_saturation(x, ksigma):
     alpha = alpha.flatten()
 
     # Scale the input data and apply the tanh function to saturate outliers
-    y = (np.diag(alpha) * np.tanh(np.diag(1. / alpha) * x))[0]
+    y = (np.diag(alpha) * np.tanh(np.diag(1.0 / alpha) * x))[0]
     return y
 
 
@@ -47,6 +47,6 @@ if __name__ == "__main__":
         2023: Translated to Python from Matlab
 
     """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()
