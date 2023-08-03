@@ -6,12 +6,14 @@
 #         TauScondHalf - the optimal Tau for the second 'half'
 
 import numpy as np
+
+
 def ComputeOptimalTau(s, beats_Rpeaks):
     first_half = []
     second_half = []
     for i in np.arange(len(s)):
-        first_half.append(len(s[i][0:beats_Rpeaks[i]]))
-        second_half.append(len(s[i][beats_Rpeaks[i]:]))
-    TauFirstHalf = max(first_half) 
+        first_half.append(len(s[i][0 : beats_Rpeaks[i]]))
+        second_half.append(len(s[i][beats_Rpeaks[i] :]))
+    TauFirstHalf = max(first_half)
     TauSecondHalf = max(second_half)
     return TauFirstHalf, TauSecondHalf
