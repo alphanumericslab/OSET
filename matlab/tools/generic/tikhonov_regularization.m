@@ -20,7 +20,7 @@ function y = tikhonov_regularization(x, diff_order_or_filter_coefs, lambda)
 %
 %   Revision History:
 %       2020: First release
-%       2023: Renamed from deprecated version TikhonovRegularization()
+%       2023: Renamed from deprecated version TikhonovRegularization
 %
 %   Reza Sameni, 2020-2023
 %   The Open-Source Electrophysiological Toolbox

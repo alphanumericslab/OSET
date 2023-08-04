@@ -1,9 +1,9 @@
-function y = ecg_den_smoothness_lti(x, varargin)
-% ecg_den_smoothness_lti - Linear time invariant (LTI) ECG denoising based
-%   on penalized least squares (Tikhonov regularization).
+function y = ecg_den_lti_smoother(x, varargin)
+% ecg_den_lti_smoother - Linear time invariant (LTI) ECG denoising based
+%   on penalized least squares with smoothness priors (Tikhonov regularization).
 %
 % Usage:
-%   y = ecg_den_smoothness_lti(x, filter_param, SmoothnessFactor, mode, stable_pole_mag_th)
+%   y = ecg_den_lti_smoother(x, filter_param, SmoothnessFactor, mode, stable_pole_mag_th)
 %
 % Inputs:
 %   x: Matrix of input ECG data (channels x samples)
@@ -16,8 +16,8 @@ function y = ecg_den_smoothness_lti(x, varargin)
 %       smoothness regularization level in the denoising process. Change
 %       SmoothnessFactor by orders of magniture (in positive and negatize
 %       powers of 10), to see the change.
-%   mode: An integer representing the mode of operation:
-%       - mode = 0 (default): y^* = argmin_y(|x - y| + lambda*|D*y + b|), fixed smoothness penalty (lambda)
+%   mode: An integer representing the mode of operation (default: mode = 0):
+%       - mode = 0 : y^* = argmin_y(|x - y| + lambda*|D*y + b|), fixed smoothness penalty (lambda)
 %       - mode = 1: y^* = argmin_y(|D * y + b| + gamma*|x - y|), fixed MSE penalty (gamma)
 %   stable_pole_mag_th: threshold of filter poles to be considered as stable (inside the unit circle). Default = 0.9999
 %
@@ -33,7 +33,7 @@ function y = ecg_den_smoothness_lti(x, varargin)
 %   2020: Modified to work with multichannel signals
 %   2023: Renamed from deprecated version ECGSmoothnessPriorsDenoiserLTI
 %
-% Reza Sameni, 2020-2023
+% Reza Sameni, 2015-2023
 % The Open-Source Electrophysiological Toolbox
 
 % use the given filter or calculate the filter impulse response
