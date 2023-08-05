@@ -73,7 +73,7 @@ end
 
 
 % --- Executes just before ECGBeatFitter is made visible.
-function ECGBeatFitter_OpeningFcn(hObject, eventdata, handles, varargin)
+function ECGBeatFitter_OpeningFcn(hObject, ~, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -85,13 +85,13 @@ mn = varargin{1};
 sd = varargin{2};
 phase = varargin{3};
 handles.mdlError = 'ModelErrorPercentage';
-if (nargin>6),
+if (nargin>6)
     handles.ExpParamName = varargin{4};
 else
     handles.ExpParamName = 'OptimumParams';
 end
 
-if (nargin>7),
+if (nargin>7)
     set(handles.text3,'String',varargin{5});
 end
 
@@ -130,7 +130,7 @@ guidata(hObject, handles);
 uiwait(handles.figure1);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = ECGBeatFitter_OutputFcn(hObject, eventdata, handles)
+function varargout = ECGBeatFitter_OutputFcn(~, ~, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -142,7 +142,7 @@ function varargout = ECGBeatFitter_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.OptimizedParameters;
 
 % --- Executes on button press in Reset.
-function Reset_Callback(hObject, eventdata, handles)
+function Reset_Callback(~, ~, ~)
 % hObject    handle to Reset (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -167,7 +167,7 @@ set(data.opterror,'String','');
 guidata(gcbo,data);
 
 % --- Executes on button press in Optimize.
-function Optimize_Callback(hObject, eventdata, handles)
+function Optimize_Callback(~, ~, handles)
 % hObject    handle to Optimize (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -203,7 +203,7 @@ data.Optmodhandle = plot(Model,'k','LineWidth',2);
 L = length(OptParams);
 
 ph = OptParams(2*L/3+1:L);
-for i = 1:L/3,
+for i = 1:L/3
     if(ph(i)<min(data.ECGphase) || ph(i)>max(data.ECGphase))
         ph(i) = mean(data.ECGphase); % place the possible erroneous estimate at the middle of the ECG beat (close to the R-peak)
     end
@@ -240,7 +240,7 @@ assignin('caller',handles.mdlError,er);
 guidata(gcbo,data);
 
 % --- Executes on button press in ExportData.
-function ExportData_Callback(hObject, eventdata, handles)
+function ExportData_Callback(~, ~, handles)
 % hObject    handle to ExportData (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -254,7 +254,7 @@ assignin('caller',handles.ExpParamName,handles.OptimizedParameters);
 uiresume(handles.figure1);
 
 
-function MyButtonDownFcn(hObject, eventdata, handles)
+function MyButtonDownFcn(~, ~, ~)
 pn = get(gca,'Currentpoint');
 % hndl = plot(pn(1,1),pn(1,2),'ro');
 ax = axis;
@@ -269,14 +269,14 @@ guidata(gcbo,data);
 
 
 % --------------------------------------------------------------------
-function Helpmenu_Callback(hObject, eventdata, handles)
+function Helpmenu_Callback(~, ~, ~)
 % hObject    handle to Helpmenu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
 % --------------------------------------------------------------------
-function About_1_Callback(hObject, eventdata, handles)
+function About_1_Callback(~, ~, ~)
 % hObject    handle to About_1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -284,17 +284,17 @@ AboutPath = which('About.htm');
 web(AboutPath);
 
 % --------------------------------------------------------------------
-function Help_1_Callback(hObject, eventdata, handles)
+function Help_1_Callback(~, ~, ~)
 % hObject    handle to Help_1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 HelpPath = which('Help.htm');
 web(HelpPath);
-
+% helpdlg('ECG Beat Fitter Help\n\t1- Select the critical ECG points by clicking on the ECG plot.\n\t2- Click Optimize to start the optimization of the parameters.\n\t3- The number of Gaussian kernels used for the optimization and the fitting error is reported in the report panel.\n\t4- Click Export Parameters to export the parameters to the work space. The exported parameters are stored in a vector called OptimumParams or with the name defined by the calling function.\n\t5- You can change the selected critical points by clicking on the Reset button.');
 
 % --- Executes on button press in Exit.
-function Exit_Callback(hObject, eventdata, handles)
+function Exit_Callback(~, ~, handles)
 % hObject    handle to Exit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)

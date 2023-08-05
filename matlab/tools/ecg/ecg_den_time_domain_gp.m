@@ -1,8 +1,8 @@
-function [data_posterior_est, data_prior_est, n_var] = ECGTimeDomainMAPFilter(data, peaks, params)
-% An ECG denoiser based on a data driven MAP estimator in the time domain
+function [data_posterior_est, data_prior_est, n_var] = ecg_den_time_domain_gp(data, peaks, params)
+% ecg_den_time_domain_gp - An ECG denoiser based on a data-driven Gaussian Process MAP estimator in the time domain
 %
 % Usage:
-%   [data_posterior_est, data_prior_est, n_var] = ECGTimeDomainMAPFilter(data, peaks, params)
+%   [data_posterior_est, data_prior_est, n_var] = ecg_den_time_domain_gp(data, peaks, params)
 %
 % Inputs:
 %   data: single or multichannel ECG signal with row-wise channels
@@ -30,9 +30,13 @@ function [data_posterior_est, data_prior_est, n_var] = ECGTimeDomainMAPFilter(da
 %       (row-wise channels)
 %   n_var: the noise variance estimate used in the algorithm (estimated internally)
 %
-% Copyright Reza Sameni, Nov 2021
-% The Open-Source Electrophysiological Toolbox
-% (https://github.com/alphanumericslab/OSET)
+%   Revision History:
+%       2021: First release
+%       2023: Renamed from deprecated version ECGTimeDomainMAPFilter()
+%
+%   Reza Sameni, 2021-2023
+%   The Open-Source Electrophysiological Toolbox
+%   https://github.com/alphanumericslab/OSET
 
 % if ~isfield(params, 'bins') % number of phase bins
 %     params.bins = median(diff(find(peaks))); % use median of RR-intervals in samples by default
@@ -110,19 +114,10 @@ for ch = 1 : size(data, 1)
 
 
 
-
-
-
-
-
-
-
-
-
     % Under-development. For QRS and ventricular wave supression (useful for P-wave detection)
     % if isfield(params, 'avg_beat_shaping_window') && ~isempty(params.avg_beat_shaping_window)
     if isfield(params, 'Q_onset_lead') && ~isempty(params.Q_onset_lead) && ...
-       isfield(params, 'T_offset_lag') && ~isempty(params.T_offset_lag)
+            isfield(params, 'T_offset_lag') && ~isempty(params.T_offset_lag)
 
         %{
         if(mod(params.avg_beat_shaping_window, 2) == 0)
@@ -142,29 +137,20 @@ for ch = 1 : size(data, 1)
         shape_window = exp(-(nn_ - ceil(length(ECG_avg)/2)).^2/(2*params.avg_beat_shaping_window^2));
         %}
         shape_window = SigmoidFunction(length(ECG_avg), ceil(length(ECG_avg)/2) - params.Q_onset_lead, 2.0) - ...
-                       SigmoidFunction(length(ECG_avg), ceil(length(ECG_avg)/2) + params.T_offset_lag, 0.5);
+            SigmoidFunction(length(ECG_avg), ceil(length(ECG_avg)/2) + params.T_offset_lag, 0.5);
 
         % figure
         % plot(ECG_avg)
         % hold on
         % plot(shape_window*200)
-        
-%         first_few_samples = 3;
-%         ECG_avg = 0        *      mean(ECG_avg(1:first_few_samples)) + ECG_avg .* shape_window;
+
+        %         first_few_samples = 3;
+        %         ECG_avg = 0        *      mean(ECG_avg(1:first_few_samples)) + ECG_avg .* shape_window;
 
         ECG_avg = ECG_avg .* shape_window;
     end
     % plot(ECG_avg)
     % grid
-
-
-
-
-
-
-
-
-
 
 
     switch params.NOISE_VAR_EST_METHOD

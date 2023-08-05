@@ -8,7 +8,7 @@ from oset.ecg.peak_detection.peak_detection_simple import peak_detection_simple
 
 import unit_test as testing
 
-mat = scipy.io.loadmat('../../../datasets/sample-data/SampleECG1.mat')['data'][0]
+mat = scipy.io.loadmat("../../../datasets/sample-data/SampleECG1.mat")["data"][0]
 f = 1
 fs = 1000
 th = 0.10  # an arbitrary value for testing
@@ -22,7 +22,7 @@ def peak_detection_simple_unit_test():
     del ml, py
     ml = runMatLab(1)
     py = runPython(1)
-    y = testing.compare_number_arrays(py[0], ml[0][0], )
+    y = testing.compare_number_arrays(py[0], ml[0][0])
     z = testing.compare_number_arrays(py[1], ml[1][0])
     return w and x and y and z
 
@@ -30,8 +30,8 @@ def peak_detection_simple_unit_test():
 def runMatLab(z):
     eng = matlab.engine.start_matlab()
     x = matlab.double(mat.tolist())
-    eng.addpath('../../../matlab/tools/ecg')
-    eng.addpath('../../../matlab/tools/generic')
+    eng.addpath("../../../matlab/tools/ecg")
+    eng.addpath("../../../matlab/tools/generic")
     return eng.peak_detection_simple(x, f / fs, z, nargout=2)
 
 

@@ -1,4 +1,5 @@
 import logging
+import typing
 
 import numpy as np
 
@@ -12,12 +13,17 @@ import numpy as np
 """
 
 
-def compare_number_arrays(a, b, round_val: int = -1, debug: bool = False) -> bool:
+def compare_number_arrays(
+    python: typing.Iterable,
+    matlab: typing.Iterable,
+    round_val: int = -1,
+    debug: bool = False,
+) -> bool:
     """
     Compares 2 number arrays
     Args:
-        a: Python array
-        b: Matlab array
+        python: Python array
+        matlab: Matlab array
         round_val (int, optional): Determines whether the inputs should be rounded.
                                    Use -1 for no rounding (default), otherwise specify the number of decimals.
         debug (bool, optional): Enable debug mode. False by default.
@@ -26,36 +32,41 @@ def compare_number_arrays(a, b, round_val: int = -1, debug: bool = False) -> boo
 
     """
     if round_val > -1:
-        a = np.round(a, round_val)
-        b = np.round(b, round_val)[0]
+        python = np.round(python, round_val)
+        matlab = np.round(matlab, round_val)[0]
     if debug:
         logging.basicConfig(level=logging.DEBUG)
     x = True
     try:
-        if a == b:
+        if python == matlab:
             return True
     except:
-        logging.debug('Iterating through the entire array')
-    if not len(a) == len(b):
-        print("python length:", len(a))
-        print("matlab length:", len(b))
-        raise Exception('lengths of both inputs have to be the same')
-    for i in range(len(a)):
-        if not (a[i] == b[i]):
+        logging.debug("Iterating through the entire array")
+    if not len(python) == len(matlab):
+        print("python length:", len(python))
+        print("matlab length:", len(matlab))
+        raise Exception("lengths of both inputs have to be the same")
+    for i in range(len(python)):
+        if not (python[i] == matlab[i]):
             print(i)
-            print("python:", a[i])
-            print("matlab:", b[i])
+            print("python:", python[i])
+            print("matlab:", matlab[i])
             x = False
     return x
 
 
-def compare_arrays(a, b, round_val: int = -1, debug: bool = False) -> bool:
+def compare_arrays(
+    python: typing.Iterable,
+    matlab: typing.Iterable,
+    round_val: int = -1,
+    debug: bool = False,
+) -> bool:
     """
     Compares an array of numbers ('a') against an array of arrays, where each sub-array contains only one number.
     For example, it compares [1, 2, 3] against [[1], [2], [3]].
     Args:
-        a: Python array
-        b: Matlab array
+        python: Python array
+        matlab: Matlab array
         round_val (int, optional): Determines whether the inputs should be rounded.
                                    Use -1 for no rounding (default), otherwise specify the number of decimals.
         debug (bool, optional): Enable debug mode. False by default.
@@ -64,26 +75,26 @@ def compare_arrays(a, b, round_val: int = -1, debug: bool = False) -> bool:
 
     """
     if round_val > -1:
-        a = np.round(a, round_val)
-        for i in range(len(a)):
-            b[i][0] = round(b[i][0], round_val)
+        python = np.round(python, round_val)
+        for i in range(len(python)):
+            matlab[i][0] = round(matlab[i][0], round_val)
     if debug:
         logging.basicConfig(level=logging.DEBUG)
     x = True
     try:
-        if a == b:
+        if python == matlab:
             return True
     except:
-        logging.debug('Iterating through the entire array')
-    if not len(a) == len(b):
-        print("python length:", len(a))
-        print("matlab length:", len(b))
-        raise Exception('lengths of both inputs have to be the same')
-    for i in range(len(a)):
-        if not (a[i] == b[i][0]):
+        logging.debug("Iterating through the entire array")
+    if not len(python) == len(matlab):
+        print("python length:", len(python))
+        print("matlab length:", len(matlab))
+        raise Exception("lengths of both inputs have to be the same")
+    for i in range(len(python)):
+        if not (python[i] == matlab[i][0]):
             print(i)
-            print("python:", a[i])
-            print("matlab:", b[i][0])
+            print("python:", python[i])
+            print("matlab:", matlab[i][0])
             x = False
     return x
 

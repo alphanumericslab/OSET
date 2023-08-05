@@ -2,7 +2,7 @@ function [index, rank] = sqi_level_crossing(x, th1, th2, varargin)
 % sqi_level_crossing - Signal quality index based on the percentage of samples exceeding upper and lower thresholds.
 %
 % Usage:
-%   [index, rank] = sqi_level_crossing(x, th1, th2, varargin)
+%   [index, rank] = sqi_level_crossing(x, th1, th2, ranking_mode)
 %
 % Inputs:
 %   x: Input signal matrix with dimensions [L1, L2]

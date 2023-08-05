@@ -1,4 +1,4 @@
-% TrimmedFilter has been deprecated. Use event_stacker instead.
+% TrimmedFilter has been deprecated. Use trimmed_filter.cpp instead.
 error('TrimmedFilter has been deprecated. Use trimmed_filter.cpp instead.');
 
 %  y = TrimmedFilter(x,type,L,k,h),

@@ -31,7 +31,7 @@ end
 
 T = length(x);
 x_med = zeros(1,T);
-for j = 1 : T,
+for j = 1 : T
     index = max(j-wlen, 1) : min(j+wlen, T);
     x_med(j) = median(x(index));
 end

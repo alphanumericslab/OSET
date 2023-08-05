@@ -1,8 +1,8 @@
-function [data_posterior_est, data_prior_est, n_var] = ECGPhaseDomainMAPFilter(data, peaks, params)
-% An ECG denoiser based on a data driven MAP estimator in the phase domain
+function [data_posterior_est, data_prior_est, n_var] = ecg_den_phase_domain_gp(data, peaks, params)
+% ecg_den_phase_domain_gp - An ECG denoiser based on a data driven Gaussian Process filter in the phase domain
 %
 % Usage:
-%   [data_posterior_est, data_prior_est, n_var] = ECGPhaseDomainMAPFilter(data, peaks, params)
+%   [data_posterior_est, data_prior_est, n_var] = ecg_den_phase_domain_gp(data, peaks, params)
 %
 % Inputs:
 %   data: single or multichannel ECG signal with row-wise channels
@@ -35,9 +35,13 @@ function [data_posterior_est, data_prior_est, n_var] = ECGPhaseDomainMAPFilter(d
 %   "Multichannel electrocardiogram decomposition using periodic component
 %   analysis." IEEE transactions on biomedical engineering 55.8 (2008): 1935-1940.
 %
-% Copyright Reza Sameni, Oct 2021
-% The Open-Source Electrophysiological Toolbox
-% (https://github.com/alphanumericslab/OSET)
+%   Revision History:
+%       2021: First release
+%       2023: Renamed from deprecated version ECGPhaseDomainMAPFilter()
+%
+%   Reza Sameni, 2021-2023
+%   The Open-Source Electrophysiological Toolbox
+%   https://github.com/alphanumericslab/OSET
 
 [phase, ~] = PhaseCalculation(peaks); % phase calculation
 
@@ -92,11 +96,6 @@ for ch = 1 : size(data, 1)
     end
 
 
-
-
-
-
-
     % Under-development. For QRS and ventricular wave supression (useful for P-wave detection)
     % if isfield(params, 'avg_beat_shaping_window') && ~isempty(params.avg_beat_shaping_window)
     if isfield(params, 'Q_onset_lead') && ~isempty(params.Q_onset_lead) && ...
@@ -124,8 +123,6 @@ for ch = 1 : size(data, 1)
 
         ECG_avg = ECG_avg .* shape_window;
     end
-
-
 
     switch params.NOISE_VAR_EST_METHOD
         case 'MIN' % Method 1: min std
@@ -198,15 +195,6 @@ for ch = 1 : size(data, 1)
 
     if isfield(params, 'plotresults')
         if params.plotresults == true
-            % if ch == 1
-            %     figure
-            %     plot(phase)
-            %     hold on
-            %     plot(pphase)
-            %     grid
-            %     legend('phase', 'pphase');
-            % end
-
             figure
             errorbar(meanphase, ECG_avg, ECG_std/2);
             hold on
@@ -256,6 +244,6 @@ end
 end
 
 function y = SigmoidFunction(len, center, alpha)
-t = (1 : len);
+t = 1 : len;
 y = 1 ./ (1 + exp(-alpha*(t-center)));
 end
