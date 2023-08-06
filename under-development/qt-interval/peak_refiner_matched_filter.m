@@ -1,32 +1,44 @@
-function [peak_refined_indexes, peak_quality_scores, ecg_quality] = peak_refiner(ecg_raw, peak_indexes, fs)
+function [peak_refined_indexes, peak_quality_scores, ecg_quality] = peak_refiner_matched_filter(ecg_raw, peak_indexes, fs, params)
 
 % peak_refiner - R-peak refiner for an existing R-peak detector method with R-peaks in R_peak_indexes
 % Syntax:
 %   [R_peak_refined, R_peak_quality, ecg_quality] = peak_refiner(ECG_raw, R_peak_indexes, fs)
 %
 % Method:
-%   detects R-peaks in the ECG signal x using a max search algorithm over a sliding window
-%   with adaptive width. The function returns the binary impulse train of detected peaks
-%   (PEAKS) and their corresponding indexes (PEAK_INDEXES) in the input signal x.
+%   refine R-peaks in the ECG signal for an existing R-peak detector method
+%   using matched filter concept & RR series analysis. 
+%   The function returns corresponding refined indexes (peak_refined_indexes).
 %
 % Inputs:
 %   ecg_raw: Vector of the input ECG signal.
 %   peak_indexes: Indexes of the detected R-peaks in the input signal.
 %   fs: Sampling frequency in Hz.
+%   params.f_powerline : powerline frequency in Hz.
+
 % Outputs:
 %   peak_refined_indexes: Indexes of the detected R-peaks in the input signal.
 %   peak_quality_scores: Score between [-1,1] that indicates the quality of detected peaks
-%
+%   ecg_quality: Indicate the quality of extracted peak_indexes for the input ECG
+
 % Revision History:
 % 2023: First release.
 %
 % Reza Sameni, Sajjad Karimi 2023
 % The Open-Source Electrophysiological Toolbox
 % https://github.com/alphanumericslab/OSET
+if nragin>3
+    if isfield(params,'f_powerline')
+        fc = params.f_powerline;
+    else
+        fc = 50.0; % powerline frequency
+    end
 
+else
+
+    fc = 50.0; % powerline frequency
+end
 
 % Notch filtering the ECG
-fc = 50.0; % powerline frequency
 Qfactor = 45; % Q-factor of the notch filter
 Wo = fc/(fs/2);  BW = Wo/Qfactor; % nothc filter parameters
 [b,a] = iirnotch(Wo, BW); % design the notch filter
