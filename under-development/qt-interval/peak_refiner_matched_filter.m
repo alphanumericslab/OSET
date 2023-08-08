@@ -13,7 +13,7 @@ function [peak_refined_indexes, peak_quality_scores, ecg_quality] = peak_refiner
 %   ecg_raw: Vector of the input ECG signal.
 %   peak_indexes: Indexes of the detected R-peaks in the input signal.
 %   fs: Sampling frequency in Hz.
-%   params.f_powerline : powerline frequency in Hz.
+%   params.f_powerline : powerline frequency in Hz (default = 60Hz).
 
 % Outputs:
 %   peak_refined_indexes: Indexes of the detected R-peaks in the input signal.
@@ -26,16 +26,16 @@ function [peak_refined_indexes, peak_quality_scores, ecg_quality] = peak_refiner
 % Reza Sameni, Sajjad Karimi 2023
 % The Open-Source Electrophysiological Toolbox
 % https://github.com/alphanumericslab/OSET
-if nragin>3
+if nargin>3
     if isfield(params,'f_powerline')
         fc = params.f_powerline;
     else
-        fc = 50.0; % powerline frequency
+        fc = 60.0; % powerline frequency
     end
 
 else
 
-    fc = 50.0; % powerline frequency
+    fc = 60.0; % powerline frequency
 end
 
 % Notch filtering the ECG
