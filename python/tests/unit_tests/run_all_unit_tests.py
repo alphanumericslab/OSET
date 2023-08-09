@@ -17,6 +17,7 @@ from peak_detection_modified_pan_tompkins_unit_test import (
 )
 from peak_detection_pan_tompkins_unit_test import peak_detection_pan_tompkins_unit_test
 from peak_detection_simple_unit_test import peak_detection_simple_unit_test
+from baseline_sliding_window_unit_test import baseline_sliding_window_unit_test
 
 
 class TestMyFunctions(unittest.TestCase):
@@ -43,6 +44,9 @@ class TestMyFunctions(unittest.TestCase):
 
     def test_peak_detection_matched_filter_unit_test(self):
         self.assertTrue(peak_detection_matched_filter_unit_test())
+
+    def test_baseline_sliding_window_unit_test(self):
+        self.assertTrue(baseline_sliding_window_unit_test())
 
 
 if __name__ == "__main__":
