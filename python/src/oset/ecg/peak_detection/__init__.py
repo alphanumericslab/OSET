@@ -4,3 +4,4 @@ from .peak_detection_matched_filter_robust import peak_detection_matched_filter_
 from .peak_detection_modified_pan_tompkins import peak_detection_modified_pan_tompkins
 from .peak_detection_pan_tompkins import peak_detection_pan_tompkins
 from .peak_detection_simple import peak_detection_simple
+from .peak_detection_adaptive_hr import peak_detection_adaptive_hr
