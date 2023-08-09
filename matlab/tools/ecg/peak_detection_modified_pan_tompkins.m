@@ -60,15 +60,15 @@ else
 end
 
 if nargin > 6 && ~isempty(varargin{5})
-    flag = varargin{5};
+    ksigma = varargin{5};
 else
-    flag = abs(max(data)) > abs(min(data));
+    ksigma = 12;
 end
 
 if nargin > 7 && ~isempty(varargin{6})
-    ksigma = varargin{6};
+    flag = varargin{6};
 else
-    ksigma = 12;
+    flag = abs(max(data)) > abs(min(data));
 end
 
 N = length(data);
