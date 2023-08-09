@@ -16,7 +16,7 @@ fs = 1000
 th = 0.10  # an arbitrary value for testing
 
 
-def peak_detection_simple_unit_test():
+def baseline_sliding_window_unit_test():
     ml = runMatLab("md")[0]
     py = runPython("md")[0]
     x = testing.compare_number_arrays(py, ml, round_val=12)
@@ -45,4 +45,4 @@ if __name__ == "__main__":
         description="""This is a unit test for baseline_sliding_window"""
     )
     args = parser.parse_args()
-    print(peak_detection_simple_unit_test())
+    print(baseline_sliding_window_unit_test())
