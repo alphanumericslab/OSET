@@ -34,7 +34,6 @@ if nargin>3
     end
 
 else
-
     fc = 60.0; % powerline frequency
 end
 
@@ -62,7 +61,6 @@ R_peak_set = nan(L,2*interval_width+1);
 R_peak_set_sat = nan(L,2*interval_width+1);
 
 for r = 1:L
-
     this_peak_index = peak_indexes(r)-interval_width : peak_indexes(r)+interval_width;
     if this_peak_index(1)<1 || this_peak_index(end)>T
         continue;

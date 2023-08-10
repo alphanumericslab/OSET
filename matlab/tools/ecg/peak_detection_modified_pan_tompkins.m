@@ -24,7 +24,9 @@ function [peaks, peak_indexes, width] = peak_detection_modified_pan_tompkins(dat
 %
 %   Revision History:
 %       2006: First release
-%       2023: Added ksigma saturation feature, removed a bug in baseline wander remover filter and renamed from deprecated version PeakDetection2()
+%       2023: Added ksigma saturation feature, removed a bug in baseline
+%           wander remover filter and renamed from deprecated version
+%           PeakDetection2
 % 
 %   Reference:
 %       Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans
