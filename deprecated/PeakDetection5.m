@@ -1,6 +1,6 @@
 function [peaks, peak_indexes] = PeakDetection5(x, ff, varargin)
 % PeakDetection5 has been deprecated. Use peak_detection_local_search instead.
-    warning('PeakDetection5 has been deprecated. Use peak_detection_local_search instead.');
+warning('PeakDetection5 has been deprecated. Use peak_detection_local_search instead.');
 
 if nargin > 2 && ~isempty(varargin{1})
     flag = varargin{1};

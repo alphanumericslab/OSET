@@ -1,6 +1,6 @@
 function [peaks, peak_indexes] = peak_detection_simple(x, ff, flag, varargin)
 %
-% peak_detection_simple - Internal R-peak detector function
+% peak_detection_simple - A basic R-peak detector
 %
 %   Syntax: [peaks, peak_indexes] = peak_detection_simple(x, ff, flag, omit_close_peaks)
 %
