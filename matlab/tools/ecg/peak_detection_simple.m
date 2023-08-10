@@ -17,7 +17,7 @@ function [peaks, peak_indexes] = peak_detection_simple(x, ff, flag, varargin)
 % 
 %   Revision History:
 %       2006: First release
-%       2023: Extracted from deprecated version PeakDetection()
+%       2023: Replaced deprecated version PeakDetection
 %
 %   Reza Sameni, 2006-2023
 %   The Open-Source Electrophysiological Toolbox
