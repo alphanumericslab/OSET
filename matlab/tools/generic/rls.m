@@ -18,8 +18,9 @@ function [y, e, P] = rls(x, d, p, lambda, delta)
 % Reference: 
 %   Simon S. Haykin, Adaptive Filter Theory, Edition 3, Prentice Hall, 1996 (Chapter 13)
 %
-%       2020: First release
-%       2023: Renamed from deprecated version RLS()
+% Revision History:       
+%   2020: First release
+%   2023: Renamed from deprecated version RLS()
 %
 %   Reza Sameni, 2006-2023
 %   The Open-Source Electrophysiological Toolbox
