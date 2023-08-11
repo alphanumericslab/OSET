@@ -1,12 +1,12 @@
 import argparse
 
 import numpy as np
-from oset.ecg.peak_detection.peak_detection_simple import peak_detection_simple
+from oset.ecg.peak_det.peak_det_simple import peak_det_simple
 
 
-def peak_detection_local_search(x, ff, *args):
+def peak_det_local_search(x, ff, *args):
     """
-    peak_detection_local_search - R-peak detector based on local max/min search
+    peak_det_local_search - R-peak detector based on local max/min search
     peaks, peak_indexes = PeakDetection(x,f,flag, num_rounds),
 
     inputs:
@@ -29,7 +29,7 @@ def peak_detection_local_search(x, ff, *args):
     R-peak detection
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_local_search.m)
+        July 2023: Translated to Python from Matlab (peak_det_local_search.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox
@@ -60,7 +60,7 @@ def peak_detection_local_search(x, ff, *args):
         omit_close_peaks = 0
 
     # Perform peak detection
-    peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
+    peaks, peak_indexes = peak_det_simple(x, ff, flag, omit_close_peaks)
 
     # Perform additional iterations if specified
     if num_rounds > 1:
@@ -69,14 +69,14 @@ def peak_detection_local_search(x, ff, *args):
             ff = hr_update_fraction / np.median(
                 rr_intervals
             )  # refined heart rate (in Hz) used for R-peak detection
-            peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
+            peaks, peak_indexes = peak_det_simple(x, ff, flag, omit_close_peaks)
     return peaks, peak_indexes
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
-    peak_detection_local_search - R-peak detector based on local max/min search
+    peak_det_local_search - R-peak detector based on local max/min search
     peaks, peak_indexes = PeakDetection(x,f,flag, num_rounds),
 
     inputs:
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     R-peak detection
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_local_search.m)
+        July 2023: Translated to Python from Matlab (peak_det_local_search.m)
 
     """,
         formatter_class=argparse.RawTextHelpFormatter,

@@ -1,14 +1,14 @@
 import argparse
 
 import numpy as np
-from oset.ecg.peak_detection.peak_detection_simple import peak_detection_simple
+from oset.ecg.peak_det.peak_det_simple import peak_det_simple
 
 
-def peak_detection_amp_threshold(x, ff, th, *args):
+def peak_det_amp_threshold(x, ff, th, *args):
     """
-    peak_detection_amp_threshold - R-peak detector based on max search and level thresholding
+    peak_det_amp_threshold - R-peak detector based on max search and level thresholding
 
-    Syntax: peaks, peak_indexes = peak_detection_amp_threshold(x, ff, th, *args)
+    Syntax: peaks, peak_indexes = peak_det_amp_threshold(x, ff, th, *args)
 
     Inputs:
       x: Vector of input data.
@@ -29,7 +29,7 @@ def peak_detection_amp_threshold(x, ff, th, *args):
       R-peak detection.
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_amp_threshold.m)
+        July 2023: Translated to Python from Matlab (peak_det_amp_threshold.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox
@@ -41,7 +41,7 @@ def peak_detection_amp_threshold(x, ff, th, *args):
         flag = args[0]
     else:
         flag = (np.abs(np.max(x))) > np.abs(np.min(x))
-    peaks = peak_detection_simple(x, ff, flag, omit_close_peaks)[0]
+    peaks = peak_det_simple(x, ff, flag, omit_close_peaks)[0]
 
     I = np.nonzero(peaks)[0]
     mx = np.max(np.abs(x[I]))
@@ -54,9 +54,9 @@ def peak_detection_amp_threshold(x, ff, th, *args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
-    peak_detection_amp_threshold - R-peak detector based on max search and level thresholding
+    peak_det_amp_threshold - R-peak detector based on max search and level thresholding
 
-    Syntax: peaks, peak_indexes = peak_detection_amp_threshold(x, ff, th, *args)
+    Syntax: peaks, peak_indexes = peak_det_amp_threshold(x, ff, th, *args)
 
     Inputs:
       x: Vector of input data.
@@ -77,7 +77,7 @@ if __name__ == "__main__":
       R-peak detection.
     
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_amp_threshold.m)
+        July 2023: Translated to Python from Matlab (peak_det_amp_threshold.m)
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )

@@ -20,7 +20,7 @@ Q_factor = 50; % Q-factor of the mains notch filter
 denoising_method = 'BYPASS';%'MDMN', 'LP', 'BYPASS', 'SEGMENTWISETIKHONOV', 'TIKHONOV', 'WAVELET', 'LP';
 
 % R-peak detector
-peak_detection_method = 'PeakDetectionMultiStage'; % 'PeakDetection', 'PeakDetectionMultiStage', 'PeakDetectionProbabilistic'
+peak_det_method = 'PeakDetectionMultiStage'; % 'PeakDetection', 'PeakDetectionMultiStage', 'PeakDetectionProbabilistic'
 
 % Plot results or not?
 plot_results = true;
@@ -101,7 +101,7 @@ for mm = 1 : length(sub_folders)
 
         % Detect the R-peaks
         r_peak_detector_params.ref_ch = 1;
-        r_peak_detector_params.peak_detection_method = peak_detection_method;
+        r_peak_detector_params.peak_det_method = peak_det_method;
         r_peak_detector_params.fs = fs;
         [peaks, peaks_indexes, rr_intervals, hr, hr_max, hr_min, hr_mean, hr_median, hr_std] = DetectRPeaks_(data_denoised, r_peak_detector_params);
 
@@ -373,7 +373,7 @@ end
 end
 
 function [peaks, peaks_indexes, rr_intervals, hr, hr_max, hr_min, hr_mean, hr_median, hr_std] = DetectRPeaks_(data, params)
-switch params.peak_detection_method
+switch params.peak_det_method
     case 'PeakDetection'
         f0 = 1.0; % approximate heart rate (in Hz) used for R-peak detection
         [peaks, peaks_indexes] = PeakDetection(data(params.ref_ch, :), f0/params.fs, 1); % peak detection

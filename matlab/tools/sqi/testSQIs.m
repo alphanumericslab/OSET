@@ -28,7 +28,7 @@ load(filename);
 fs = 1000;
 segLen = 10*fs; % segmentation length
 noSegLen = length(fECGdata)/segLen; % # of segments
-average_peak_detection_rate = 2.5; %average FECG peak detection rate
+average_peak_det_rate = 2.5; %average FECG peak detection rate
 flgInput = 1; % Asking user for channel ranking; 1:enable, 0:disable
 winLen = 120; % window length for SQI5 algorithm
 flgOutput = 1; % Print Results
@@ -56,7 +56,7 @@ for seg = 1 : noSegLen
     
     % Peak detection
     for ch = 1:CH
-        peaks{ch} = PeakDetection(JADEcomp(ch,:), average_peak_detection_rate/fs, 0);
+        peaks{ch} = PeakDetection(JADEcomp(ch,:), average_peak_det_rate/fs, 0);
     end
     
     % Call the signal quality indexe algorithms

@@ -4,11 +4,11 @@ import numpy as np
 from scipy.signal import lfilter
 
 
-def peak_detection_matched_filter(x, fs, h, th, fmax) -> tuple:
+def peak_det_matched_filter(x, fs, h, th, fmax) -> tuple:
     """
-    peak_detection_matched_filter - R-peak detector based on a matched filter
+    peak_det_matched_filter - R-peak detector based on a matched filter
 
-    Syntax: [peaks, mn, r] = peak_detection_matched_filter(x, fs, h, th, fmax)
+    Syntax: [peaks, mn, r] = peak_det_matched_filter(x, fs, h, th, fmax)
 
     Args:
         x:      Vector of input data
@@ -23,7 +23,7 @@ def peak_detection_matched_filter(x, fs, h, th, fmax) -> tuple:
         r:      Filtered output after matched filtering
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_matched_filter.m)
+        July 2023: Translated to Python from Matlab (peak_det_matched_filter.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox
@@ -78,9 +78,9 @@ def peak_detection_matched_filter(x, fs, h, th, fmax) -> tuple:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
-    peak_detection_matched_filter - R-peak detector based on a matched filter
+    peak_det_matched_filter - R-peak detector based on a matched filter
     
-    Syntax: [peaks, mn, r] = peak_detection_matched_filter(x, fs, h, th, fmax)
+    Syntax: [peaks, mn, r] = peak_det_matched_filter(x, fs, h, th, fmax)
     
     Args:
         x:      Vector of input data
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         r:      Filtered output after matched filtering
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_matched_filter.m)
+        July 2023: Translated to Python from Matlab (peak_det_matched_filter.m)
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )

@@ -1,7 +1,7 @@
-function [peaks, peak_indexes] = peak_detection_pan_tompkins(data, fs, varargin)
-% peak_detection_pan_tompkins - R-peak detector based on Pan-Tompkins method.
+function [peaks, peak_indexes] = peak_det_pan_tompkins(data, fs, varargin)
+% peak_det_pan_tompkins - R-peak detector based on Pan-Tompkins method.
 %
-%   [peaks, peak_indexes] = peak_detection_pan_tompkins(data, fs, varargin)
+%   [peaks, peak_indexes] = peak_det_pan_tompkins(data, fs, varargin)
 %
 %   This function implements the Pan-Tompkins algorithm for R-peak detection
 %   in ECG signals, with a simplified post-detection R-peak selection logic

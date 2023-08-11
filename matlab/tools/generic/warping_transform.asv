@@ -56,12 +56,8 @@ function M = warping_transform(in_vector_boundaries, out_vector_boundaries, orde
 %   coefficients (polynomial of order 'order'). The general steps are as
 %   follows:
 %   1- Find the neighborhood samples of the input space (columns) that
-%       required for building a specific sample from the output sapace.
-%   2- Find the coefficients of the polynomial of order N that passes those
-%       points
-%   3- Use the polynomial coefficients to find the coefficients of the
-%       intermediate point of interest
-%   4- Move on to the next point
+%   required for building a specific sample from the output sapace.
+%   2- 
 %
 % Reference (usage):
 %   R. Sameni, C. Jutten, and M. B. Shamsollahi. Multichannel

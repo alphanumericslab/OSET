@@ -1,7 +1,7 @@
-function [peaks, peak_indexes] = peak_detection_amp_threshold(x, ff, th, varargin)
-% peak_detection_amp_threshold - R-peak detector based on max search and level thresholding
+function [peaks, peak_indexes] = peak_det_amp_threshold(x, ff, th, varargin)
+% peak_det_amp_threshold - R-peak detector based on max search and level thresholding
 %
-% Syntax: [peaks, peak_indexes] = peak_detection_amp_threshold(x, ff, th, varargin)
+% Syntax: [peaks, peak_indexes] = peak_det_amp_threshold(x, ff, th, varargin)
 %
 % Inputs:
 %   x: Vector of input data.
@@ -37,7 +37,7 @@ else
 end
 
 omit_close_peaks = 0;
-[peaks, ~] = peak_detection_simple(x, ff, flag, omit_close_peaks);
+[peaks, ~] = peak_det_simple(x, ff, flag, omit_close_peaks);
 
 % Remove small peaks below the threshold
 I = find(peaks);

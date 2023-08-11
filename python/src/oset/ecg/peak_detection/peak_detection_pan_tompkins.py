@@ -4,9 +4,9 @@ import numpy as np
 from scipy.signal import butter, filtfilt, convolve
 
 
-def peak_detection_pan_tompkins(data, fs, *args):
+def peak_det_pan_tompkins(data, fs, *args):
     """
-    peak_detection_pan_tompkins - R-peak detector based on Pan-Tompkins method.
+    peak_det_pan_tompkins - R-peak detector based on Pan-Tompkins method.
 
     Args:
         data (numpy.ndarray): Vector of input ECG data
@@ -26,7 +26,7 @@ def peak_detection_pan_tompkins(data, fs, *args):
         Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_pan_tompkins.m)
+        July 2023: Translated to Python from Matlab (peak_det_pan_tompkins.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox
@@ -107,7 +107,7 @@ def peak_detection_pan_tompkins(data, fs, *args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
-    peak_detection_pan_tompkins - R-peak detector based on Pan-Tompkins method.
+    peak_det_pan_tompkins - R-peak detector based on Pan-Tompkins method.
 
     Args:
         data (numpy.ndarray): Vector of input ECG data
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_pan_tompkins.m)
+        July 2023: Translated to Python from Matlab (peak_det_pan_tompkins.m)
 
     """,
         formatter_class=argparse.RawTextHelpFormatter,

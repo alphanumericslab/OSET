@@ -4,13 +4,13 @@ function [score1, score2, peaks1, peaks2, rank1, rank2] = sqi_multi_matched_filt
 %   deviation
 %
 % Usage:
-%   [score1, score2, peaks1, peaks2, rank1, rank2] = sqi_multi_matched_filter(x, f, fs, num_peak_detection_itr, template_type, template_params, plot_templates)
+%   [score1, score2, peaks1, peaks2, rank1, rank2] = sqi_multi_matched_filter(x, f, fs, num_peak_det_itr, template_type, template_params, plot_templates)
 %
 % Inputs:
 %   x: Input data array (channels x samples).
 %   f: Frequency vector.
 %   fs: Sampling frequency.
-%   num_peak_detection_itr (optional): Number of iterations for peak
+%   num_peak_det_itr (optional): Number of iterations for peak
 %       detection (default: 1). 
 %   template_type (optional): Template type (default: 0).
 %       template_type 0: parameters preselected for fetal ECG
@@ -56,9 +56,9 @@ function [score1, score2, peaks1, peaks2, rank1, rank2] = sqi_multi_matched_filt
 
 % Handle optional arguments
 if nargin > 3 && ~isempty(varargin{1})
-    num_peak_detection_itr = varargin{1};
+    num_peak_det_itr = varargin{1};
 else
-    num_peak_detection_itr = 1;
+    num_peak_det_itr = 1;
 end
 
 if nargin > 4 && ~isempty(varargin{2})
@@ -152,7 +152,7 @@ for i = 1:L
     r = sqrt(r1.^2 + r2.^2 + r3.^2);
 
     % Find the local peaks of the power envelope
-    ppeaks(i, :) = peak_detection_local_search(r, f/fs, 1, num_peak_detection_itr);
+    ppeaks(i, :) = peak_det_local_search(r, f/fs, 1, num_peak_det_itr);
 
     % Combine all nearby peaks to form a pulse corresponding to the R-peak of length LL (widest template width)
     LL = max([L1 L2 L3]);

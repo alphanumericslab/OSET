@@ -1,8 +1,8 @@
-function [peaks, peak_indexes] = peak_detection_local_search(x, ff, varargin)
+function [peaks, peak_indexes] = peak_det_local_search(x, ff, varargin)
 %
-% peak_detection_local_search - R-peak detector based on local max/min search
+% peak_det_local_search - R-peak detector based on local max/min search
 %
-%   [peaks, peak_indexes] = peak_detection_local_search(x, f, flag, num_rounds, hr_update_fraction, omit_close_peaks)
+%   [peaks, peak_indexes] = peak_det_local_search(x, f, flag, num_rounds, hr_update_fraction, omit_close_peaks)
 %
 %   Inputs:
 %       x: Vector of input data
@@ -64,13 +64,13 @@ else
 end
 
 % Perform peak detection
-[peaks, peak_indexes] = peak_detection_simple(x, ff, flag, omit_close_peaks);
+[peaks, peak_indexes] = peak_det_simple(x, ff, flag, omit_close_peaks);
 
 % Perform additional iterations if specified
 if num_rounds > 1
     for k = 1 : num_rounds - 1
         rr_intervals = diff(peak_indexes);
         ff = hr_update_fraction / median(rr_intervals); % Refined heart rate (in Hz) used for R-peak detection
-        [peaks, peak_indexes] = peak_detection_simple(x, ff, flag, omit_close_peaks);
+        [peaks, peak_indexes] = peak_det_simple(x, ff, flag, omit_close_peaks);
     end
 end

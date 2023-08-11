@@ -14,7 +14,7 @@ data_hp = data - lp_filter_zero_phase(data, 2.0/fs);
 num_rounds = 3;
 hr_update_fraction = 1.05;
 omit_close_peaks = true;
-[peaks, peak_indexes] = peak_detection_local_search(data_hp, 1.0/fs, [], num_rounds, hr_update_fraction, omit_close_peaks);
+[peaks, peak_indexes] = peak_det_local_search(data_hp, 1.0/fs, [], num_rounds, hr_update_fraction, omit_close_peaks);
 
 
 mn_wlens = 0.2 : 0.05 : 2.0;

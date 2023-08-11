@@ -6,7 +6,7 @@ if nargin == 3
 else
     beat_width = varargin{1};
 end
-num_peak_detection_itr = 1;
+num_peak_det_itr = 1;
 ranking_mode = 'AVG_BEAT_MAX_PEAK_ALIGNED';
 plot_results = 0;
-[index, rank] = sqi_beat_shape_variability(x, ff, fs, method, num_peak_detection_itr, beat_width, ranking_mode, plot_results);
+[index, rank] = sqi_beat_shape_variability(x, ff, fs, method, num_peak_det_itr, beat_width, ranking_mode, plot_results);

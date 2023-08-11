@@ -1,11 +1,11 @@
-function [peaks, peak_indexes, qrs_likelihood] = peak_detection_probabilistic(signal, fs, varargin)
-% function [peaks, peak_indexes, qrs_likelihood] = peak_detection_probabilistic(signal, fs, varargin)
+function [peaks, peak_indexes, qrs_likelihood] = peak_det_probabilistic(signal, fs, varargin)
+% function [peaks, peak_indexes, qrs_likelihood] = peak_det_probabilistic(signal, fs, varargin)
 % A probabilistic R-peak detector based on local peaks sorting
 % 
 % Note: Under development
 %
 % Usage:
-%   [peaks, qrs_likelihood, peak_indexes] = peak_detection_probabilistic(signal, fs, params)
+%   [peaks, qrs_likelihood, peak_indexes] = peak_det_probabilistic(signal, fs, params)
 %
 % Inputs:
 %   signal: single or multichannel ECG signal with row-wise channels

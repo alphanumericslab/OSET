@@ -1,7 +1,7 @@
-function [peaks, mn, r] = peak_detection_matched_filter(x, fs, h, th, fmax)
-% peak_detection_matched_filter - R-peak detector based on a matched filter
+function [peaks, mn, r] = peak_det_matched_filter(x, fs, h, th, fmax)
+% peak_det_matched_filter - R-peak detector based on a matched filter
 %
-% Syntax: [peaks, mn, r] = peak_detection_matched_filter(x, fs, h, th, fmax)
+% Syntax: [peaks, mn, r] = peak_det_matched_filter(x, fs, h, th, fmax)
 %
 % Inputs:
 %       x:      Vector of input data

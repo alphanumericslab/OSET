@@ -1,17 +1,17 @@
 import argparse
 
 import numpy as np
-from oset.ecg.peak_detection.peak_detection_local_search import (
-    peak_detection_local_search,
+from oset.ecg.peak_det.peak_det_local_search import (
+    peak_det_local_search,
 )
 from scipy.signal import lfilter
 
 
-def peak_detection_matched_filter_robust(ref, fs, h, fmax, itr=1):
+def peak_det_matched_filter_robust(ref, fs, h, fmax, itr=1):
     """
-    peak_detection_matched_filter_robust: R-peak detector based on a matched filter
+    peak_det_matched_filter_robust: R-peak detector based on a matched filter
 
-    Syntax: [peaks, r] = peak_detection_matched_filter_robust(ref, fs, h, fmax, itr)
+    Syntax: [peaks, r] = peak_det_matched_filter_robust(ref, fs, h, fmax, itr)
 
     Args:
         ref:    Vector of input data.s
@@ -25,7 +25,7 @@ def peak_detection_matched_filter_robust(ref, fs, h, fmax, itr=1):
         r:      Filtered output after matched filtering.
 
       Revision History:
-      July 2023: Translated to Python from Matlab (peak_detection_matched_filter_robust.m)
+      July 2023: Translated to Python from Matlab (peak_det_matched_filter_robust.m)
 
         Amulya, 2023
         The Open-Source Electrophysiological Toolbox
@@ -38,16 +38,16 @@ def peak_detection_matched_filter_robust(ref, fs, h, fmax, itr=1):
     w = int(np.floor(length / 2))
     r = lfilter(h, 1, np.concatenate((ref, np.zeros(w - 1))))
     r = r[w - 1 : w + n]
-    peaks = peak_detection_local_search(r, fmax / fs, 1, itr)[0]
+    peaks = peak_det_local_search(r, fmax / fs, 1, itr)[0]
     return peaks, r
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
-        peak_detection_matched_filter_robust: R-peak detector based on a matched filter
+        peak_det_matched_filter_robust: R-peak detector based on a matched filter
 
-        Syntax: peaks, r = peak_detection_matched_filter_robust(ref, fs, h, fmax, itr)
+        Syntax: peaks, r = peak_det_matched_filter_robust(ref, fs, h, fmax, itr)
 
         Inputs:
           ref:    Vector of input data.
@@ -61,7 +61,7 @@ if __name__ == "__main__":
           r:      Filtered output after matched filtering.
 
           Revision History:
-          July 2023: Translated to Python from Matlab (peak_detection_matched_filter_robust.m)
+          July 2023: Translated to Python from Matlab (peak_det_matched_filter_robust.m)
 
             Amulya, 2023
             The Open-Source Electrophysiological Toolbox
