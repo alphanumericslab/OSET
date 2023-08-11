@@ -33,7 +33,7 @@ flgDbg = 1;
 % Matched filter peak detector parameters
 wide_wlen = round(fs*0.03); % wide moving window length (in samples)
 narrow_wlen = round(fs*0.01); % narrow moving window length (in samples)
-average_peak_detection_rate = 2.2; %average FECG peak detection rate
+average_peak_det_rate = 2.2; %average FECG peak detection rate
 PP_diff_wlen = 5; % number of successive beats used for averaging
 PP_diff_th = 100; % difference above these number of samples is considered as erroneous and should be corrected
 type = 'median';
@@ -56,4 +56,4 @@ wide_matched_template = ECGdata(selectedCH, wide_template_stop : -1 : wide_templ
 % Narrow window template
 narrow_matched_template = ECGdata(selectedCH, narrow_template_stop : -1 : narrow_template_start);
 
-[multi_matched_peaks_indexes, PeakToPeak_corrected, peak_location_cdi, PeakToPeak_corrected_Rule] = TwoStageSMFPeakDetectorRuleBasedCorrecction(ECGdata(selectedCH,:), wide_matched_template, narrow_matched_template, type,  wide_wlen, narrow_wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs, flgDbg);
+[multi_matched_peaks_indexes, PeakToPeak_corrected, peak_location_cdi, PeakToPeak_corrected_Rule] = TwoStageSMFPeakDetectorRuleBasedCorrecction(ECGdata(selectedCH,:), wide_matched_template, narrow_matched_template, type,  wide_wlen, narrow_wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs, flgDbg);

@@ -1,10 +1,10 @@
-function [peaks, peak_indexes, R_prominence] = peak_detection_advanced_pan_tompkins(data, fs, varargin)
+function [peaks, peak_indexes, R_prominence] = peak_det_advanced_pan_tompkins(data, fs, varargin)
 %
-% peak_detection_modified_pan_tompkins - R-peak detector based on modified
+% peak_det_modified_pan_tompkins - R-peak detector based on modified
 %   Pan-Tompkins method. The filters and post-detection R-peak selection
 %   logic differ from the original algorithm
 %
-%   [peaks, peak_indexes, width] = peak_detection_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
+%   [peaks, peak_indexes, width] = peak_det_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
 %
 %   Inputs:
 %       data: Vector of input data

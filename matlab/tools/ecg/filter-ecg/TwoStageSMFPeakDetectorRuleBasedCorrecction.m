@@ -1,4 +1,4 @@
-function [multi_matched_peaks_indexes, PeakToPeak_corrected, peak_location_cdi, PeakToPeak_corrected_Rule]=TwoStageSMFPeakDetectorRuleBasedCorrecction(ECG_data, wide_matched_template, narrow_matched_template, type,  wide_wlen, narrow_wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs, flgDbg)
+function [multi_matched_peaks_indexes, PeakToPeak_corrected, peak_location_cdi, PeakToPeak_corrected_Rule]=TwoStageSMFPeakDetectorRuleBasedCorrecction(ECG_data, wide_matched_template, narrow_matched_template, type,  wide_wlen, narrow_wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs, flgDbg)
 % ===========================================================
 % Two satege (narrow&wide) matched filter peak detector and Rule-Based Correction
 %
@@ -18,7 +18,7 @@ function [multi_matched_peaks_indexes, PeakToPeak_corrected, peak_location_cdi, 
 %   narrow_wlen: narrow moving window length (in samples)
 %   PP_diff_wlen: number of successive beats used for averaging
 %   PP_diff_th: difference above these number of samples is considered as erroneous and should be corrected
-%   average_peak_detection_rate: average FECG peak detection rate
+%   average_peak_det_rate: average FECG peak detection rate
 %   fs: sampling rate
 %
 % output:
@@ -45,11 +45,11 @@ function [multi_matched_peaks_indexes, PeakToPeak_corrected, peak_location_cdi, 
 
 % Call the matched filter R-peak detector and smoothed heart rate function
 % for wide and narrow window templates
-[PeakToPeak_corrected_HR_all_wide, PeakToPeak_differences_wide, matched_peaks_indexes_wide, smoothed_matched_output_wide] = SMFPeakDetector(ECG_data, wide_matched_template, type,  wide_wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs);
-[PeakToPeak_corrected_HR_all_narrow, PeakToPeak_differences_narrow, matched_peaks_indexes_narrow, smoothed_matched_output_narrow] = SMFPeakDetector(ECG_data, narrow_matched_template, type,  narrow_wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs);
+[PeakToPeak_corrected_HR_all_wide, PeakToPeak_differences_wide, matched_peaks_indexes_wide, smoothed_matched_output_wide] = SMFPeakDetector(ECG_data, wide_matched_template, type,  wide_wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs);
+[PeakToPeak_corrected_HR_all_narrow, PeakToPeak_differences_narrow, matched_peaks_indexes_narrow, smoothed_matched_output_narrow] = SMFPeakDetector(ECG_data, narrow_matched_template, type,  narrow_wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs);
 
 % peak detection over energy envelope
-multi_matched_peaks = PeakDetection(smoothed_matched_output_wide.*smoothed_matched_output_narrow, average_peak_detection_rate/fs, 1);
+multi_matched_peaks = PeakDetection(smoothed_matched_output_wide.*smoothed_matched_output_narrow, average_peak_det_rate/fs, 1);
 multi_matched_peaks_indexes = find(multi_matched_peaks);
 
 % postprocess the heart rate 

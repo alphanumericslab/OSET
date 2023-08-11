@@ -10,11 +10,11 @@ wlen = round(0.05*fs); % averaging window length
 type = 'mean';
 PP_diff_th = 50;
 PP_diff_wlen = 3;
-average_peak_detection_rate = 1.0;
+average_peak_det_rate = 1.0;
 plotflag = 1;
 
-% [PeakToPeak_corrected, PeakToPeak_differences, matched_peaks_indexes] = MFPeakDetector(testdata, template_start, template_stop, type, wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs, plotflag);
-[PeakToPeak_corrected, PeakToPeak_differences, matched_peaks_indexes, smoothed_matched_output] = MFPeakDetector2(testdata, testdata(template_start:template_stop), type, wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs, plotflag);
+% [PeakToPeak_corrected, PeakToPeak_differences, matched_peaks_indexes] = MFPeakDetector(testdata, template_start, template_stop, type, wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs, plotflag);
+[PeakToPeak_corrected, PeakToPeak_differences, matched_peaks_indexes, smoothed_matched_output] = MFPeakDetector2(testdata, testdata(template_start:template_stop), type, wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs, plotflag);
 
 
 t = (0:length(testdata)-1)/fs;

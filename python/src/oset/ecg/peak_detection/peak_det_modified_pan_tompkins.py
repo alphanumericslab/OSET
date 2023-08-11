@@ -6,13 +6,13 @@ from oset.generic.tanh_saturation import tanh_saturation
 from scipy.signal import lfilter
 
 
-def peak_detection_modified_pan_tompkins(data, fs, *args):
+def peak_det_modified_pan_tompkins(data, fs, *args):
     """
-    peak_detection_modified_pan_tompkins - R-peak detector based on modified
+    peak_det_modified_pan_tompkins - R-peak detector based on modified
       Pan-Tompkins method. The filters and post-detection R-peak selection
       logic differ from the original algorithm
 
-      peaks, peak_indexes, width = peak_detection_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
+      peaks, peak_indexes, width = peak_det_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
 
       Inputs:
           data: Vector of input data
@@ -35,7 +35,7 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
           Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_modified_pan_tompkins.m)
+        July 2023: Translated to Python from Matlab (peak_det_modified_pan_tompkins.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox
@@ -137,11 +137,11 @@ def peak_detection_modified_pan_tompkins(data, fs, *args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
-      peak_detection_modified_pan_tompkins - R-peak detector based on modified
+      peak_det_modified_pan_tompkins - R-peak detector based on modified
       Pan-Tompkins method. The filters and post-detection R-peak selection
       logic differ from the original algorithm
 
-      peaks, peak_indexes, width = peak_detection_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
+      peaks, peak_indexes, width = peak_det_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
 
       Inputs:
           data: Vector of input data
@@ -164,7 +164,7 @@ if __name__ == "__main__":
           Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_modified_pan_tompkins.m)
+        July 2023: Translated to Python from Matlab (peak_det_modified_pan_tompkins.m)
 
     """,
         formatter_class=argparse.RawTextHelpFormatter,

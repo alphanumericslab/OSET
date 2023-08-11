@@ -3,10 +3,10 @@ import argparse
 import numpy as np
 
 
-def peak_detection_simple(x, ff, flag=0, omit_close_peaks=0):
+def peak_det_simple(x, ff, flag=0, omit_close_peaks=0):
     """
-    peak_detection_simple - Internal R-peak detector function
-    Syntax: peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
+    peak_det_simple - Internal R-peak detector function
+    Syntax: peaks, peak_indexes = peak_det_simple(x, ff, flag, omit_close_peaks)
 
       Inputs:
           x: Vector of input data
@@ -20,7 +20,7 @@ def peak_detection_simple(x, ff, flag=0, omit_close_peaks=0):
           peak_indexes: Vector of R-peak indexes
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_simple.m)
+        July 2023: Translated to Python from Matlab (peak_det_simple.m)
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox
@@ -67,8 +67,8 @@ def peak_detection_simple(x, ff, flag=0, omit_close_peaks=0):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
-    peak_detection_simple - Internal R-peak detector function
-    Syntax: peaks, peak_indexes = peak_detection_simple(x, ff, flag, omit_close_peaks)
+    peak_det_simple - Internal R-peak detector function
+    Syntax: peaks, peak_indexes = peak_det_simple(x, ff, flag, omit_close_peaks)
 
       Inputs:
           x: Vector of input data
@@ -82,7 +82,7 @@ if __name__ == "__main__":
           peak_indexes: Vector of R-peak indexes
 
     Revision History:
-        July 2023: Translated to Python from Matlab (peak_detection_simple.m)
+        July 2023: Translated to Python from Matlab (peak_det_simple.m)
 
     """,
         formatter_class=argparse.RawTextHelpFormatter,

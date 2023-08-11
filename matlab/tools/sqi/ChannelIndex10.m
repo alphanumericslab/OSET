@@ -5,9 +5,9 @@ function [ind, peaks, ch] = ChannelIndex10(x,f,fs, varargin)
 % September 2010
 
 if nargin > 3 && ~isempty(varargin{1})
-    num_peak_detection_itr = varargin{1};
+    num_peak_det_itr = varargin{1};
 else
-    num_peak_detection_itr = 1;
+    num_peak_det_itr = 1;
 end
 
 
@@ -56,7 +56,7 @@ for i = 1:L
     for kk = 1 : size(r,1)
         % % %         ppeaks(kk,i,:) = PeakDetection6(r(kk,:),f/fs,.01,1); % search for positive peaks
 %         ppeaks(kk,i,:) = PeakDetectionFromC3(r(kk,:), f, fs, 1);
-        ppeaks(kk,i,:) = peak_detection_local_search(r(kk,:), f/fs, 1, num_peak_detection_itr);
+        ppeaks(kk,i,:) = peak_det_local_search(r(kk,:), f/fs, 1, num_peak_det_itr);
         I = find(ppeaks(kk,i,:));
         d = diff(I);
         score(kk,i) = std(d(3:end-2));

@@ -1,7 +1,7 @@
 function [index, rank] = sqi_pseudo_periodicity(x, ff, fs, varargin)
 % Signal quality index based on pseudo-periodicity measures
 %
-% [index, rank] = sqi_pseudo_periodicity(x, ff, fs, method, num_peak_detection_itr, ranking_mode, plot_results)
+% [index, rank] = sqi_pseudo_periodicity(x, ff, fs, method, num_peak_det_itr, ranking_mode, plot_results)
 %
 % This function calculates the signal quality index (SQI) based on
 %   pseudo-periodicity measures of the input data.
@@ -11,7 +11,7 @@ function [index, rank] = sqi_pseudo_periodicity(x, ff, fs, varargin)
 %   ff: Fundamental frequency of the signal in Hz
 %   fs: Sampling rate of the signal in Hz
 %   method (optional): Method for SQI calculation ('STACKED_BEATS', 'EVD', 'GEVD', 'TRACE'). Default is 'STACKED_BEATS'
-%   num_peak_detection_itr (optional): Number of iterations for peak detection (optional, default is 1)
+%   num_peak_det_itr (optional): Number of iterations for peak detection (optional, default is 1)
 %   ranking_mode (optional): Sorting mode for the output ranking ('ascend' or 'descend', optional, default is 'descend')
 %   plot_results (optional): Flag to plot the results (0 or 1, optional, default is 0)
 %
@@ -43,9 +43,9 @@ else
 end
 
 if nargin > 4 && ~isempty(varargin{2})
-    num_peak_detection_itr = varargin{2};
+    num_peak_det_itr = varargin{2};
 else
-    num_peak_detection_itr = 1;
+    num_peak_det_itr = 1;
 end
 
 % Check for sorting mode argument
@@ -70,7 +70,7 @@ index = zeros(L1, 1);
 x = x - mean(x,2);
 
 for i = 1 : L1
-    [peaks, peak_indexes] = peak_detection_local_search(x(i,:), ff/fs, [], num_peak_detection_itr);
+    [peaks, peak_indexes] = peak_det_local_search(x(i,:), ff/fs, [], num_peak_det_itr);
     if plot_results
         tt = (0:length(x(i, :))-1)/fs;
         figure

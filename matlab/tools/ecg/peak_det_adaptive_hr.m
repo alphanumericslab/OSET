@@ -1,7 +1,7 @@
-function [peaks, peak_indexes] = peak_detection_adaptive_hr(x, ff, fs, varargin)
-% peak_detection_adaptive_hr - R-peak detector based on max search over sliding window with adaptive width
+function [peaks, peak_indexes] = peak_det_adaptive_hr(x, ff, fs, varargin)
+% peak_det_adaptive_hr - R-peak detector based on max search over sliding window with adaptive width
 % Syntax:
-%   [peaks, peak_indexes] = peak_detection_adaptive_hr(x, ff, fs, flag, [th, th2], rejection_threshold)
+%   [peaks, peak_indexes] = peak_det_adaptive_hr(x, ff, fs, flag, [th, th2], rejection_threshold)
 % 
 % Method:
 %   detects R-peaks in the ECG signal x using a max search algorithm over a sliding window

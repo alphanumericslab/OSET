@@ -1,11 +1,11 @@
-function [interpeaks, ref_to_out_lag] = intermediate_peak_detection(x, peaks, wlen, n_peaks, varargin)
-% intermediate_peak_detection - Searches for intermediate peaks between a
+function [interpeaks, ref_to_out_lag] = intermediate_peak_det(x, peaks, wlen, n_peaks, varargin)
+% intermediate_peak_det - Searches for intermediate peaks between a
 %   set of readily found landmark peaks. Useful for detecting P and T wave
 %   peaks from the reference R-peaks or for PCG S1 and S2 detection from ECG
 %   R-peaks
 % 
 % Syntax:
-%   [interpeaks, ref_to_out_lag] = intermediate_peak_detection(x, peaks, wlen, n_peaks, flag, method)
+%   [interpeaks, ref_to_out_lag] = intermediate_peak_det(x, peaks, wlen, n_peaks, flag, method)
 %
 % Inputs:
 %   x: Vector of input data.
@@ -61,7 +61,7 @@ if method == 0 % Method 0: start from an empty set and add peaks one-by-one
     for j = 1 : length(I_refpeaks) - 1
         ref_ind_range = I_refpeaks(j) : I_refpeaks(j + 1) - 1;
         x_segment = x(ref_ind_range);
-        interpeaks_tmp = peak_detection_local_search(x_segment, 1 / wlen, flag); % Find all potential local peaks
+        interpeaks_tmp = peak_det_local_search(x_segment, 1 / wlen, flag); % Find all potential local peaks
         JJ = find(interpeaks_tmp);
         I_amps = x_segment(JJ);
         if(flag)
@@ -73,7 +73,7 @@ if method == 0 % Method 0: start from an empty set and add peaks one-by-one
     end
     
 elseif method == 1 % Method 1: start from the superset of points and remove the less probable ones one-by-one
-    all_peaks = peak_detection_local_search(x, 1 / wlen, flag); % Find all potential local peaks
+    all_peaks = peak_det_local_search(x, 1 / wlen, flag); % Find all potential local peaks
     
     interpeaks = all_peaks;
     ref_to_out_lag = zeros(1, length(I_refpeaks));
@@ -96,7 +96,7 @@ elseif method == 1 % Method 1: start from the superset of points and remove the 
     
 elseif method == 2 % Method 2: Find the first 'n_peaks' local peaks after each reference in a window of length 'wlen'
     N = length(x);
-    all_peaks = peak_detection_local_search(x, 1 / wlen, flag); % Call peak_detection_local_search function
+    all_peaks = peak_det_local_search(x, 1 / wlen, flag); % Call peak_det_local_search function
     
     interpeaks = zeros(1, N);
     ref_to_out_lag = zeros(1, length(I_refpeaks));

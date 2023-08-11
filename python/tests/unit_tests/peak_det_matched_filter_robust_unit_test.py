@@ -3,8 +3,8 @@ import argparse
 import matlab
 import matlab.engine
 import scipy.io
-from oset.ecg.peak_detection.peak_detection_matched_filter_robust import (
-    peak_detection_matched_filter_robust,
+from oset.ecg.peak_det.peak_det_matched_filter_robust import (
+    peak_det_matched_filter_robust,
 )
 
 import unit_test as testing
@@ -15,7 +15,7 @@ fs = 1000
 th = 0.10  # an arbitrary value for testing
 
 
-def peak_detection_matched_filter_robust_unit_test():
+def peak_det_matched_filter_robust_unit_test():
     import warnings
 
     warnings.warn("This unit test has not yet been deployed")
@@ -40,16 +40,16 @@ def runMatLab(itr):
     y = matlab.double([1, 2, 3, 4])
     eng.addpath("../../../matlab/tools/ecg")
     eng.addpath("../../../matlab/tools/generic")
-    return eng.peak_detection_matched_filter_robust(x, f / fs, y, 60, itr, nargout=2)
+    return eng.peak_det_matched_filter_robust(x, f / fs, y, 60, itr, nargout=2)
 
 
 def runPython(itr):
-    return peak_detection_matched_filter_robust(mat, f / fs, [1, 2, 3, 4], 60, itr)
+    return peak_det_matched_filter_robust(mat, f / fs, [1, 2, 3, 4], 60, itr)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="""This is a unit test for peak_detection_matched_filter_robust"""
+        description="""This is a unit test for peak_det_matched_filter_robust"""
     )
     args = parser.parse_args()
-    print(peak_detection_matched_filter_robust_unit_test())
+    print(peak_det_matched_filter_robust_unit_test())

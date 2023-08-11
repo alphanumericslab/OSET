@@ -1,8 +1,8 @@
-function [rr_interval_corrected, rr_interval_differences, matched_peaks_indexes, smoothed_matched_output] = peak_detection_matched_filter_pwr_env(x, matched_template, type, wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs, varargin)
-% peak_detection_matched_filter_pwr_env - matched filter R-Peak detector
+function [rr_interval_corrected, rr_interval_differences, matched_peaks_indexes, smoothed_matched_output] = peak_det_matched_filter_pwr_env(x, matched_template, type, wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs, varargin)
+% peak_det_matched_filter_pwr_env - matched filter R-Peak detector
 % and smoothed heart rate of the matched filter output's power envelope
 %
-%   [rr_interval_corrected, rr_interval_differences, matched_peaks_indexes, smoothed_matched_output] = peak_detection_matched_filter_pwr_env(x, matched_template, type, wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs, mode)
+%   [rr_interval_corrected, rr_interval_differences, matched_peaks_indexes, smoothed_matched_output] = peak_det_matched_filter_pwr_env(x, matched_template, type, wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs, mode)
 %
 %   This function implements a Matched Filter-based R-Peak detector and
 %   smoothed heart rate calculation. It detects R-peaks by convolving the
@@ -17,7 +17,7 @@ function [rr_interval_corrected, rr_interval_differences, matched_peaks_indexes,
 %   wlen: Moving window length for smoothing the energy envelope of the matched filter output (in samples).
 %   PP_diff_wlen: Number of successive beats used for averaging peak-to-peak differences.
 %   PP_diff_th: Threshold for detecting erroneous peak-to-peak differences.
-%   average_peak_detection_rate: Average peak detection rate (peaks per second).
+%   average_peak_det_rate: Average peak detection rate (peaks per second).
 %   fs: Sampling rate in Hz.
 %   mode: Optional. Matching mode: 'CAUSAL' (default) or 'NON-CAUSAL'.
 %
@@ -70,7 +70,7 @@ elseif strcmp(mode, 'NON-CAUSAL')
 end
 
 % Peak detection over energy envelope
-matched_peaks = peak_detection_local_search(smoothed_matched_output, average_peak_detection_rate / fs, 1);
+matched_peaks = peak_det_local_search(smoothed_matched_output, average_peak_det_rate / fs, 1);
 matched_peaks_indexes = find(matched_peaks);
 
 % Post-process the heart rate

@@ -1,19 +1,19 @@
 function [hr, peaks, hr_period_std] = hr_calculation(x, f, fs, varargin)
 % hr_calculation - Calculate heart rate (HR) from an ECG signal.
 %
-%   [hr, peaks, hr_period_std] = hr_calculation(x, f, fs, peak_detection_method, averaging_method, params)
+%   [hr, peaks, hr_period_std] = hr_calculation(x, f, fs, peak_det_method, averaging_method, params)
 % 
 %   Calculates the heart rate (HR) from an ECG signal. The R-peak detector
-%   is based on a peak search (peak_detection_local_search) on the single
+%   is based on a peak search (peak_det_local_search) on the single
 %   or multi-channel signal or its envelope (see modes of operation), and
 %   the HR is calculated as the mean, median, or trimmed-mean of the HR
 %   over the data window.
 %
 % Inputs:
-%   x: Vector of input ECG data, or matrix in multi-channel mode (channels x samples); see 'peak_detection_method'.
+%   x: Vector of input ECG data, or matrix in multi-channel mode (channels x samples); see 'peak_det_method'.
 %   f: Approximate ECG beat-rate in Hz.
 %   fs: Sampling frequency in Hz.
-%   peak_detection_method: The method used for peak detection.
+%   peak_det_method: The method used for peak detection.
 %       Available options:
 %       - 'LOCAL-PEAKS' (default): Detect R-peaks in the original ECG signal.
 %       - 'LOCAL-PEAKS-REFINED': Refine R-peak detection using a power envelope approach.
@@ -42,11 +42,11 @@ function [hr, peaks, hr_period_std] = hr_calculation(x, f, fs, varargin)
 % The Open-Source Electrophysiological Toolbox
 % https://github.com/alphanumericslab/OSET
 
-% Check if the 'peak_detection_method' argument is provided, otherwise use the default 'LOCAL-SEARCH'
+% Check if the 'peak_det_method' argument is provided, otherwise use the default 'LOCAL-SEARCH'
 if nargin > 3 && ~isempty(varargin{1})
-    peak_detection_method = varargin{1};
+    peak_det_method = varargin{1};
 else
-    peak_detection_method = 'LOCAL-PEAKS';
+    peak_det_method = 'LOCAL-PEAKS';
 end
 
 % Check if the 'averaging_method' argument is provided, otherwise use the default 'mean'
@@ -62,14 +62,14 @@ if nargin > 5 && ~isempty(varargin{3})
 end
 
 % Detect R-peaks using the specified peak detection method
-switch peak_detection_method
+switch peak_det_method
     case 'LOCAL-PEAKS'
-        peaks = peak_detection_local_search(x, f/fs);
+        peaks = peak_det_local_search(x, f/fs);
     case 'LOCAL-PEAKS-REFINED'
         half_wlen = round(params.wlen/2);
         T = length(x);
         x_power_envelope = filtfilt(ones(1, params.wlen), params.wlen, x.^2);
-        peaks0 = peak_detection_local_search(x_power_envelope, f/fs, 1);
+        peaks0 = peak_det_local_search(x_power_envelope, f/fs, 1);
         I0 = find(peaks0);
         I0_len = length(I0);
         peaks = zeros(size(peaks0));
@@ -80,14 +80,14 @@ switch peak_detection_method
         end
     case 'POWER-ENVELOPE'
         x_power_envelope = filtfilt(ones(1, params.wlen), params.wlen, x.^2);
-        peaks = peak_detection_local_search(x_power_envelope, f/fs, 1);
+        peaks = peak_det_local_search(x_power_envelope, f/fs, 1);
     case 'MULTI-LEAD-POWER-ENVELOPE'
         x_power_envelope = zeros(size(x));
         for k = 1 : size(x_power_envelope, 1)
             x_power_envelope(k, :) = filtfilt(ones(1, params.wlen), params.wlen, x(k, :).^2);
         end
         x_combined_envelopes = sqrt(sum(x_power_envelope, 1));
-        peaks = peak_detection_local_search(x_combined_envelopes, f/fs, 1);
+        peaks = peak_det_local_search(x_combined_envelopes, f/fs, 1);
     otherwise
         error('undefined peak detection method');
 end

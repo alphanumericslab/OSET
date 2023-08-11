@@ -1,4 +1,4 @@
-function [PeakToPeak_corrected, PeakToPeak_differences, matched_peaks_indexes] = MFPeakDetector(x, template_start, template_stop, type,  wlen, PP_diff_wlen, PP_diff_th, average_peak_detection_rate, fs, plotflag)
+function [PeakToPeak_corrected, PeakToPeak_differences, matched_peaks_indexes] = MFPeakDetector(x, template_start, template_stop, type,  wlen, PP_diff_wlen, PP_diff_th, average_peak_det_rate, fs, plotflag)
 % ===========================================================
 % Matched Filter R-Peak Detector and Smoothed Heart Rate
 %
@@ -12,7 +12,7 @@ function [PeakToPeak_corrected, PeakToPeak_differences, matched_peaks_indexes] =
 % 	 wlen: moving window length of smoothing the energy envelope of the matched filter output (in samples)
 % 	 PP_diff_wlen: number of successive beats used for averaging
 % 	 PP_diff_th: difference above these number of samples is considered as erroneous and should be corrected
-%    average_peak_detection_rate: average peak detection rate
+%    average_peak_det_rate: average peak detection rate
 %    fs: sampling rate
 %    plotflag: 0 (do not plot)/ 1 (plot)
 %  output:
@@ -35,7 +35,7 @@ matched_out = [matched_out(matched_filter_lag:end) zeros(1, matched_filter_lag-1
 smoothed_matched_output = sqrt(filter(ones(wlen,1), wlen, matched_out.^2));
 
 % peak detection over energy envelope
-matched_peaks = PeakDetection(smoothed_matched_output, average_peak_detection_rate/fs, 1);
+matched_peaks = PeakDetection(smoothed_matched_output, average_peak_det_rate/fs, 1);
 matched_peaks_indexes = find(matched_peaks);
 
 % postprocess the peaks

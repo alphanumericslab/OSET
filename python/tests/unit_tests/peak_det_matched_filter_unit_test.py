@@ -4,8 +4,8 @@ import argparse
 import matlab
 import matlab.engine
 import scipy.io
-from oset.ecg.peak_detection.peak_detection_matched_filter import (
-    peak_detection_matched_filter,
+from oset.ecg.peak_det.peak_det_matched_filter import (
+    peak_det_matched_filter,
 )
 
 import unit_test as testing
@@ -16,7 +16,7 @@ fs = 1000
 th = 0.90  # an arbitrary value for testing
 
 
-def peak_detection_matched_filter_unit_test():
+def peak_det_matched_filter_unit_test():
     import warnings
 
     warnings.warn("This unit test has not yet been deployed")
@@ -34,16 +34,16 @@ def runMatLab():
     y = matlab.double([1, 2, 3, 4])
     eng.addpath("../../../matlab/tools/ecg")
     eng.addpath("../../../matlab/tools/generic")
-    return eng.peak_detection_matched_filter(x, f / fs, y, th, 60, nargout=3)
+    return eng.peak_det_matched_filter(x, f / fs, y, th, 60, nargout=3)
 
 
 def runPython():
-    return peak_detection_matched_filter(mat, f / fs, [1, 2, 3, 4], th, 60)
+    return peak_det_matched_filter(mat, f / fs, [1, 2, 3, 4], th, 60)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="""This is a unit test for peak_detection_matched_filter"""
+        description="""This is a unit test for peak_det_matched_filter"""
     )
     args = parser.parse_args()
-    print(peak_detection_matched_filter_unit_test())
+    print(peak_det_matched_filter_unit_test())

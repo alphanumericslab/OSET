@@ -1,7 +1,7 @@
 function [index, rank] = sqi_beat_shape_variability(x, ff, fs, varargin)
 % SQI_BEAT_SHAPE_VARIABILITY - Signal quality index (SQI) based on pseudo-periodicity measures
 %
-%   [index, rank] = sqi_beat_shape_variability(x, ff, fs, method, num_peak_detection_itr, beat_width, ranking_mode, plot_results)
+%   [index, rank] = sqi_beat_shape_variability(x, ff, fs, method, num_peak_det_itr, beat_width, ranking_mode, plot_results)
 %
 % Inputs:
 %   x: Input data array (channels x samples).
@@ -13,7 +13,7 @@ function [index, rank] = sqi_beat_shape_variability(x, ff, fs, varargin)
 %     - 'AVG_BEAT_MAX_PEAK_ALIGNED': Calculates the SQI based on the maximum amplitude of the average beat with R-peak amplitude alignment.
 %     - 'AVG_BEAT_VAR': Calculates the SQI based on the beat variance of the average beat.
 %     - 'AVG_BEAT_VAR_PEAK_ALIGNED': Calculates the SQI based on the beat variance of the average beat with R-peak amplitude alignment.
-%   num_peak_detection_itr (optional): Number of iterations for peak detection (default: 1).
+%   num_peak_det_itr (optional): Number of iterations for peak detection (default: 1).
 %   beat_width (optional): Width of ECG beat used for beat stacking. Must be an odd integer (default: average heart rate time window, calculated internally).
 %   ranking_mode (optional): Ranking mode for the channels ('ascend' or 'descend', default: 'descend').
 %   plot_results (optional): Flag for plotting the results (default: 0).
@@ -46,9 +46,9 @@ else
 end
 
 if nargin > 4 && ~isempty(varargin{2})
-    num_peak_detection_itr = varargin{2};
+    num_peak_det_itr = varargin{2};
 else
-    num_peak_detection_itr = 1;
+    num_peak_det_itr = 1;
 end
 
 if nargin > 5 && ~isempty(varargin{3})
@@ -86,7 +86,7 @@ mn = mean(x,2)*ones(1,L2);
 x = x - mn;
 
 for i = 1 : L1
-    [peaks, peak_indexes] = peak_detection_local_search(x(i,:), ff/fs, [], num_peak_detection_itr);
+    [peaks, peak_indexes] = peak_det_local_search(x(i,:), ff/fs, [], num_peak_det_itr);
     if beat_width_auto
         beat_width = round(mean(peak_indexes));
         if mod(beat_width, 2) == 0 % beat_width must be odd
