@@ -28,7 +28,7 @@ L = length(h);
 
 h = h(end:-1:1); % Reverse the template waveform
 
-w = floor(L/2);
+w = round(L/2);
 
 r = filter(h, 1, [x zeros(1, w-1)]); % Matched filtering
 r = r(w : N+w-1); % Trim the filtered output to match the length of x
