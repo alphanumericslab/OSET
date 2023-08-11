@@ -42,6 +42,8 @@ def baseline_sliding_window(x, l, approach):
         for j in range(1, n + 1):
             index = slice(max(0, j - flen - 1), min(n, j + flen))
             b[:, j - 1] = np.median(x[:, index], axis=1)
+    if b.shape[0] == 1:
+        b = b[0]
     return b
 
 
