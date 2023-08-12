@@ -18,11 +18,11 @@ th = 0.10  # an arbitrary value for testing
 
 def baseline_sliding_window_unit_test():
     ml = runMatLab("md")[0]
-    py = runPython("md")[0]
+    py = runPython("md")
     x = testing.compare_number_arrays(py, ml, round_val=12)
     del ml, py
     ml = runMatLab("mn")[0]
-    py = runPython("mn")[0]
+    py = runPython("mn")
     y = testing.compare_number_arrays(py, ml, round_val=12)
     return x and y
 
