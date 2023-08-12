@@ -4,8 +4,8 @@ import argparse
 import matlab
 import matlab.engine
 import scipy.io
-from oset.ecg.peak_detection.peak_detection_adaptive_hr import (
-    peak_detection_adaptive_hr,
+from oset.ecg.peak_detection.peak_det_adaptive_hr import (
+    peak_det_adaptive_hr,
 )
 
 import unit_test as testing
@@ -31,13 +31,13 @@ def runMatLab(z):
     eng.addpath("../../../matlab/tools/ecg")
     eng.addpath("../../../matlab/tools/generic")
     x = matlab.double(mat.tolist())
-    return eng.peak_detection_adaptive_hr(
+    return eng.peak_det_adaptive_hr(
         x, matlab.double(60), matlab.double(fs), z, nargout=2
     )
 
 
 def runPython(z):
-    return peak_detection_adaptive_hr(mat, 60, fs, z)
+    return peak_det_adaptive_hr(mat, 60, fs, z)
 
 
 if __name__ == "__main__":

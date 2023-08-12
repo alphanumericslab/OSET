@@ -7,7 +7,7 @@ from oset.generic.baseline_sliding_window.baseline_sliding_window import (
 )
 
 
-def peak_detection_adaptive_hr(
+def peak_det_adaptive_hr(
     x, ff, fs, flag=None, th=0.5, th2=0.8, rejection_threshold=0.3
 ):
     """
