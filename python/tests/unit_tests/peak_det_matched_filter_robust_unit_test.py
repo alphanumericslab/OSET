@@ -3,7 +3,7 @@ import argparse
 import matlab
 import matlab.engine
 import scipy.io
-from oset.ecg.peak_det.peak_det_matched_filter_robust import (
+from oset.ecg.peak_detection.peak_det_matched_filter_robust import (
     peak_det_matched_filter_robust,
 )
 

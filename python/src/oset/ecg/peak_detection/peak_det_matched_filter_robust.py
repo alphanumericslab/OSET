@@ -1,7 +1,7 @@
 import argparse
 
 import numpy as np
-from oset.ecg.peak_det.peak_det_local_search import (
+from oset.ecg.peak_detection.peak_det_local_search import (
     peak_det_local_search,
 )
 from scipy.signal import lfilter
