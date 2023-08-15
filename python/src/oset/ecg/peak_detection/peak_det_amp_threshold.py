@@ -1,7 +1,7 @@
 import argparse
 
 import numpy as np
-from oset.ecg.peak_det.peak_det_simple import peak_det_simple
+from oset.ecg.peak_detection.peak_det_simple import peak_det_simple
 
 
 def peak_det_amp_threshold(x, ff, th, *args):

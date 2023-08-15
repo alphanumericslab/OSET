@@ -5,7 +5,7 @@ import matlab
 import matlab.engine
 import numpy as np
 import scipy.io
-from oset.ecg.peak_det.peak_det_pan_tompkins import (
+from oset.ecg.peak_detection.peak_det_pan_tompkins import (
     peak_det_pan_tompkins,
 )
 
