@@ -1,4 +1,4 @@
-function [peaks, peak_indexes] = peak_det_pan_tompkins(ecg_data, fs, ecg_polarity)
+function [peaks, peak_indexes] = peak_det_pan_tompkins(ecg_data, fs, varargin)
 % peak_det_pan_tompkins - R-peak detector based on Pan-Tompkins method.
 % QRS Detection with Pan-Tompkins algorithm.
 % Pan et al. 1985: A Real-Time QRS Detection Algorithm.
@@ -10,8 +10,11 @@ function [peaks, peak_indexes] = peak_det_pan_tompkins(ecg_data, fs, ecg_polarit
 %   Inputs:
 %       data: Vector of input ECG data
 %       fs: Sampling rate in Hz
-%       ecg_polarity: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
+%  (optional input):
+%        - ecg_polarity: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
 %             By default, the skewness value of the bandpass-filtered signal determines the peak sign.
+%        - qrs_width: expected maximal length of QRS complexes [ms]. Default 150ms.
+%        - refracT:     refractory time for T-wave [ms] (default 360ms).
 %   Outputs:
 %       peaks: Vector of R-peak impulse train
 %       peak_indexes: Vector of R-peak indexes
@@ -20,25 +23,34 @@ function [peaks, peak_indexes] = peak_det_pan_tompkins(ecg_data, fs, ecg_polarit
 %       Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans
 %       Biomed Eng. 1985;32(3):230-236. doi:10.1109/TBME.1985.325532
 %
-%   Reza Sameni, 2023
+%   Reza Sameni, Sajjad Karimi 2023
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 %
-% (optional input):
-%        - refrac:      refractory time [ms] (default 200ms)
-%        - refracT:     refractory time for T-wave [ms] (default 360ms).
-%                       Part of the heuristics behind the algorithm.
-%        _ QRSmaxwidth: expected maximal length of QRS complexes [ms]. Default 150ms.
 %
-%       fc_low (Optional): BP filter lower cutoff frequency in Hz (default: 5.0 Hz)
-%       fc_high (Optional): BP filter upper cutoff frequency in Hz (default: 15.0 Hz)
-%       window_length (Optional): Integration window length in seconds (default: 0.150 s)
-%       threshold_ratio (Optional): Threshold ratio for peak detection (default: 0.2)
-%       refractory_period (Optional): Refractory period in seconds (default: 0.2 s)
+%   fc_low: BP filter lower cutoff frequency in Hz (default: 5.0 Hz)
+%   fc_high: BP filter upper cutoff frequency in Hz (default: 15.0 Hz)
 
-QRSmaxwidth = 0.150;
-refrac = 0.200;
-refracT = 0.360;
+% Check optional input arguments
+if nargin > 2 && ~isempty(varargin{1})
+    ecg_polarity = varargin{1};
+else
+    ecg_polarity = [];
+end
+
+if nargin > 3 && ~isempty(varargin{2})
+    qrs_width = varargin{2};
+else
+    qrs_width = 0.150;
+end
+
+if nargin > 4 && ~isempty(varargin{3})
+    refracT = varargin{3};
+else
+    refracT = 0.360;
+end
+
+
 
 data = ecg_data(:);
 
@@ -78,7 +90,7 @@ total_delay = total_delay + 2;
 squared_data = diff_data .^ 2;
 
 % Moving average integration
-window_length = round( QRSmaxwidth * fs_pt/2);
+window_length = round( qrs_width * fs_pt/2);
 integrated_data = movmean(squared_data, [window_length,window_length]);
 
 % remove delays & resample
@@ -90,17 +102,16 @@ integrated_data = integrated_data./std(integrated_data);
 filtered_data = [filtered_data(filter_delay:end); repelem(filtered_data(end),filter_delay-1,1)]';
 filtered_data = resample(filtered_data,fs/G ,fs_pt/G);
 
-if nargin < 3
-filtered_data = filtered_data * sign(skew(filtered_data));
+if ~isempty(ecg_polarity)
+    filtered_data = filtered_data * sign(skew(filtered_data));
 else
-filtered_data = filtered_data * sign(ecg_polarity-0.5);
+    filtered_data = filtered_data * sign(ecg_polarity-0.5);
 end
 filtered_data = filtered_data./std(filtered_data);
 
 
 %% Adaptive thresholding
 
-refrac = round( refrac * fs);
 refracT = round( refracT * fs);
 
 %=======================================================================
@@ -323,7 +334,7 @@ while ((counter_this< 1.66 * RR_val) && ~(above_thr&&fall_thr)) && t < T
     counter_this = counter_this+1;
     t=t+1;
 
-    if integrated_data(t)>thresholdI2 
+    if integrated_data(t)>thresholdI2
         above_thr = 1;
     end
 
