@@ -4,7 +4,7 @@ import argparse
 import matlab
 import matlab.engine
 import scipy.io
-from oset.ecg.peak_det.peak_det_simple import peak_det_simple
+from oset.ecg.peak_detection.peak_det_simple import peak_det_simple
 
 import unit_test as testing
 

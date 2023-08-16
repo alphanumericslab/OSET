@@ -1,6 +1,7 @@
-function [peaks, peak_indexes] = peak_det_pan_tompkins(data, fs, varargin)
+function [peaks, peak_indexes] = peak_det_pan_tompkins(ecg_data, fs, ecg_polarity)
 % peak_det_pan_tompkins - R-peak detector based on Pan-Tompkins method.
-%
+% QRS Detection with Pan-Tompkins algorithm.
+% Pan et al. 1985: A Real-Time QRS Detection Algorithm.
 %   [peaks, peak_indexes] = peak_det_pan_tompkins(data, fs, varargin)
 %
 %   This function implements the Pan-Tompkins algorithm for R-peak detection
@@ -9,12 +10,8 @@ function [peaks, peak_indexes] = peak_det_pan_tompkins(data, fs, varargin)
 %   Inputs:
 %       data: Vector of input ECG data
 %       fs: Sampling rate in Hz
-%       fc_low (Optional): BP filter lower cutoff frequency in Hz (default: 5.0 Hz)
-%       fc_high (Optional): BP filter upper cutoff frequency in Hz (default: 15.0 Hz)
-%       window_length (Optional): Integration window length in seconds (default: 0.150 s)
-%       threshold_ratio (Optional): Threshold ratio for peak detection (default: 0.2)
-%       refractory_period (Optional): Refractory period in seconds (default: 0.2 s)
-%
+%       ecg_polarity: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
+%             By default, the skewness value of the bandpass-filtered signal determines the peak sign.
 %   Outputs:
 %       peaks: Vector of R-peak impulse train
 %       peak_indexes: Vector of R-peak indexes
@@ -26,73 +23,314 @@ function [peaks, peak_indexes] = peak_det_pan_tompkins(data, fs, varargin)
 %   Reza Sameni, 2023
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
+%
+% (optional input):
+%        - refrac:      refractory time [ms] (default 200ms)
+%        - refracT:     refractory time for T-wave [ms] (default 360ms).
+%                       Part of the heuristics behind the algorithm.
+%        _ QRSmaxwidth: expected maximal length of QRS complexes [ms]. Default 150ms.
+%
+%       fc_low (Optional): BP filter lower cutoff frequency in Hz (default: 5.0 Hz)
+%       fc_high (Optional): BP filter upper cutoff frequency in Hz (default: 15.0 Hz)
+%       window_length (Optional): Integration window length in seconds (default: 0.150 s)
+%       threshold_ratio (Optional): Threshold ratio for peak detection (default: 0.2)
+%       refractory_period (Optional): Refractory period in seconds (default: 0.2 s)
 
-% Set default parameter values
-default_params.fc_low = 5.0;
-default_params.fc_high = 15;
-default_params.window_length = 0.150;
-default_params.threshold_ratio = 0.2;
-default_params.refractory_period = 0.200;
+QRSmaxwidth = 0.150;
+refrac = 0.200;
+refracT = 0.360;
 
-% Parse input arguments
-params = default_params;
-if ~isempty(varargin) && isstruct(varargin{1})
-    % params struct is provided
-    params = fill_default_params(varargin{1}, default_params);
-end
+data = ecg_data(:);
 
-data = data(:);
+fs_pt = 200;
+total_delay = 0;
 
-% High-pass filter
-[b_hp, a_hp] = butter(5, params.fc_low / (fs/2), 'high');
-filtered_data_hp = filtfilt(b_hp, a_hp, data);
+G = gcd( fs_pt,fs );
+data = resample(data,fs_pt/G,fs/G);
 
-% Low-pass filter
-[b_lp, a_lp] = butter(5, params.fc_high / (fs/2), 'low');
-filtered_data = filtfilt(b_lp, a_lp, filtered_data_hp);
+%% Pan-Tomkins signal processing
+
+% #1 remove the mean
+data = data - mean(data);
+
+% #2 low-pass filter  H(z) = ((1 - z^(-6))^2)/(1 - z^(-1))^2
+b = [1 0 0 0 0 0 -2 0 0 0 0 0 1];
+a = [1 -2 1];
+filtered_data = filter(b,a,data);
+total_delay = total_delay + 6;
+
+% #3 high-pass filter H(z) = (-1+32z^(-16)+z^(-32))/(1+z^(-1))
+b = zeros(1,33);
+b(1) = -1; b(17) = 32; b(33) = 1;
+a = [1 1];
+filtered_data = filter(b,a,filtered_data);    % Without Delay
+total_delay = total_delay + 16;
+filter_delay = total_delay;
 
 % Differentiation to enhance R-peaks
-diff_data = [0 ; diff(filtered_data)];
+% H(z) = (1/8T)(-z^(-2) - 2z^(-1) + 2z + z^(2))
+b = [1 2 0 -2 -1].*(1/8)*fs;
+
+diff_data = filter(b,1,filtered_data);
+total_delay = total_delay + 2;
 
 % Squaring to further emphasize R-peaks
 squared_data = diff_data .^ 2;
 
 % Moving average integration
-window_length = round(params.window_length * fs);
-window = ones(1, window_length) / window_length;
-integrated_data = conv(squared_data, window, 'same');
+window_length = round( QRSmaxwidth * fs_pt/2);
+integrated_data = movmean(squared_data, [window_length,window_length]);
 
-% Amplitude thresholding
-threshold = params.threshold_ratio * max(integrated_data);
+% remove delays & resample
 
-% Refractory period to avoid detecting multiple peaks within a short duration
-refractory_half_period = round(params.refractory_period * fs / 2);
+integrated_data = [integrated_data(total_delay:end); repelem(integrated_data(end),total_delay-1,1)]';
+integrated_data = resample(integrated_data,fs/G ,fs_pt/G);
+integrated_data = integrated_data./std(integrated_data);
+
+filtered_data = [filtered_data(filter_delay:end); repelem(filtered_data(end),filter_delay-1,1)]';
+filtered_data = resample(filtered_data,fs/G ,fs_pt/G);
+
+if nargin < 3
+filtered_data = filtered_data * sign(skew(filtered_data));
+else
+filtered_data = filtered_data * sign(ecg_polarity-0.5);
+end
+filtered_data = filtered_data./std(filtered_data);
 
 
-% Find the local peaks that satisfy both amplitude and width condition
-peaks = zeros(1, length(data));
-for k = 1 : length(peaks)
-    search_win_start = max(1, k - refractory_half_period);
-    search_win_stop = min(length(data), k + refractory_half_period);
+%% Adaptive thresholding
 
-    if integrated_data(k) > threshold && max(integrated_data(search_win_start : search_win_stop)) == integrated_data(k)
-        peaks(k) = 1;
+refrac = round( refrac * fs);
+refracT = round( refracT * fs);
+
+%=======================================================================
+% ===================  learning phase 1 ==================================
+%=======================================================================
+
+
+% initializing thresholds based on first 3s of signal
+temp_I = integrated_data(1:3*fs);
+SPKI = max(temp_I);
+NPKI = mean(temp_I);
+
+thresholdI1 = NPKI + 0.25*(SPKI-NPKI);
+
+
+temp_F = filtered_data(1:3*fs);
+SPKF = max(temp_F);
+NPKF = mean(temp_F);
+
+
+T = length(integrated_data);
+max_peak = T/fs * 3;
+
+peaks = islocalmax(temp_I, 'MinSeparation',refracT, 'MinProminence',thresholdI1);
+
+qrs_pos_init = find(peaks);
+
+RR_init = median(diff(qrs_pos_init));
+
+%=======================================================================
+% =====================  detection phase ===============================
+%=======================================================================
+
+%initialization of detection phase
+qrs_pos = nan(max_peak,1);
+qrs_pos(1) = qrs_pos_init(1);
+
+RR_recents = NaN(1,8);
+RR_recents(1,1) = RR_init;
+
+
+RR_selected = NaN(1,8);
+RR_selected(1,1) = RR_init;
+
+
+start_pos = qrs_pos(1,1) + find(temp_I(qrs_pos(1,1)+1:end)<thresholdI1,1,'first');
+t = max(start_pos, qrs_pos(1,1)+refracT);
+
+while t <= T-refracT/2
+
+    RR1 = mean(RR_recents,'omitnan');
+    RR2 = mean(RR_selected,'omitnan');
+
+    %regulary heart rate check
+    if (RR1 == RR2)
+        factor = 1;
+    else
+        factor = 0.5;
     end
+
+
+    %updating thresholds
+    thresholdI1 = factor*(NPKI + (0.25*(SPKI-NPKI)));
+    thresholdI2 = thresholdI1; %is automatically updated if necessary
+
+    thresholdF1 = factor*(NPKF + (0.25*(SPKF-NPKF)));
+    thresholdF2 = thresholdF1; %is automatically updated if necessary
+
+
+    [t_I, above_thr, fall_thr] = segment_analysis(RR1, integrated_data, thresholdI2, start_pos, T );
+
+    segment_normal = above_thr && fall_thr;
+    segment_normal_I = segment_normal;
+
+    %search back with threshold re-adjustment for possible R-peak
+    thres_gain = 1;
+    c = 0;
+    while segment_normal==0 && c<5
+        c=c+1;
+        thres_gain = thres_gain*0.5;
+        thresholdI2 = thresholdI2*thres_gain;
+        [t_I, above_thr, fall_thr] = segment_analysis(RR1, integrated_data, thresholdI2, start_pos, T );
+        segment_normal = above_thr && fall_thr;
+    end
+
+    [t_F, above_thr, fall_thr] = segment_analysis(RR1, filtered_data, thresholdF2, start_pos, T );
+    segment_normal = above_thr && fall_thr;
+    segment_normal_F = segment_normal;
+
+    %search back with threshold re-adjustment for possible R-peak
+    thres_gain = 1;
+    c = 0;
+    while segment_normal==0 && c<5
+        c=c+1;
+        thres_gain = thres_gain*0.5;
+        thresholdF2 = thresholdF2*thres_gain;
+        [t_F, above_thr, fall_thr] = segment_analysis(RR1, filtered_data, thresholdF2, start_pos, T );
+        segment_normal = above_thr && fall_thr;
+    end
+
+    t = max(t_I, t_F);
+    this_segment_index = start_pos:t;
+
+    %begin new search from actual detection
+    filt_data = filtered_data(this_segment_index);
+    intg_data = integrated_data(this_segment_index);
+
+    %exceeding both thresholds
+    pos_common = intg_data>thresholdI2 & filt_data>thresholdF2;
+
+    if  any(pos_common) % normal scenario
+
+        pos_mask_I = find(pos_common);
+        pos_mask_F = find(pos_common);
+
+        neg_mask_I = find(~pos_common);
+        neg_mask_F = find(~pos_common);
+
+    else % for weak or irregular R-peak with back-search
+
+        pos_I = intg_data>thresholdI2;
+        pos_F = filt_data>thresholdF2;
+        if ~any(pos_F)
+            pos_F = pos_I;
+        end
+
+        pos_mask_I = find(pos_I);
+        pos_mask_F = find(pos_F);
+
+        neg_mask_I = find(~pos_I);
+        neg_mask_F = find(~pos_F);
+
+    end
+
+    %find I-peaks
+    idx_max_temp = islocalmax(intg_data(pos_mask_I) ,'MaxNumExtrema',1);
+    if ~any(idx_max_temp)
+        peakIs = max(intg_data(pos_mask_I));
+    else
+        peakIs = intg_data(pos_mask_I(idx_max_temp));
+    end
+
+    peakIn = mean(intg_data(neg_mask_I));
+
+
+    %find R-peaks
+    idx_max = islocalmax(filt_data(pos_mask_F) ,'MaxNumExtrema',1);
+    idx_max = find(idx_max);
+    if isempty(idx_max)
+        [peakFs, idx_max] = max(filt_data(pos_mask_F));
+    else
+        peakFs = filt_data(pos_mask_F(idx_max));
+    end
+
+    peakFn = mean(intg_data(neg_mask_F));
+
+    peakFs = max(0.01,peakFs);
+    peakFn = max(0.01,peakFn);
+
+    % update new R-peak position
+    next_idx = find(isnan(qrs_pos),1,'first');
+    qrs_pos(next_idx) = this_segment_index(pos_mask_F(idx_max));
+
+    if next_idx==21
+        yu=0;
+    end
+
+    if segment_normal_I && segment_normal_F
+        SPKI = (0.125*peakIs)+(0.875*SPKI);
+        NPKI = (0.125*peakIn)+(0.875*NPKI);
+        SPKF = (0.125*peakFs)+(0.875*SPKF);
+        NPKF = (0.125*peakFn)+(0.875*NPKF);
+    else %double speed threshold adjustment after searchback
+        SPKI = (0.25*peakIs)+(0.75*SPKI);
+        NPKI = (0.25*peakIn)+(0.75*NPKI);
+        SPKF = (0.25*peakFs)+(0.75*SPKF);
+        NPKF = (0.25*peakFn)+(0.75*NPKF);
+    end
+
+    %check refractory/t-wave criterion and manipulate indices
+    start_pos = t+1;
+    start_pos = max(start_pos, qrs_pos(next_idx)+refracT);
+
+
+    %calculate and sort in new RR-interval
+    if next_idx >= 3
+        RR_new = qrs_pos(next_idx)-qrs_pos(next_idx-1);
+
+        RR_recents = circshift(RR_recents,1);
+        RR_recents(1) = RR_new;
+
+        if ((RR_new >= (0.92*RR1))&&(RR_new <= (1.16*RR1)))
+            RR_selected = circshift(RR_selected,1);
+            RR_selected(1) = RR_new;
+        end
+
+    end
+
+
+    t = start_pos;
+
 end
 
-% Get peak indexes
-peak_indexes = find(peaks);
+qrs_pos(isnan(qrs_pos))=[];
+peaks = 0 * ecg_data;
+peaks(qrs_pos) = 1;
+peak_indexes = qrs_pos;
 
 end
 
-function params = fill_default_params(params, default_params)
-% Helper function to fill missing fields in params struct with default values
 
-fields = fieldnames(default_params);
-for i = 1:numel(fields)
-    if ~isfield(params, fields{i})
-        params.(fields{i}) = default_params.(fields{i});
+function [t, above_thr, fall_thr] = segment_analysis(RR_val, integrated_data, thresholdI2, start_pos, T )
+
+counter_this = 0;
+above_thr = 0;
+fall_thr = 0;
+t = start_pos;
+
+while ((counter_this< 1.66 * RR_val) && ~(above_thr&&fall_thr)) && t < T
+    counter_this = counter_this+1;
+    t=t+1;
+
+    if integrated_data(t)>thresholdI2 
+        above_thr = 1;
     end
+
+    if integrated_data(t)<thresholdI2 &&  above_thr == 1
+        fall_thr = 1;
+    end
+
 end
 
 end
