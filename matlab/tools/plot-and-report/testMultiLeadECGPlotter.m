@@ -36,10 +36,11 @@ for k = 1 : 1%length(filelist)
     % plot the multichannel ECG
     ref_ch = 1;
     t1_small = 0.0;
-    t2_small = 3.0;
+    t2_small = 2.5;
     t1_long = 0.0;
-    t2_long = 10.0;
-    MultiLeadECGPlotter(data(1 : 12, :), ch_names, fs, ref_ch, t1_small, t2_small, t1_long, t2_long, 'Record #0000');
-    % MultiLeadECGPlotterStandardSize(data(1 : 12, 1 : round(t2_long * fs)), ch_names, fs, ref_ch, t1_small, t2_small, 'Record #0000');
-    
+    t2_long = 12.0;
+    % ecg_strip_viewer_multichannel(data(1 : 12, :), fs)%, ch_names, ref_ch, t1_small, t2_small, t1_long, t2_long, 'Record #0000');
+    % MultiLeadECGPlotter(data(1 : 12, :), ch_names, fs, ref_ch, t1_small, t2_small, t1_long, t2_long, 'Record #0000');
+    ecg_strip_viewer_standard_grid(data(1 : 12, 1 : round(t2_long * fs)), fs, ch_names, ref_ch, t1_small, t2_small, 'Record #0000')
+    % MultiLeadECGPlotterStandardSize(data(1 : 12, 1 : round(t2_long * fs)), ch_names, fs, ref_ch, t1_small, t2_small, 'Record #0000');    
 end

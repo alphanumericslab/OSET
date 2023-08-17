@@ -1,4 +1,4 @@
-function ecg_strip_viewer_standard_grid(data, ch_names, fs, ref_ch, t1_small, t2_small, Title)
+function ecg_strip_viewer_standard_grid(data, fs, ch_names, ref_ch, t1_small, t2_small, Title)
 
 t1_long = 0; % beginning of the long segment in seconds
 t2_long = size(data, 2)/fs; % end of long segment in seconds
@@ -150,7 +150,7 @@ peak_detector_params.k_sigma = 4;
 peak_detector_params.hist_search_th = 0.9;
 peak_detector_params.rpeak_search_wlen = 0.4; % MAX detectable HR (in BPM) = 60/rpeak_search_wlen
 peak_detector_params.filter_type = 'MDMN';%'MULT_MATCHED_FILTER';%'BANDPASS_FILTER', 'MATCHED_FILTER', 'MULT_MATCHED_FILTER', 'MDMN', 'WAVELET'
-[~, peak_indexes, ~] = PeakDetectionProbabilistic(data(ref_ch, :), fs, peak_detector_params);
+[~, peak_indexes, ~] = peak_det_probabilistic(data(ref_ch, :), fs, peak_detector_params);
 peak_indexes_selected_segment = peak_indexes(find(peak_indexes >= n1_long, 1, 'first') : find(peak_indexes <= n2_long, 1, 'last'));
 
 event_width = round(1.1 * median(diff([1, peak_indexes, size(data, 2)]))); % Add the first and last indexes

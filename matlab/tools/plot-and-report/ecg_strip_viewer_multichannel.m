@@ -1,13 +1,108 @@
-function ecg_strip_viewer_multichannel(data, ch_names, fs, ref_ch, t1_small, t2_small, t1_long, t2_long, Title)
-% A multilead ECG protter
-%   Revision History:
-%       2022: First release
-%       2023: Renamed from deprecated version MultiLeadECGPlotter
+function ecg_strip_viewer_multichannel(data, fs, varargin)
+% ECG Strip Viewer - Multichannel Version
 %
-%   Reza Sameni, 2022-2023
-%   The Open-Source Electrophysiological Toolbox
-%   https://github.com/alphanumericslab/OSET
+% A tool for visualizing multilead ECG signals.
+%
+% Usage:
+% ecg_strip_viewer_multichannel(data, fs, ch_names, ref_ch, t1_small, t2_small, t1_long, t2_long, Title)
+%
+% Inputs:
+%   data: Multilead ECG signal data.
+%       - This is a matrix containing ECG data for multiple leads. Each row
+%         corresponds to a different lead, and each column corresponds to a
+%         time sample.
+%
+%   fs: Sampling frequency of the ECG signal.
+%       - This parameter specifies the number of samples collected per second
+%         for the ECG data in 'data'. It is used to convert time indices to
+%         time values.
+%
+%   ch_names: Cell array of channel names (optional, default: empty cell array)
+%       - This parameter allows you to provide names for each channel (lead) in
+%         the ECG data. It should be a cell array of strings, where each string
+%         corresponds to a channel name. The length of 'ch_names' should match
+%         the number of rows in 'data'.
+%
+%   ref_ch: Reference channel for HR and median/mean plots (optional, default: 1)
+%       - This parameter determines the reference channel for plotting heart rate
+%         (HR) and median/mean ECG plots. It specifies the index of the reference
+%         channel in the 'data' matrix.
+%
+%   t1_small: Start time for small plots (optional, default: 0.0)
+%       - This parameter specifies the start time (in seconds) for the small
+%         lead plots. It is used to define the time range for plotting the
+%         individual lead signals.
+%
+%   t2_small: End time for small plots (optional, default: 3.0)
+%       - This parameter specifies the end time (in seconds) for the small lead
+%         plots. It is used to define the time range for plotting the individual
+%         lead signals.
+%
+%   t1_long: Start time for long plots (optional, default: 0.0)
+%       - This parameter specifies the start time (in seconds) for the long lead
+%         plots. It is used to define the time range for plotting the reference
+%         lead signal and calculating heart rate.
+%
+%   t2_long: End time for long plots (optional, default: 10.0)
+%       - This parameter specifies the end time (in seconds) for the long lead
+%         plots. It is used to define the time range for plotting the reference
+%         lead signal and calculating heart rate.
+%
+%   Title: Title for the main figure (optional, default: empty string)
+%       - This parameter allows you to provide a title for the main figure that
+%         displays the multichannel ECG plots. It should be a string that
+%         describes the content of the figure.
+%
+% Revision History:
+%   2022: First release
+%   2023: Renamed from deprecated version MultiLeadECGPlotter
+%
+% Reza Sameni, 2022-2023
+% The Open-Source Electrophysiological Toolbox
+% https://github.com/alphanumericslab/OSET
 
+
+if nargin > 2 && ~isempty(varargin{1})
+    ch_names = varargin{1};
+else
+    ch_names = repmat(cell({''}), 1, size(data, 1));
+end
+
+if nargin > 3 && ~isempty(varargin{2})
+    ref_ch = varargin{2};
+else
+    ref_ch = 1;
+end
+
+if nargin > 4 && ~isempty(varargin{3})
+    t1_small = varargin{3};
+else
+    t1_small = 0.0;
+end
+
+if nargin > 5 && ~isempty(varargin{4})
+    t2_small = varargin{4};
+else
+    t2_small = 3.0;
+end
+
+if nargin > 6 && ~isempty(varargin{5})
+    t1_long = varargin{5};
+else
+    t1_long = 0.0;
+end
+
+if nargin > 7 && ~isempty(varargin{6})
+    t2_long = varargin{6};
+else
+    t2_long = 10.0;
+end
+
+if nargin > 8 && ~isempty(varargin{7})
+    Title = varargin{7};
+else
+    Title = '';
+end
 
 fig_left = 100;
 fig_bottom = 100;
