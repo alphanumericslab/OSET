@@ -9,7 +9,8 @@ function R = Rotate3D(tetax,tetay,tetaz)
 % tetaz: rotation angle around the z axis (in rads.)
 %
 % output:
-% R: The rotation matrix
+% R: The rotation matrix as the product of three rotation matrices around
+% x, y, and z (in order): R = Rx*Ry*Rz
 %
 %
 % Open Source ECG Toolbox, version 1.0, November 2006

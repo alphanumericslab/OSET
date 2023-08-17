@@ -118,7 +118,7 @@ for i = 1:NumCh
     end
 end
 
-[DIP, teta] = DipoleGeneratorAbnormal(N,fs,F,alphai,bi,tetai,teta0,STM,S0);
+[DIP, teta] = ecg_dipole_gen_abnormal(N,fs,F,alphai,bi,tetai,teta0,STM,S0);
 
 VCG = R0*Lambda*[DIP.x ; DIP.y ; DIP.z];
 s0 = H*VCG;

@@ -1,7 +1,6 @@
 %
 % Test program for generating synthetic abnormal multichannel ECGs with additive
-% colored noise
-% The current example is for the TWA abnormality
+% colored noise. The current example is designed to model T-wave alternans (TWA) 
 %
 % Dependencies: The synthetic ECG generator and noise generator package of
 %   the Open Source ECG Toolbox
@@ -13,7 +12,7 @@
 % reza.sameni@gmail.com
 %
 % Reference:
-%   Clifford, Gari D., Shamim Nemati, and Reza Sameni. 
+%   Clifford, Gari D., Shamim Nemati, and Reza Sameni.
 %   "An artificial vector model for generating abnormal electrocardiographic rhythms." Physiological measurement 31.5 (2010): 595.
 %
 
@@ -59,13 +58,13 @@ teta0 = -pi/3;              % initial phase of the ECG
 
 %//////////////////////////////////////////////////////////////////////////
 % Normal Beat model (STATE = 1)
-tetai(1).x  = [-1.09  -0.83   -0.19     -.07  0 .06        0.22    1.2 1.42 1.68 2.9];
-alphai(1).x = [0.03   .08    -0.13    .85 1.11 .75     0.06   0.1  0.17 0.39 .03];
-bi(1).x     = [0.0906    0.1057    0.0453    0.0378    0.0332    0.0302    0.0378    0.6040 0.3020  0.1812 .5];
+tetai(1).x  = [-1.09,  -0.83,   -0.19,     -.07,  0 .06,        0.22,    1.2, 1.42, 1.68, 2.9];
+alphai(1).x = [0.03,   .08,    -0.13,    .85, 1.11, .75,     0.06,   0.1,  0.17, 0.39, .03];
+bi(1).x     = [0.0906,    0.1057,    0.0453,    0.0378,    0.0332,    0.0302,    0.0378,    0.6040, 0.3020,  0.1812, .5];
 
-tetai(1).y  = [-1.1  -0.9 -0.76       -0.11   -.01       0.065  0.8 1.58 2.9];
-alphai(1).y = [0.035 0.015 -0.019     0.32    .51     -0.32    0.04   0.08 .014];
-bi(1).y     = [0.07  .07  0.04        0.055    0.037    0.0604  0.450  0.3 .5];
+tetai(1).y  = [-1.1,  -0.9, -0.76,       -0.11,   -.01,       0.065,  0.8, 1.58, 2.9];
+alphai(1).y = [0.035, 0.015, -0.019,     0.32,    .51,     -0.32,    0.04,   0.08, .014];
+bi(1).y     = [0.07,  .07,  0.04,        0.055,    0.037,    0.0604,  0.450,  0.3, .5];
 
 tetai(1).z  = [-1.1  -0.93 -0.7      -.4     -0.15    .095    1.05 1.25 1.55 2.8];
 alphai(1).z = [-0.03 -0.14 -0.035    .045     -0.4    .46    -.12 -.2 -.35 -.035];
@@ -113,9 +112,9 @@ for i = 1:NumCh
     end
 end
 
-[DIP, teta] = DipoleGeneratorAbnormal(N,fs,F,alphai,bi,tetai,teta0,STM,S0);
+[dipole, teta] = ecg_dipole_gen_abnormal(N,fs,F,alphai,bi,tetai,teta0,STM,S0);
 
-VCG = R0*Lambda*[DIP.x ; DIP.y ; DIP.z];
+VCG = R0*Lambda*[dipole.x ; dipole.y ; dipole.z];
 s0 = H*VCG;
 
 s = s0 + (sqrt(sum(s0.^2,2))./sqrt(sum(noise.^2,2))/sqrt(10^(snr/10))*ones(1,size(s0,2))).*noise;

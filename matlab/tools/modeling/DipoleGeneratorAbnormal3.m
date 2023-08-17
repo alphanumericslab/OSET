@@ -1,6 +1,6 @@
-function [DIP teta]= DipoleGeneratorAbnormal3(N,fs,rr,alphai,bi,tetai,teta0,STM,S0)
+function [dipole, teta]= DipoleGeneratorAbnormal3(N,fs,rr,alphai,bi,tetai,teta0,STM,S0)
 %
-% [DIP teta]= DipoleGeneratorAbnormal3(N,fs,rr,alphai,bi,tetai,teta0,STM,S0)
+% [dipole teta]= DipoleGeneratorAbnormal3(N,fs,rr,alphai,bi,tetai,teta0,STM,S0)
 % Synthetic cardiac dipole generator using the 'differential form' of the
 % dipole equations. Refer to references of the toolbox for further details.
 %
@@ -26,7 +26,7 @@ function [DIP teta]= DipoleGeneratorAbnormal3(N,fs,rr,alphai,bi,tetai,teta0,STM,
 
 %
 % output:
-% DIP: structure contaning the x, y, and z coordinates of the cardiac dipole
+% dipole: structure contaning the x, y, and z coordinates of the cardiac dipole
 % teta: vector containing the dipole phase
 %
 %
@@ -81,7 +81,7 @@ L = size(STM,1);
 
 teta(1) = teta0;
 state = S0;
-for i = 1:N-1;
+for i = 1:N-1
     teta(i+1) = teta(i) + w(i)*dt;
     if(teta(i+1)>pi) % beat transition
         teta(i+1) = teta(i+1) - 2*pi;
@@ -118,7 +118,7 @@ for i = 1:N-1;
     dtetaiy = mod(teta(i) - tetai(state).y + pi , 2*pi) - pi;
     dtetaiz = mod(teta(i) - tetai(state).z + pi , 2*pi) - pi;
 
-    if(i==1),
+    if(i==1)
         X(i) = sum(alphai(state).x .* exp(-dtetaix .^2 ./ (2*bi(state).x .^ 2)));
         Y(i) = sum(alphai(state).y .* exp(-dtetaiy .^2 ./ (2*bi(state).y .^ 2)));
         Z(i) = sum(alphai(state).z .* exp(-dtetaiz .^2 ./ (2*bi(state).z .^ 2)));
@@ -130,6 +130,6 @@ for i = 1:N-1;
 
 end
 
-DIP.x = X;
-DIP.y = Y;
-DIP.z = Z;
+dipole.x = X;
+dipole.y = Y;
+dipole.z = Z;
