@@ -1,9 +1,9 @@
-function [x_denoised, baseline_reference, x_mains_cancelled] = ecg_strip_analyzer(x_raw, fs, f_mains, ttl, varargin)
+function [x_denoised, baseline_reference, x_mains_cancelled] = ecg_strip_viewer_waterfall(x_raw, fs, f_mains, ttl, varargin)
 % 
-% ECG_STRIP_ANALYZER: A function to process and visualize ECG signals.
+% ecg_strip_viewer_waterfall: A function to process and visualize ECG signals.
 %
 % USAGE:
-%   [xd, bl, xm] = ecg_strip_analyzer(x, fs, f_mains, title, params);
+%   [xd, bl, xm] = ecg_strip_viewer_waterfall(x, fs, f_mains, title, params);
 %
 % INPUTS:
 %   x_raw: Raw ECG signal(s). Can be a single-channel or multi-channel signal.
@@ -18,7 +18,7 @@ function [x_denoised, baseline_reference, x_mains_cancelled] = ecg_strip_analyze
 %   x_mains_cancelled: ECG signal after mains interference cancellation.
 %
 % EXAMPLE:
-%   [xd, bl, xm] = ecg_strip_analyzer(x, 500, 50, 'Test ECG');
+%   [xd, bl, xm] = ecg_strip_viewer_waterfall(x, 500, 50, 'Test ECG');
 %
 % PARAMETER DESCRIPTION: The last input params is a structure with these
 % fields:
