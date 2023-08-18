@@ -1,4 +1,4 @@
-function [x_denoised, baseline_reference, x_mains_cancelled] = ecg_strip_viewer_waterfall(x_raw, fs, f_mains, ttl, varargin)
+function [x_denoised, baseline_reference, x_mains_cancelled] = ecg_strip_viewer_waterfall(x_raw, fs, f_mains, varargin)
 % 
 % ecg_strip_viewer_waterfall: A function to process and visualize ECG signals.
 %
@@ -22,21 +22,21 @@ function [x_denoised, baseline_reference, x_mains_cancelled] = ecg_strip_viewer_
 %
 % PARAMETER DESCRIPTION: The last input params is a structure with these
 % fields:
+%   - file_out_name: String, naming for the output files. (Default: [ttl , '_processed'])
+%   - image_name: String, naming for the output images. (Default: [ttl , '_processed'])
 %   - plot_results: Boolean, decides if results should be plotted. (Default: 1)
 %   - save_output_files: Boolean, decides if results should be saved. (Default: 0)
 %   - save_output_images: Boolean, decides if images should be saved. (Default: 0)
 %   - aply_source_separation: Boolean, decides if Blind Source Separation (BSS) should be applied. (Default: 0)
 %   - build_lead_III: Boolean, to build lead III from leads I and II. (Default: 0)
 %   - correct_lead_I_polarity: Boolean, to correct the polarity of lead I. (Default: 0)
-%   - file_out_name: String, naming for the output files. (Default: [ttl , '_processed'])
-%   - image_name: String, naming for the output images. (Default: [ttl , '_processed'])
+%   - mains_notch_method: String, method for removing mains interference. (Default: 'IIRNOTCH')
 %   - Q_factor: Numeric, Q-factor for the mains notch filter. (Default: 40)
+%   - remove_2nd_mains_harmonic: Boolean, decides if the second harmonic of the mains frequency should be removed. (Default: 0)
 %   - w1, w2, w3, w4: Numerics, defining window sizes in seconds for different stages of baseline wander removal. (Defaults: 0.29, 0.32, 0.35, 0.2 respectively)
 %   - baseline_removal_method: String, method for removing baseline wander. (Default: 'MDMDMDMN')
-%   - mains_notch_method: String, method for removing mains interference. (Default: 'IIRNOTCH')
-%   - remove_2nd_mains_harmonic: Boolean, decides if the second harmonic of the mains frequency should be removed. (Default: 0)
+%   - DiffOrder: Integer, smoothness constraint order for baseline wander removal. (Default: 2)
 %   - denoising_method: String, method for denoising the ECG signal. (Default: 'BYPASS')
-%   - DiffOrder: Integer, smoothness constraint order for denoising. (Default: 2)
 %   - beat_avg_method: String, method for beat averaging. (Default: 'TIME')
 %
 %   Revision History:
@@ -46,8 +46,14 @@ function [x_denoised, baseline_reference, x_mains_cancelled] = ecg_strip_viewer_
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 
-if nargin > 4 && ~isempty(varargin{1})
-    params_in = varargin{1};
+if nargin > 3 && ~isempty(varargin{1})
+    ttl = varargin{1};
+else
+    ttl = '';
+end
+
+if nargin > 4 && ~isempty(varargin{2})
+    params_in = varargin{2};
 else
     params_in = [];
 end
