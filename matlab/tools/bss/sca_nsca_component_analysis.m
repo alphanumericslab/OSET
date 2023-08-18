@@ -50,6 +50,7 @@ end
 
 % Compute the extraction matrix
 W = V(:, II)';
+
 % Compute the mixing matrix (pseudo-inverse of the extraction matrix)
 A = pinv(W);
 
