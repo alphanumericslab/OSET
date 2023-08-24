@@ -13,11 +13,11 @@ L=size(ecg,1); % ecg length
 tst=(1:L)/fs; % time stamp
 w1=.75; % window length of the first median filter used in base line removing
 w2=.9; % window length of the second median filter used in base line removing
-ecg=ecg-(BaseLine1(BaseLine1(ecg', round(w1*fs), 'md'), round(w2*fs), 'mn'))'; % baseline removal
+ecg=ecg-(baseline_sliding_window(baseline_sliding_window(ecg', round(w1*fs), 'md'), round(w2*fs), 'mn'))'; % baseline removal
 chnl=2;
 
 
-rPeaks = find(PeakDetection20(ecg(:,chnl),70/60/fs,.6));
+[~, rPeaks] = peak_det_amp_threshold(ecg(:,chnl),70/60/fs,.6, 2, 'MEDIAN');
 
 %% set the input values
 soi1.q=[-0.080; -0.020];

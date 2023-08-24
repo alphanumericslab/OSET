@@ -1,6 +1,5 @@
 function [GaussParams, varargout]=qtParamsGausFit_cl(ecg, fs, varargin)
 % 'corrected levels' version.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % estimate the Q-T interval and some other Q-T parameters by fitting 
 % Gaussian function models.
 % 
@@ -19,7 +18,7 @@ function [GaussParams, varargout]=qtParamsGausFit_cl(ecg, fs, varargin)
 % 
 % 
 % Inputs:
-% ecg: matrix of multichannel ECG data. Each column corresponds to each channle.
+% ecg: matrix of multichannel ECG data. Each column corresponds to each channel.
 % fs: sampling frequency.
 % rpeaks (or hr): if vector, it is index vector of R peak positions with the
 %   same lenth of ecg columns. rpeaks has 1 or true values at R peaks and 0
@@ -66,22 +65,17 @@ function [GaussParams, varargout]=qtParamsGausFit_cl(ecg, fs, varargin)
 % qtInt: Q-T intervals lendth.
 % 
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (C) 2021  Davood Fattahi
-% fattahi.d@gmail.com
-% Developed as a part of implementation in https://doi.org/10.36227/techrxiv.15176139.v2
-% 
-% 
-% 
-% This program is free software; you can redistribute it and/or modify it
-% under the terms of the GNU General Public License as published by the
-% Free Software Foundation; either version 2 of the License, or (at your
-% option) any later version.
-% This program is distributed in the hope that it will be useful, but
-% WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-% Public License for more details.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Reference:
+%   Fattahi, Davood, and Reza Sameni. "Cramér-Rao Lower Bounds of
+%   Model-Based Electrocardiogram Parameter Estimation." IEEE Transactions
+%   on Signal Processing 70 (2022): 3181-3192.
+%
+% Revision History:
+%   2021: First release
+%
+% Davood Fattahi (fattahi.d@gmail.com), 2021
+% The Open-Source Electrophysiological Toolbox
+% https://github.com/alphanumericslab/OSET
 
 %% initial values
 options=struct; rPeaks=[]; p0.q=[]; p0.t=[]; soi.q=[]; soi.t=[]; 
@@ -100,7 +94,7 @@ if length(rPeaks) == size(ecg,1)
     rPeaks = find(rPeaks);
 end
 if isempty(rPeaks)
-    rPeaks = find(PeakDetection20(mean(ecg,2),hr/fs, .6));  % R peaks position
+    [~, rPeaks] = peak_det_amp_threshold(mean(ecg,2),hr/fs, .6, 2, 'MEDIAN');  % R peaks position
 end
 nBeats=length(rPeaks); 
 
@@ -285,12 +279,12 @@ end
 
 varargout{1}=rPeaks;
 waveParams.q= [GaussParams.q(3,:,:) - beta.q*GaussParams.q(2,:,:);
-     GaussParams.q(end,:,:) + beta.q*GaussParams.q(end-1,:,:)];
+     GaussParams.q(3,:,:) + beta.q*GaussParams.q(2,:,:)];
 waveParams.t= [GaussParams.t(3,:,:) - beta.t*GaussParams.t(2,:,:);
-     GaussParams.t(end,:,:) + beta.t*GaussParams.t(end-1,:,:)];
-varargout{2}=soi;
-varargout{3}=waveParams;
-varargout{4}=(GaussParams.t(end,:,:) + beta.t*GaussParams.t(end-1,:,:)) - ...
-      (GaussParams.q(3,:,:) - beta.q*GaussParams.q(2,:,:));
-end
+     GaussParams.t(3,:,:) + beta.t*GaussParams.t(2,:,:)];
+varargout{2} = soi;
+varargout{3} = waveParams;
+t_offset = GaussParams.t(3,:,:) + beta.t*GaussParams.t(2,:,:);
+q_onset = GaussParams.q(3,:,:) - beta.q*GaussParams.q(2,:,:);
+varargout{4} = t_offset - q_onset;
   

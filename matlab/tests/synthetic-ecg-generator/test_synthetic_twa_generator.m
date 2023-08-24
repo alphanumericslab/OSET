@@ -5,25 +5,23 @@
 % Dependencies: The synthetic ECG generator and noise generator package of
 %   the Open Source ECG Toolbox
 %
-% Open Source ECG Toolbox, version 2.0, April 2008
-% Released under the GNU General Public License
-% Copyright (C) 2008  Reza Sameni
-% Sharif University of Technology, Tehran, Iran -- GIPSA-Lab, Grenoble, France
-% reza.sameni@gmail.com
-%
 % Reference:
-%   Clifford, Gari D., Shamim Nemati, and Reza Sameni.
-%   "An artificial vector model for generating abnormal electrocardiographic rhythms." Physiological measurement 31.5 (2010): 595.
+% 
+%     - Sameni, Reza, et al. "Multichannel ECG and noise modeling: Application
+%       to maternal and fetal ECG signals." EURASIP Journal on Advances in
+%       Signal Processing 2007 (2007): 1-14.
+% 
+%     - Clifford, Gari D., Shamim Nemati, and Reza Sameni. "An artificial
+%       vector model for generating abnormal electrocardiographic rhythms."
+%       Physiological measurement 31.5 (2010): 595.
 %
-
-% This program is free software; you can redistribute it and/or modify it
-% under the terms of the GNU General Public License as published by the
-% Free Software Foundation; either version 2 of the License, or (at your
-% option) any later version.
-% This program is distributed in the hope that it will be useful, but
-% WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-% Public License for more details.
+% Revision History:
+%   2010: First release
+%   2023: Renamed from deprecated version testAbnormalECGGenerator1
+% 
+% Reza Sameni, 2008-2023
+% The Open-Source Electrophysiological Toolbox
+% https://github.com/alphanumericslab/OSET
 
 %//////////////////////////////////////////////////////////////////////////
 clc

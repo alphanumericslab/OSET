@@ -20,7 +20,7 @@ function [ECGmean, ECGsd] = average_beat_calculator(x, peaks, wlen, varargin)
 % Revision History:
 %   2010: First release
 %   2023: Renamed from deprecated version ECGBeatVariance and integrated
-%   with offset feature from depricated function ECGBeatVariance2
+%       with offset feature from depricated function ECGBeatVariance2
 %
 % Reza Sameni, 2010-2023
 % The Open-Source Electrophysiological Toolbox
