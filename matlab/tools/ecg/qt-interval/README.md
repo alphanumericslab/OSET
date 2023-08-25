@@ -74,7 +74,7 @@ parsms.earliest_q_onset = 0.1; % earliest Q-wave onset
 parsms.latest_t_offset = 0.35; % latest T-wave offset
 params.plot_results = true; % plot the results
 
-% Call the qt_estimator_sum_of_gaussians function
+% Call qt_estimator_sum_of_gaussians to get the fiducial points
 fiducials = qt_estimator_sum_of_gaussians(ecg_data, fs, params);
 
 % Display the results

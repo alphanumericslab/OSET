@@ -1,5 +1,5 @@
 function [dipole, teta]= DipoleGeneratorAbnormal3(N,fs,rr,alphai,bi,tetai,teta0,STM,S0)
-%
+% Under development - for QT hysteresis effect modeling
 % [dipole teta]= DipoleGeneratorAbnormal3(N,fs,rr,alphai,bi,tetai,teta0,STM,S0)
 % Synthetic cardiac dipole generator using the 'differential form' of the
 % dipole equations. Refer to references of the toolbox for further details.
