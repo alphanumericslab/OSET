@@ -1,9 +1,11 @@
-function [ecg, phi] = ecg_gen_dtw(N, fs, params, phase_bins, warping_order)
-% ecg_gen_dtw - Stochastic synthetic ECG generation using warping transformation from the phase domain.
+function [ecg, phi] = ecg_gen_warping(N, fs, params, phase_bins, warping_order)
+% ecg_gen_warping - Stochastic synthetic ECG generation using warping transformation from the phase domain.
 %
 % Method: Generates synthetic ECG signals by generating Gaussian mixture
 %   models with stochastic deviations in the phase domain, followed by
 %   transformation from the phase to time domain.
+% Usage:
+%   [ecg, phi] = ecg_gen_warping(N, fs, params, phase_bins, warping_order)
 %
 % Inputs:
 %   N: Desired length of the output ECG signal

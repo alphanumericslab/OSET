@@ -16,29 +16,39 @@ clear
 clc
 
 % Load ECG model parameters
-load('params_00004', 'params');
-params = params{1};
+% load('params_00012', 'params');
+% params = params{1};
+
+load('params_01000');
+params = params{3};
 
 % Define parameters for ECG generation
 p.alpha = params.a;
 p.b = params.b;
 p.theta = params.theta;
 p.theta0 = 0;
-p.f = 90 / 60; % Average heart rate in Hz (beats per second)
+p.f = 70 / 60; % Average heart rate in Hz (beats per second)
 p.f_deviations = 0.1; % Percentage of beat-wise heart rate deviations
 p.delta_alpha = 0.1; % Percentage of amplitude deviations
 p.delta_theta = 0.1; % Percentage of Gaussian center deviations
 p.delta_b = 0.1; % Percentage of Gaussian width deviations
+p.T_inv_shape_factor = 1.0; % T-wave inversion shape factor (determines tanh inversion function slope)
+p.T_onset = 0.1; % Anticipated onset of the T-wave 
+p.T_offset = inf; % Anticipated offset of the T-wave
 warping_order = 2; % Interpolation order for warping transformation
+seed = 0; % Random number generator seed
 
 % Simulation parameters
 T = 10.0; % Duration of the ECG signal in seconds
 fs = 1000; % Sampling rate in Hz
-phase_bins = 200; % Number of bins in the phase domain
+phase_bins = 300; % Number of bins in the phase domain
 N = round(T * fs); % Number of samples
 
-% Generate synthetic ECG and phase using ecg_gen_dtw
-[ecg, phi] = ecg_gen_dtw(N, fs, p, phase_bins, warping_order);
+% Generate synthetic ECG and phase using ecg_gen_warping
+invert = false;
+[ecg_ref, ~] = ecg_gen_inv_t_wave(N, fs, p, phase_bins, warping_order, seed, invert);
+invert = true;
+[ecg, phi] = ecg_gen_inv_t_wave(N, fs, p, phase_bins, warping_order, seed, invert);
 
 % Create time vector
 time = (0 : N - 1) / fs;
@@ -46,7 +56,10 @@ time = (0 : N - 1) / fs;
 % Plot the synthetic ECG and phase
 figure;
 yyaxis left
+hold on
+plot(time, ecg_ref)
 plot(time, ecg)
+legend('Reference ECG', 'Inverted T-wave')
 ylabel('Amplitude (mV)')
 yyaxis right
 plot(time, phi)
