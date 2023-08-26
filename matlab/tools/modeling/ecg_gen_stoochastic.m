@@ -85,7 +85,7 @@ phi(1) = theta0; % Set initial phase
 d_alpha = alpha;     % Initialize amplitude
 d_theta = theta;  % Initialize phase
 d_b = b;         % Initialize width
-
+n_gmm = length(alpha);
 for i = 1 : N - 1
     dtetai = mod(phi(i) - d_theta + pi, 2 * pi) - pi;
 
@@ -100,9 +100,9 @@ for i = 1 : N - 1
 
     if phi(i + 1) > pi % Beat transitions
         phi(i + 1) = phi(i + 1) - 2 * pi;
-        d_alpha = alpha * (1 + (rand - 0.5) * delta_alpha);
-        d_theta = theta * (1 + (rand - 0.5) * delta_theta);
-        d_b = b * max(0, (1 + (rand - 0.5) * delta_b));
+        d_alpha = alpha .* (1 + (rand(1, n_gmm) - 0.5) * delta_alpha);
+        d_theta = theta .* (1 + (rand(1, n_gmm) - 0.5) * delta_theta);
+        d_b = b .* max(0, (1 + (rand(1, n_gmm) - 0.5) * delta_b));
         w = 2 * pi * f * max(0, (1 + (rand - 0.5) * f_deviations));
     end
 end

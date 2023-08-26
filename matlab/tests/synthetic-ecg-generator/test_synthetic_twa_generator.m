@@ -110,7 +110,7 @@ for i = 1:NumCh
     end
 end
 
-[dipole, teta] = ecg_dipole_gen_abnormal(N,fs,F,alphai,bi,tetai,teta0,STM,S0);
+[dipole, teta] = vcg_gen_abnormal(N,fs,F,alphai,bi,tetai,teta0,STM,S0);
 
 VCG = R0*Lambda*[dipole.x ; dipole.y ; dipole.z];
 s0 = H*VCG;

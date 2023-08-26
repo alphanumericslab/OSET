@@ -79,6 +79,7 @@ R_peak_phase_index = find(theta >= 0, 1, 'first');
 
 % Initialize variables
 signal_len = 0;
+n_gmm = length(params.alpha);
 ecg = [];
 phi = [];
 
@@ -88,9 +89,9 @@ while signal_len < N
     beat_len = round(fs / (params.f * max(0, (1 + (rand - 0.5) * params.f_deviations))));
 
     % Apply stochastic deviations to ECG template parameters
-    p.alpha = params.alpha * (1 + (rand - 0.5) * params.delta_alpha);
-    p.theta = params.theta * (1 + (rand - 0.5) * params.delta_theta);
-    p.b = params.b * max(0, (1 + (rand - 0.5) * params.delta_b));
+    p.alpha = params.alpha .* (1 + (rand(1, n_gmm) - 0.5) * params.delta_alpha);
+    p.theta = params.theta .* (1 + (rand(1, n_gmm) - 0.5) * params.delta_theta);
+    p.b = params.b .* max(0, (1 + (rand(1, n_gmm) - 0.5) * params.delta_b));
 
     % Generate Gaussian template in the phase domain
     ecg_phase_domain_template = gaussian_mixture_model(p, theta);

@@ -90,17 +90,17 @@ for i = 1 : N-1
         phi(i+1) = phi(i+1) - 2*pi;
         
         % Apply stochastic deviations to parameters
-        d_alphai.x = alpha.x * (1 + (rand - 0.5) * delta_alpha);
-        d_alphai.y = alpha.y * (1 + (rand - 0.5) * delta_alpha);
-        d_alphai.z = alpha.z * (1 + (rand - 0.5) * delta_alpha);
+        d_alphai.x = alpha.x .* (1 + (rand(1, length(alpha.x)) - 0.5) * delta_alpha);
+        d_alphai.y = alpha.y .* (1 + (rand(1, length(alpha.y)) - 0.5) * delta_alpha);
+        d_alphai.z = alpha.z .* (1 + (rand(1, length(alpha.z)) - 0.5) * delta_alpha);
 
-        d_tetai.x = theta.x * (1 + (rand - 0.5) * delta_theta);
-        d_tetai.y = theta.y * (1 + (rand - 0.5) * delta_theta);
-        d_tetai.z = theta.z * (1 + (rand - 0.5) * delta_theta);
+        d_tetai.x = theta.x .* (1 + (rand(1, length(theta.x)) - 0.5) * delta_theta);
+        d_tetai.y = theta.y .* (1 + (rand(1, length(theta.y)) - 0.5) * delta_theta);
+        d_tetai.z = theta.z .* (1 + (rand(1, length(theta.z)) - 0.5) * delta_theta);
 
-        d_bi.x = b.x * max(0, (1 + (rand - 0.5) * delta_b));
-        d_bi.y = b.y * max(0, (1 + (rand - 0.5) * delta_b));
-        d_bi.z = b.z * max(0, (1 + (rand - 0.5) * delta_b));
+        d_bi.x = b.x .* max(0, (1 + (rand(1, length(b.x)) - 0.5) * delta_b));
+        d_bi.y = b.y .* max(0, (1 + (rand(1, length(b.y)) - 0.5) * delta_b));
+        d_bi.z = b.z .* max(0, (1 + (rand(1, length(b.z)) - 0.5) * delta_b));
         
         % Update angular frequency with stochastic deviation
         w = 2 * pi * f * max(0, (1 + (rand - 0.5) * f_deviations));
