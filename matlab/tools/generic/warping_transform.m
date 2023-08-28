@@ -16,17 +16,23 @@ function M = warping_transform(in_vector_boundaries, out_vector_boundaries, orde
 %   out_vector_boundaries: Scalar or or monotonically increasing vector of
 %       output vector knot point indices. When scalar, out_vector_boundaries
 %       indicates the output length (the row space)
-%   order: Interpolation order (1 for linear, 2 for quadratic, 3 for 3rd order).
+%   order: Interpolation order (>=1). For order <=3, order can be given as
+%       characters '1', '2', or '3' (supported only for testing and
+%       compatibility purposes). When order is an integer, linear
+%       interpolation (equivalent to order = 1) is applied to the borders.
 %
 % Outputs:
 %   M: Warping matrix for time-warping the input vector to match the output
 %      vector's specified knot points.
 %
-% Note: The resulting vector (post multiplication by M) is guaranteed to
-%   match certain knot points between the input and output vectors as a
-%   result of multiplying this matrix. This includes the first, last, and
-%   user-defined intermediate points listed in in_vector_boundaries and
-%   out_vector_boundaries.
+% Note:
+%   1)  The resulting vector (post multiplication by M) is guaranteed to
+%       match certain knot points between the input and output vectors as a
+%       result of multiplying this matrix. This includes the first, last, and
+%       user-defined intermediate points listed in in_vector_boundaries and
+%       out_vector_boundaries.
+%   2)  For consistency consider using integer order mode in all cases. In
+%       this case, the rows of M have a unit sum
 %
 % Example 1:
 %   % Generate warping matrix using quadratic interpolation
@@ -63,7 +69,7 @@ function M = warping_transform(in_vector_boundaries, out_vector_boundaries, orde
 %       intermediate point of interest
 %   4- Move on to the next point
 %
-% Reference (usage):
+% Reference (application):
 %   R. Sameni, C. Jutten, and M. B. Shamsollahi. Multichannel
 %   electrocardiogram decomposition using periodic component analysis. IEEE
 %   Transactions on Biomedical Engineering, 55(8):1935-1940, Aug. 2008.
@@ -80,12 +86,9 @@ if length(in_vector_boundaries) ~= length(out_vector_boundaries)
     error('input and output vectors should have the same number of knots');
 end
 
-% Check if the knot points start from 1
-if in_vector_boundaries(1) ~= 1
+% Make sure that the knot points start from 1
+if in_vector_boundaries(1) ~= 1 || out_vector_boundaries(1) ~= 1
     in_vector_boundaries = [1, in_vector_boundaries];
-end
-
-if out_vector_boundaries(1) ~= 1
     out_vector_boundaries = [1, out_vector_boundaries];
 end
 
@@ -108,10 +111,92 @@ for k = 1 : length(in_vector_boundaries) - 1
     fractional_update = (in_len -1) / (out_len - 1);
 
     % Select interpolation method based on 'order'
-    switch order
-        case 1 % linear interpolation
-            t = in_vector_boundaries(k);
-            for row = out_vector_boundaries(k) : out_vector_boundaries(k+1)
+    if ischar(order) % The string case is provided for test and compatibility purposes. It purforms identical to the integer input case
+        switch order
+            case '1' % linear interpolation
+                t = in_vector_boundaries(k);
+                for row = out_vector_boundaries(k) : out_vector_boundaries(k+1)
+                    col1 = floor(t);
+                    col2 = col1 + 1;
+                    if col1 <= in_vector_boundaries(end)
+                        M(row, col1) = col2 - t ;
+                    end
+
+                    if col2 <= in_vector_boundaries(end)
+                        M(row, col2) = t - col1;
+                    end
+                    t = t + fractional_update;
+                end
+            case '2' % quadratic interpolation
+                t = in_vector_boundaries(k);
+                for row = out_vector_boundaries(k) : out_vector_boundaries(k+1)
+                    col1 = ceil(t - 1.5 + eps);
+                    col2 = col1 + 1;
+                    col3 = col1 + 2;
+                    A = [col1.^2, col1, 1; col2.^2, col2, 1; col3.^2, col3, 1];
+                    coefs = [t.^2, t, 1] * pinv(A);
+                    if col1 >= 1 && col1 <= in_vector_boundaries(end)
+                        M(row, col1) = coefs(1);
+                    end
+                    if col2 >= 1 && col2 <= in_vector_boundaries(end)
+                        M(row, col2) = coefs(2);
+                    end
+                    if col3 >= 1 && col3 <= in_vector_boundaries(end)
+                        M(row, col3) = coefs(3);
+                    end
+                    t = t + fractional_update;
+                end
+            case '3' % 3rd order interpolation
+                t = in_vector_boundaries(k);
+                for row = out_vector_boundaries(k) : out_vector_boundaries(k+1)
+                    col1 = ceil(t - 2.0 + eps);
+                    col2 = col1 + 1;
+                    col3 = col1 + 2;
+                    col4 = col1 + 3;
+                    A = [col1.^3, col1.^2, col1, 1; col2.^3, col2.^2, col2, 1; col3.^3, col3.^2, col3, 1; col4.^3, col4.^2, col4, 1];
+                    coefs = [t.^3, t.^2, t, 1] * pinv(A);
+                    if col1 >= 1 && col1 <= in_vector_boundaries(end)
+                        M(row, col1) = coefs(1);
+                    end
+                    if col2 >= 1 && col2 <= in_vector_boundaries(end)
+                        M(row, col2) = coefs(2);
+                    end
+                    if col3 >= 1 && col3 <= in_vector_boundaries(end)
+                        M(row, col3) = coefs(3);
+                    end
+                    if col4 >= 1 && col4 <= in_vector_boundaries(end)
+                        M(row, col4) = coefs(4);
+                    end
+                    t = t + fractional_update;
+                end
+            otherwise
+                error('Only orders 1, 2 and 3 are supported when order is a string. Consider using the integer-valued mode for higher orders.');
+        end
+    else
+        t = in_vector_boundaries(k);
+        for row = out_vector_boundaries(k) : out_vector_boundaries(k+1)
+            col_first = ceil(t - (order + 1)/2.0 + eps);
+            col_last = col_first + order;
+            if col_first >= 1 && col_last <= in_vector_boundaries(end) % use order only if columns are within range
+                A = zeros(order + 1);
+                tt = zeros(1, order + 1);
+                cols = col_first : col_last;
+
+                for ii = 1 : order + 1
+                    for jj = 1 : order + 1
+                        A(ii, jj) = cols(ii)^(order + 1 - jj);
+                    end
+                    tt(ii) = t.^(order + 1 - ii);
+                end
+                coefs = tt * pinv(A);
+
+                for cc = 1 : length(cols)
+                    if cols(cc) >= 1 && cols(cc) <= in_vector_boundaries(end)
+                        M(row, cols(cc)) = coefs(cc);
+                    end
+
+                end
+            else % Use linear interpolation for boundaries
                 col1 = floor(t);
                 col2 = col1 + 1;
                 if col1 <= in_vector_boundaries(end)
@@ -121,71 +206,9 @@ for k = 1 : length(in_vector_boundaries) - 1
                 if col2 <= in_vector_boundaries(end)
                     M(row, col2) = t - col1;
                 end
-                t = t + fractional_update;
+
             end
-        case 2 % quadratic interpolation
-            t = in_vector_boundaries(k);
-            for row = out_vector_boundaries(k) : out_vector_boundaries(k+1)
-                col1 = ceil(t - 1.5 + eps);
-                col2 = col1 + 1;
-                col3 = col1 + 2;
-                A = [col1.^2, col1, 1; col2.^2, col2, 1; col3.^2, col3, 1];
-                coefs = [t.^2, t, 1] * pinv(A);
-                if col1 >= 1 && col1 <= in_vector_boundaries(end)
-                    M(row, col1) = coefs(1);
-                end
-                if col2 >= 1 && col2 <= in_vector_boundaries(end)
-                    M(row, col2) = coefs(2);
-                end
-                if col3 >= 1 && col3 <= in_vector_boundaries(end)
-                    M(row, col3) = coefs(3);
-                end
-                t = t + fractional_update;
-            end
-        case 3 % 3rd order interpolation
-            t = in_vector_boundaries(k);
-            for row = out_vector_boundaries(k) : out_vector_boundaries(k+1)
-                col1 = ceil(t - 2.0 + eps);
-                col2 = col1 + 1;
-                col3 = col1 + 2;
-                col4 = col1 + 3;
-                A = [col1.^3, col1.^2, col1, 1; col2.^3, col2.^2, col2, 1; col3.^3, col3.^2, col3, 1; col4.^3, col4.^2, col4, 1];
-                coefs = [t.^3, t.^2, t, 1] * pinv(A);
-                if col1 >= 1 && col1 <= in_vector_boundaries(end)
-                    M(row, col1) = coefs(1);
-                end
-                if col2 >= 1 && col2 <= in_vector_boundaries(end)
-                    M(row, col2) = coefs(2);
-                end
-                if col3 >= 1 && col3 <= in_vector_boundaries(end)
-                    M(row, col3) = coefs(3);
-                end
-                if col4 >= 1 && col4 <= in_vector_boundaries(end)
-                    M(row, col4) = coefs(4);
-                end
-                t = t + fractional_update;
-            end
-        otherwise
-            t = in_vector_boundaries(k);
-            for row = out_vector_boundaries(k) : out_vector_boundaries(k+1)
-                col_first = ceil(t - (order + 1)/2 + eps);
-                col_last = col_first + order;
-                A = zeros(order + 1);
-                tt = zeros(1, order + 1);
-                cols = col_first : col_last;
-                for ii = 1 : order + 1
-                    for jj = 1 : order + 1
-                        A(ii, jj) = cols(ii)^(order + 1 - jj);
-                    end
-                    tt(ii) = t.^(order + 1 - ii);
-                end
-                coefs = tt * pinv(A);
-                for cc = 1 : length(cols)
-                    if cols(cc) >= 1 && cols(cc) <= in_vector_boundaries(end)
-                        M(row, cols(cc)) = coefs(cc);
-                    end
-                end
-                t = t + fractional_update;
-            end
+            t = t + fractional_update;
+        end
     end
 end

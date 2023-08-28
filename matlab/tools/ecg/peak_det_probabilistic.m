@@ -108,8 +108,8 @@ elseif isfield(params, 'filter_type') && isequal(params.filter_type, 'MDMN')
     wlen1 = round(params.wlen_md * fs);
     wlen2 = round(params.wlen_mn * fs);
     for kk = 1 : size(data_sat, 1)
-        bl1 = BaseLine1(data_sat(kk, :), wlen1, 'md');
-        bl2 = BaseLine1(bl1, wlen2, 'mn');
+        bl1 = baseline_sliding_window(data_sat(kk, :), wlen1, 'md');
+        bl2 = baseline_sliding_window(bl1, wlen2, 'mn');
         data_filtered(kk, :) = data_sat(kk, :) - bl2;
         %         figure
         %         plot(data_sat(kk, :));
@@ -274,7 +274,7 @@ if 0
 end
 
 % peaks = PeakDetection(mean(data_filtered, 1), 1.0/median(diff(peak_indexes)));
-peaks = PeakDetection(data_filtered_env, 1.0/median(diff(peak_indexes)), 1);
+peaks = peak_det_local_search(data_filtered_env, 1.0/median(diff(peak_indexes)), 1);
 peak_indexes = find(peaks);
 
 % calculate a likelihood function for the R-peaks (useful for classification and scoring purposes)
@@ -300,7 +300,7 @@ qrs_likelihood = qrs_likelihood(lag : SigLen + lag - 1);
 
 % search for local peaks with sign of most frequent among previously found peaks
 data_filtered_mn_all_channels = mean(data_filtered, 1);
-peaks = PeakDetection(mode(sign(data_filtered_mn_all_channels(peak_indexes))) * data_filtered_mn_all_channels .* qrs_likelihood, 1.0/median(diff(peak_indexes)), 1);
+peaks = peak_det_local_search(mode(sign(data_filtered_mn_all_channels(peak_indexes))) * data_filtered_mn_all_channels .* qrs_likelihood, 1.0/median(diff(peak_indexes)), 1);
 
 peak_indexes = find(peaks);
 
@@ -318,7 +318,7 @@ if params.RemoveUnsimilarBeats
     % First round (negative correlations)
     event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
     %     stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
-    stacked_beats = EventStacker(data_filtered_mn_all_channels, peak_indexes, event_width);
+    stacked_beats = event_stacker(data_filtered_mn_all_channels, peak_indexes, event_width);
     Rho_beats = corrcoef(stacked_beats');
     C_beats = (sum(Rho_beats, 1) - 1.0) / (length(peak_indexes) - 1); % Average correlation of each beat with the others
     I_omit = C_beats < 0;
@@ -328,7 +328,7 @@ if params.RemoveUnsimilarBeats
     peak_amps = data_filtered_mn_all_channels(peak_indexes);
     event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
     %     stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
-    [stacked_beats, num_non_zeros] = EventStacker(data_filtered_mn_all_channels, peak_indexes, event_width);
+    [stacked_beats, num_non_zeros] = event_stacker(data_filtered_mn_all_channels, peak_indexes, event_width);
     std_beats = (event_width -1) * std(stacked_beats, 0, 2)' ./ (num_non_zeros - 1); % compensates the boundary events STD that were zero-padded in EventStacker
     I_omit = std_beats < 0.2*median(std_beats) & abs(peak_amps - mean(peak_amps)) > 2.0 * std(peak_amps);
     if(length(I_omit) < peak_indexes) % don't remove all peaks!
@@ -338,7 +338,7 @@ if params.RemoveUnsimilarBeats
     % Third round (omit beats with low correlations)
     event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
     %     stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
-    stacked_beats = EventStacker(data_filtered_mn_all_channels, peak_indexes, event_width);
+    stacked_beats = event_stacker(data_filtered_mn_all_channels, peak_indexes, event_width);
     Rho_beats = corrcoef(stacked_beats');
     C_beats = (sum(Rho_beats, 1) - 1.0) / (length(peak_indexes) - 1); % Average correlation of each beat with the others
     %     I_omit = C_beats < max(0.3, min(0.8, 0.5 * max(C_beats))); % omit beats with low correlations
@@ -352,7 +352,7 @@ if params.RemoveUnsimilarBeats
     for itr = 1 : max_itr
         NumBeats = length(peak_indexes);
         event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
-        stacked_beats = EventStacker(data_filtered_mn_all_channels, peak_indexes, event_width);
+        stacked_beats = event_stacker(data_filtered_mn_all_channels, peak_indexes, event_width);
         
         %     ECG_robust_mean = RWAverage(stacked_beats);
         ECG_robust_mean = mean(stacked_beats, 1);

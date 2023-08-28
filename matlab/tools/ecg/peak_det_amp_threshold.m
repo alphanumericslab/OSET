@@ -8,7 +8,9 @@ function [peaks, peak_indexes] = peak_det_amp_threshold(x, ff, th, varargin)
 %   ff: Approximate ECG beat-rate in Hertz, normalized by the sampling frequency.
 %   th: Peaks smaller than this fraction of the max peak amplitude are neglected.
 %   flag (optional): Search for positive (flag=1) or negative (flag=0) peaks. By default,
-%               the maximum absolute value of the signal determines the peak sign.
+%       the maximum absolute value of the signal determines the peak sign.
+%   level (optional): fake peak rejection thresholding level find from 'MAX',
+%       'MEDIAN' or 'MEAN' of absolute peaks 
 %
 % Outputs:
 %   peaks: Vector of R-peak impulse train.
@@ -24,16 +26,23 @@ function [peaks, peak_indexes] = peak_det_amp_threshold(x, ff, th, varargin)
 %   Revision History:
 %       2006: First release
 %       2020: Used logical indexing for speed improvement
-%       2023: Renamed from deprecated version PeakDetection6()
+%       2023: Renamed from deprecated version PeakDetection6 and combined
+%           with PeakDetection20
 %
 %   Reza Sameni, 2006-2023
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 
-if nargin == 4
+if nargin > 3 && ~isempty(varargin{1})
     flag = varargin{1};
 else
     flag = abs(max(x)) > abs(min(x));
+end
+
+if nargin > 4 && ~isempty(varargin{2})
+    level = varargin{2};
+else
+    level = 'MAX';
 end
 
 omit_close_peaks = 0;
@@ -41,8 +50,19 @@ omit_close_peaks = 0;
 
 % Remove small peaks below the threshold
 I = find(peaks);
-mx = max(abs(x(I)));
-J = abs(x(I)) < th * mx;
-peaks(I(J)) = 0;
+switch level
+    case 'MAX'
+        mx = max(abs(x(I)));
+        J = abs(x(I)) < th * mx;
+    case 'MEDIAN'
+        med = median(abs(x(I)));
+        J = abs(x(I)) < th * med;
+    case 'MEAN'
+        mn = mean(abs(x(I)));
+        J = abs(x(I)) < th * mn;
+    otherwise
+        error('Unknow level detection method')
+end
 
+peaks(I(J)) = 0;
 peak_indexes = find(peaks);

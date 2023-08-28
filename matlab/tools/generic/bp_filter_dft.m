@@ -18,7 +18,7 @@ function y = bp_filter_dft(x, fl, fu)
 %
 %   Revision History:
 %       2008: First release
-%       2023: Debugged and renamed from deprecated version BPFilter()
+%       2023: Debugged and renamed from deprecated version BPFilter
 %
 %   Reza Sameni, 2008-2023
 %   The Open-Source Electrophysiological Toolbox

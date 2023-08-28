@@ -87,7 +87,7 @@ After compiling the `resampler_mex.cpp` with `mex`, you can use the Resampler cl
    ```matlab
    % Sample test of the Resampler class using the mexFunction interface
    inputSignal = sin(2 * pi * 2 * (0:0.01:1)); % 2 Hz sine wave
-   conversionRate = 2.0; % Resample to twice the input sample rate
+   conversionRate = 2.0; % Resample to half the input sample rate (input/output sampling frequency)
    order = 4; % Use fourth-order interpolation
 
    % Call the resampler_mex function to perform resampling
