@@ -191,10 +191,11 @@ bi = .04*ones(size(alphai));
 options = optimset('TolX',1e-4,'TolFun',1e-4,'MaxIter',100);
 InitParams = [alphai bi tetai];
 
-OptParams = nlinfit(data.ECGphase,data.ECGmean,@ECGModel,InitParams,options);
+OptParams = nlinfit(data.ECGphase,data.ECGmean,@ecg_gen_from_phase,InitParams,options);
 % OptParams = lsqnonlin(@(InitParams) ECGModelError(InitParams,ECGmn,Phasemn,0),InitParams,InitParams-2,InitParams+2,options);
 % Model0 = ECGModelError(InitParams,data.ECGmean,data.ECGphase,1);
-Model = ECGModelError(OptParams,data.ECGmean,data.ECGphase,1);
+% Model = ECGModelError(OptParams,data.ECGmean,data.ECGphase,1);
+Model = ecg_gen_from_phase(OptParams,data.ECGphase);
 
 ax = axis;
 % data.Initmodhandle = plot(Model0,'g');

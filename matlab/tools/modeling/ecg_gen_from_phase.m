@@ -53,7 +53,7 @@ end
 x = zeros(size(phase));
 
 % Generate the ECG signal using a Gaussian mixture model
-for j = 1:length(a)
+for j = 1:length(alpha)
     % Calculate the phase difference
     dtheta = rem(phase - theta(j) + pi, 2 * pi) - pi;
     

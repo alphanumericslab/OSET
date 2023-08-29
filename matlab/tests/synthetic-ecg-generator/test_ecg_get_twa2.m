@@ -1,16 +1,16 @@
 %
 % Test program for generating synthetic abnormal multichannel ECGs with additive
-% colored noise. The current example is designed to model T-wave alternans (TWA) 
+% colored noise. The current example is designed to model T-wave alternans (TWA)
 %
 % Dependencies: The synthetic ECG generator and noise generator package of
 %   the Open Source ECG Toolbox
 %
 % Reference:
-% 
+%
 %     - Sameni, Reza, et al. "Multichannel ECG and noise modeling: Application
 %       to maternal and fetal ECG signals." EURASIP Journal on Advances in
 %       Signal Processing 2007 (2007): 1-14.
-% 
+%
 %     - Clifford, Gari D., Shamim Nemati, and Reza Sameni. "An artificial
 %       vector model for generating abnormal electrocardiographic rhythms."
 %       Physiological measurement 31.5 (2010): 595.
@@ -18,7 +18,7 @@
 % Revision History:
 %   2010: First release
 %   2023: Renamed from deprecated version testAbnormalECGGenerator1
-% 
+%
 % Reza Sameni, 2008-2023
 % The Open-Source Electrophysiological Toolbox
 % https://github.com/alphanumericslab/OSET
@@ -87,9 +87,15 @@ bi(2).z     = [.03  .12  .04         .4    .045       .05    .8 .4 .2 .4];
 %     - Each row of STM should sum up to 1
 %     - STM is usually asymmetric
 
-STM = [0 1 ; 1 0]         % exact alternation: the T-wave will alternate in each beat
-% STM = [.2 .8 ; .8 .2]       % probabilistic alternation with high probability of state transition
-% STM = [.9 .1 ; .99 .01]     % abnormalities with low probability of occurrence
+case_study = 1;
+switch case_study
+    case 1
+        STM = [0 1 ; 1 0];         % exact alternation: the T-wave will alternate in each beat
+    case 2
+        STM = [.2 .8 ; .8 .2];       % probabilistic alternation with high probability of state transition
+    case 3
+        STM = [.9 .1 ; .99 .01];     % abnormalities with low probability of occurrence
+end
 
 S0 = 1; % Start with a normal beat
 

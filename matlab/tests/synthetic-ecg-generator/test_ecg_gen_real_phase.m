@@ -33,12 +33,12 @@ bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may b
 
 x = data - bsline;
 
-peaks = PeakDetection(x,f/fs);                  % peak detection
+peaks = peak_det_local_search(x,f/fs);                  % peak detection
 
-[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = phase_calculator(peaks);     % phase calculation
 
 teta = 0;                                       % desired phase shift
-pphase = PhaseShifting(phase,teta);             % phase shifting
+pphase = phase_shifter(phase,teta);             % phase shifting
 
 bins = 250;                                     % number of phase bins
 [ECGmean,ECGsd,meanphase] = MeanECGExtraction(x,pphase,bins,1); % mean ECG extraction 
@@ -51,7 +51,7 @@ bi = OptimumParams(L+1:2*L);
 tetai = OptimumParams(2*L+1:3*L);
 % teta0 = pi/2;
 teta0 = 0;
-[ECG, teta]= SingleChannelECGGenerator(pphase,teta0,alphai,bi,tetai);
+[ECG, teta]= ecg_gen_gmm(pphase,teta0,alphai,bi,tetai);
 
 %//////////////////////////////////////////////////////////////////////////
 % data plotting
