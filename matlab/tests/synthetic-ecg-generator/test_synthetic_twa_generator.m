@@ -49,7 +49,7 @@ NumCh = size(ElecPos,1);
 % Dipole parameters
 F = .9;                     % heart rate
 k = 1;                      % dipole attenuation parameter
-R0 = Rotate3D(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
+R0 = rotation_matrix_3d(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
 Lambda = eye(3);
 
 teta0 = -pi/3;              % initial phase of the ECG
@@ -87,8 +87,8 @@ bi(2).z     = [.03  .12  .04         .4    .045       .05    .8 .4 .2 .4];
 %     - Each row of STM should sum up to 1
 %     - STM is usually asymmetric
 
-% STM = [0 1 ; 1 0]         % exact alternation: the T-wave will alternate in each beat
-STM = [.2 .8 ; .8 .2]       % probabilistic alternation with high probability of state transition
+STM = [0 1 ; 1 0]         % exact alternation: the T-wave will alternate in each beat
+% STM = [.2 .8 ; .8 .2]       % probabilistic alternation with high probability of state transition
 % STM = [.9 .1 ; .99 .01]     % abnormalities with low probability of occurrence
 
 S0 = 1; % Start with a normal beat

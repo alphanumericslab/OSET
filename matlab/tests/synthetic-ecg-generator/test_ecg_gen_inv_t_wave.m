@@ -45,10 +45,9 @@ phase_bins = 300; % Number of bins in the phase domain
 N = round(T * fs); % Number of samples
 
 % Generate synthetic ECG and phase using ecg_gen_warping
-invert = false;
-[ecg_ref, ~] = ecg_gen_inv_t_wave(N, fs, p, phase_bins, warping_order, seed, invert);
-invert = true;
-[ecg, phi] = ecg_gen_inv_t_wave(N, fs, p, phase_bins, warping_order, seed, invert);
+no_inversion = true;
+[ecg_ref, ~] = ecg_gen_inv_t_wave(N, fs, p, phase_bins, warping_order, seed, no_inversion);
+[ecg, phi] = ecg_gen_inv_t_wave(N, fs, p, phase_bins, warping_order, seed);
 
 % Create time vector
 time = (0 : N - 1) / fs;

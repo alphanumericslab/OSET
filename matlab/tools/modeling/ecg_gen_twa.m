@@ -1,13 +1,20 @@
-function [ecg, phi] = ecg_gen_inv_t_wave(N, fs, params, phase_bins, varargin)
-% ecg_gen_inv_t_wave - Synthetic inverted T-wave ECG generator
+function [ecg, phi] = ecg_gen_twa(N, fs, params, phase_bins, varargin)
+% ecg_gen_twa - Synthetic T-wave alternans (TWA) ECG generator
 %
 % Method: Generates synthetic ECG signals by generating Gaussian mixture
-% models with stochastic deviations in the phase domain, followed by
-% inversion of the polarity of the T-wave segment and transformation from
-% the phase to time domain.
+%   models with stochastic deviations in the phase domain, followed by
+%   scaling the T-wave segment with alternating amplitude fluctuations and
+%   transformation from the phase to time domain. The TWA random sequence is
+%   controlled by the provided state-transition matrix (STM), which is used
+%   to generate an alternating first-order Markov model that switches ECG
+%   T-wave amplitudes in the A-B-A-B-... style that is common in TWA,
+%   according to the state transition probabilities in the STM. The function
+%   generates synthetic ECG signals by first creating a template in the 
+%   phase domain using Gaussian mixture modeling with stochastic deviations.
+%   It then applies a warping transformation to match the desired ECG length.
 %
 % Usage:
-%   [ecg, phi] = ecg_gen_inv_t_wave(N, fs, params, phase_bins, warping_order, seed, no_inversion)
+%   [ecg, phi] = ecg_gen_twa(N, fs, params, phase_bins, warping_order, seed, twa_off)
 %
 % Inputs:
 %   N: Desired length of the output ECG signal
@@ -21,27 +28,26 @@ function [ecg, phi] = ecg_gen_inv_t_wave(N, fs, params, phase_bins, varargin)
 %       params.delta_b: Percentage of Gaussian wave width deviations added per beat
 %       params.theta: Phase of Gaussian functions used for ECG modeling
 %       params.delta_theta: Percentage of Gaussian center deviations added per beat
+%       params.STM: The state transition matrix, where STM(i,j) represents the
+%           probability of transitioning from state i to state j in the next beat.
+%           Each row of STM should sum up to 1.
+%       params.state0 (optional): initial state of the Markov model for
+%           generating TWA. Default is random (1 or 2)
 %       params.T_onset: Anticipated T-wave onset in seconds
-%       params.T_offset (optional): Anticipated T-wave offset in seconds. Set to inf,
-%           if up to the last sample of the beat is intended. Default: inf
+%       params.T_offset (optional): Anticipated T-wave offset in seconds. Set to 
+%           inf if up to the end of the beat is intended. Default: inf
 %       params.TWA_shape_factor (optional): T-wave inversion shape factor (determines
 %           tanh inversion function slope). Default is 2.0
 %   phase_bins: Number of bins in the phase domain for Gaussian template
 %   warping_order (optional): Interpolation order for time-warping
 %       transformation. Default is 2
 %   seed (optional): randomization seed. Default is random (no seed set)
-%   no_inversion (optional): does not invert the T-wave if set to true. Used
-%       for comparison of results with/without T-wave inversion. Default is
-%       false. Consider setting 'seed', if exact comparison is required.
+%   twa_off (optional): does not perform TWA. Used for comparison of
+%       results with/without TWA. Default is false.
 %
 % Outputs:
 %   ecg: Synthetic ECG signal
 %   phi: Corresponding phase vector for the synthetic ECG signal
-%
-% Description:
-%   This function generates synthetic ECG signals by first creating a template
-%   in the phase domain using Gaussian mixture modeling with stochastic deviations.
-%   It then applies a warping transformation to match the desired ECG length.
 %
 % Revision History:
 %   2023: First release.
@@ -62,17 +68,21 @@ if nargin > 5 && ~isempty(varargin{2})
 end
 
 if nargin > 6 && ~isempty(varargin{3})
-    no_inversion = varargin{3};
+    twa_off = varargin{3};
 else
-    no_inversion = false;
+    twa_off = false;
 end
 
-if ~isfield(params, 'T_inv_shape_factor')
-    params.T_inv_shape_factor = 2.0;
+if ~isfield(params, 'TWA_shape_factor')
+    params.TWA_shape_factor = 2.0;
 end
 
 if ~isfield(params, 'T_offset')
     params.T_offset = inf;
+end
+
+if ~isfield(params, 'state0')
+    params.state0 = randi([1, 2]);
 end
 
 % Generate phase values
@@ -84,6 +94,7 @@ signal_len = 0;
 n_gmm = length(params.alpha);
 ecg = [];
 phi = [];
+state = params.state0;
 
 % Generate the ECG signal iteratively until reaching the desired length
 while signal_len < N
@@ -98,14 +109,22 @@ while signal_len < N
     % Generate Gaussian template in the phase domain
     ecg_phase_domain_template = gaussian_mixture_model(p, theta);
 
-    % Shape function used to invert the T-wave segment (inverts the
-    % polarity of the T-segment)
+    % Shape function used to invert the T-wave segment (inverts the polarity of the T-segment)
     p.T_onset = fs * params.T_onset * phase_bins / beat_len;
     p.T_offset = fs * params.T_offset * phase_bins / beat_len;
 
-    if ~no_inversion
-        shape_window =  1 - tanh_function(phase_bins, ceil(R_peak_phase_index + p.T_onset), params.T_inv_shape_factor)...
-            + tanh_function(phase_bins, ceil(R_peak_phase_index + p.T_offset), params.T_inv_shape_factor);
+    if ~twa_off
+        shape_window =  tanh_function(phase_bins, ceil(R_peak_phase_index + p.T_onset), params.TWA_shape_factor)...
+            - tanh_function(phase_bins, ceil(R_peak_phase_index + p.T_offset), params.TWA_shape_factor);
+
+        state = markov_model_next_state_gen(params.STM, state);
+        if state == 1
+            twa_high_low_mode = 1;
+        else
+            twa_high_low_mode = -1;
+        end
+
+        shape_window = twa_high_low_mode * shape_window / 2 * params.TWA_fluct_factor + 1;
 
         % shape_window = ones(1, phase_bins); % For testing purposes only
 
@@ -139,10 +158,5 @@ end
 
 function y = tanh_function(len, center, alpha)
 t = 1 : len;
-y = tanh(alpha*(t-center));
+y = tanh(alpha * (t - center));
 end
-
-% function y = sigmoid_function(len, center, alpha)
-% t = 1 : len;
-% y = 1 ./ (1 + exp(-alpha*(t-center)));
-% end
