@@ -1,3 +1,4 @@
+warning('This function has been deprecated. Run test_ecg_get_twa2.m instead.');
 %
 % Test program for generating synthetic abnormal multichannel ECGs with additive
 % colored noise
@@ -41,7 +42,7 @@ fs = 500;       % desired sampling rate
 snr = 50;       % signal to noise ratio
 beta  = 1.5;    % noise color
 
-% Twave parameters
+% T-wave parameters
 twafx = 0.9; % factor my which to modify T-wave in x-dirn
 twafy = 0.9; % factor my which to modify T-wave in y-dirn
 twafz = 0.9; % factor my which to modify T-wave in z-dirn
@@ -57,7 +58,7 @@ NumCh = size(ElecPos,1);
 % Dipole parameters
 F = .9;                     % heart rate
 k = 1;                      % dipole attenuation parameter
-R0 = Rotate3D(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
+R0 = rotation_matrix_3d(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
 Lambda = eye(3);
 
 teta0 = -pi/3;              % initial phase of the ECG
@@ -118,9 +119,9 @@ for i = 1:NumCh
     end
 end
 
-[DIP, teta] = ecg_dipole_gen_abnormal(N,fs,F,alphai,bi,tetai,teta0,STM,S0);
+[dipole, teta] = vcg_gen_abnormal(N,fs,F,alphai,bi,tetai,teta0,STM,S0);
 
-VCG = R0*Lambda*[DIP.x ; DIP.y ; DIP.z];
+VCG = R0*Lambda*[dipole.x ; dipole.y ; dipole.z];
 s0 = H*VCG;
 
 s = s0 + (sqrt(sum(s0.^2,2))./sqrt(sum(noise.^2,2))/sqrt(10^(snr/10))*ones(1,size(s0,2))).*noise;

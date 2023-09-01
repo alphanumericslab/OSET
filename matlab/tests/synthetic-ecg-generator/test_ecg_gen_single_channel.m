@@ -38,10 +38,10 @@ peaks = zeros(1,N);
 I = 10:round(fs/f):N;
 peaks(I) = 1;
 
-[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = phase_calculator(peaks);     % phase calculation
 
 teta = pi;                                       % desired phase shift
-pphase = PhaseShifting(phase,teta);             % phase shifting
+pphase = phase_shifter(phase,teta);             % phase shifting
 
 
 % L = length(OptimumParams)/3;% number of Gaussian kernels
@@ -55,7 +55,7 @@ tetai = pi*[-90 -10 0 15 100]/180;
 
 % teta0 = pi/2;
 teta0 = 0;
-[ECG, teta]= SingleChannelECGGenerator(pphase,teta0,alphai,bi,tetai);
+[ECG, teta]= ecg_gen_gmm(pphase,teta0,alphai,bi,tetai);
 
 %//////////////////////////////////////////////////////////////////////////
 % data plotting

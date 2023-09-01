@@ -40,7 +40,7 @@ NumCh = size(ElecPos,1);
 % Dipole parameters
 F = .9;                     % heart rate
 k = 1;                      % dipole attenuation parameter
-R0 = Rotate3D(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
+R0 = rotation_matrix_3d(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
 Lambda = eye(3);
 
 teta0 = -pi/3;              % initial phase of the ECG
@@ -61,7 +61,7 @@ bi.z     = [.03  .12  .04         .4    .045       .05    .8 .4 .2 .4];
 % Noise generation
 noise =  zeros(NumCh,N);
 for j = 1 : NumCh
-    noise(j,:) = NoiseGenerator(1,1,snr,N,fs,beta);
+    noise(j,:) = biosignal_noise_gen(1,1,snr,N,fs,beta);
 end
 
 %//////////////////////////////////////////////////////////////////////////
@@ -72,8 +72,8 @@ for i = 1:NumCh
         H(i,j) = k* ((ElecPos(i,j)-heartlocation(j))/sqrt(sum((ElecPos(i,:)-heartlocation).^2))^3 - (ElecNeg(i,j)-heartlocation(j))/sqrt(sum((ElecNeg(i,:)-heartlocation).^2))^3);
     end
 end
-[DIP, teta] = DipoleGenerator(N,fs,F,alphai,bi,tetai,teta0);
-VCG = R0*Lambda*[DIP.x ; DIP.y ; DIP.z];
+[dipole, teta] = vcg_gen_state_space(N,fs,F,alphai,bi,tetai,teta0);
+VCG = R0*Lambda*[dipole.x ; dipole.y ; dipole.z];
 s0 = H*VCG;
 
 s = s0 + (sqrt(sum(s0.^2,2))./sqrt(sum(noise.^2,2))/sqrt(10^(snr/10))*ones(1,size(s0,2))).*noise;

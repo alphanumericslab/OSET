@@ -15,7 +15,7 @@ function x = gaussian_mixture_model(params, t)
 %   t: Time/phase vector corresponding to the GMM signal
 %
 % Outputs:
-%   x: Synthetic ECG signal generated using the Gaussian mixture model
+%   x: Synthetic signal generated using the Gaussian mixture model
 %
 % Description:
 %   This function generates synthetic Gaussian mixture model signals, which

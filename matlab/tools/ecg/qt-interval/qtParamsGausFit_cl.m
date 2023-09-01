@@ -83,6 +83,8 @@ lb.q=[]; lb.t=[]; ub.q=[]; ub.t=[]; beta.q=[]; beta.t=[]; Bys=false;
 hr= 70/60; % Hz, heart rate used in r peak detector
 autoInit.q=false; autoInit.t=false;
 
+len = size(ecg,1);
+
 nChannels=size(ecg,2);
 %% inputs or default values:
 if nargin>=3 && ~isscalar(varargin{1})
@@ -90,7 +92,7 @@ if nargin>=3 && ~isscalar(varargin{1})
 elseif nargin>=3 && isscalar(varargin{1})
     hr=varargin{1};
 end
-if length(rPeaks) == size(ecg,1)
+if length(rPeaks) == len
     rPeaks = find(rPeaks);
 end
 if isempty(rPeaks)
@@ -235,11 +237,11 @@ for i=1:nBeats
         for j=1:nChannels
             %%%% setting initial point 
             if autoInit.q
-                [qp, qpi] = min(ecg(rPeaks(i)+ (qOn:qOff) ,j));
+                [qp, qpi] = min(ecg(limit_indexes(rPeaks(i)+ (qOn:qOff), len) ,j));
                 p0.q = [qp; .02;  soi.q(i,1) + qpi/fs];
             end
             %%% dc-level correcion
-            isolvl = mean(ecg(rPeaks(i)+ (qOn - floor(.04*fs):qOn),j));
+            isolvl = mean(ecg(limit_indexes(rPeaks(i)+ (qOn - floor(.04*fs):qOn), len),j));
             %%%% gauss fitting
             if Bys
                 GaussParams.q(:, i, j)=GausFit((qOn:qOff)/fs, ...
@@ -287,4 +289,11 @@ varargout{3} = waveParams;
 t_offset = GaussParams.t(3,:,:) + beta.t*GaussParams.t(2,:,:);
 q_onset = GaussParams.q(3,:,:) - beta.q*GaussParams.q(2,:,:);
 varargout{4} = t_offset - q_onset;
+end
+
+function refined_indexes = limit_indexes(indexes, len)
+    first_index = find(indexes > 0 , 1, 'first');
+    last_index = find(indexes <= len , 1, 'last');
+    refined_indexes = indexes(first_index : last_index);
+end
   

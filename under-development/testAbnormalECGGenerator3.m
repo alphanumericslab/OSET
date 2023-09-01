@@ -74,7 +74,7 @@ F = 60./hrv;
 
 
 k = 1;                      % dipole attenuation parameter
-R0 = Rotate3D(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
+R0 = rotation_matrix_3d(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
 Lambda = eye(3);
  
 teta0 = -pi/3;              % initial phase of the ECG
