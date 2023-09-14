@@ -38,6 +38,9 @@ function [ecg, phi] = ecg_gen_twa(N, fs, params, phase_bins, varargin)
 %           inf if up to the end of the beat is intended. Default: inf
 %       params.TWA_shape_factor (optional): T-wave inversion shape factor (determines
 %           tanh inversion function slope). Default is 2.0
+%       params.randomize_start (optional): whether or not start the ECG from a random
+%           initial position in the beat (true or false). Default: true (randomizes
+%           the initial start point)
 %   phase_bins: Number of bins in the phase domain for Gaussian template
 %   warping_order (optional): Interpolation order for time-warping
 %       transformation. Default is 2
@@ -85,6 +88,10 @@ if ~isfield(params, 'state0')
     params.state0 = randi([1, 2]);
 end
 
+if ~isfield(params, 'randomize_start')
+    params.randomize_start = true;
+end
+
 % Generate phase values
 theta = linspace(-pi, pi, phase_bins);
 R_peak_phase_index = find(theta >= 0, 1, 'first');
@@ -96,8 +103,11 @@ ecg = [];
 phi = [];
 state = params.state0;
 
+% Average beat length in samples
+avg_beat_len = round(fs / params.f);
+
 % Generate the ECG signal iteratively until reaching the desired length
-while signal_len < N
+while signal_len < N + avg_beat_len
     % Determine beat length based on average heart rate and deviations
     beat_len = round(fs / (params.f * max(0, (1 + (rand - 0.5) * params.f_deviations))));
 
@@ -152,8 +162,14 @@ while signal_len < N
 end
 
 % Truncate the ECG and phase matrices to the desired length
-ecg = ecg(1:N)';
-phi = phi(1:N)';
+if params.randomize_start
+    start_index = randi(avg_beat_len, 1);
+    ecg = ecg(start_index : N + start_index - 1)';
+    phi = phi(start_index : N + start_index - 1)';
+else
+    ecg = ecg(1:N)';
+    phi = phi(1:N)';
+end
 end
 
 function y = tanh_function(len, center, alpha)

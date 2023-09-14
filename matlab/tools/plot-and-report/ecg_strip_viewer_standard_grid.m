@@ -126,7 +126,7 @@ for ch = 1 : num_channels %size(data, 1)
     
     plot(ax1, t(n1_small:n2_small) + horizontal_offset, data(ch, n1_small:n2_small) + vertical_offset, 'color', 'k', 'linewidth', 0.25); %lbl = cat(2, lbl, {'Raw signal'});
     hold on
-    text(ax1, t(n1_small) + horizontal_offset, data(ch, n1_small) + vertical_offset + major_amp_ticks_in_mV, ch_names{ch}, 'color', 'b', 'fontsize', 6);
+    text(ax1, t(n1_small) + horizontal_offset, data(ch, n1_small) + vertical_offset + major_amp_ticks_in_mV, ch_names{ch}, 'color', 'b', 'fontsize', 12);
     %     hold off
     % axis tight
     % daspect(gca, [3.0, t2_small-t1_small, 1.0])
@@ -185,7 +185,7 @@ RR = 60.0 * fs ./ diff(peak_indexes_selected_segment);
 stripe_left_offset_in_seconds = all_channels_left_offset + side_time_gaps_long_ecg_in_seconds;
 plot(ax1, t(n1_long : n2_long) + stripe_left_offset_in_seconds, data(ref_ch, n1_long : n2_long) + strip_row_vertical_offset, 'color', 'k', 'linewidth', 0.25);
 plot(ax1, t(peak_indexes_selected_segment) + stripe_left_offset_in_seconds, data(ref_ch, peak_indexes_selected_segment) + strip_row_vertical_offset, 'ro', 'markersize', 4)
-text(ax1, t(n1_long) + stripe_left_offset_in_seconds, data(ref_ch, n1_long) + strip_row_vertical_offset + 0.5, ch_names{ref_ch}, 'color', 'b', 'fontsize', 6);
+text(ax1, t(n1_long) + stripe_left_offset_in_seconds, data(ref_ch, n1_long) + strip_row_vertical_offset + 0.5, ch_names{ref_ch}, 'color', 'b', 'fontsize', 12);
 
 % Plot reference ECG pulse
 pulse = square_amp_in_mV * (mod((0 : fs * pulse_duration - 1)/fs, 2.0*square_width_in_seconds) >= square_width_in_seconds);
@@ -195,10 +195,10 @@ pulse_time = (0:length(pulse)-1)/fs;
 % text(ax1, pulse_time(end) + 15.1, 10.5, '1mV/0.2s', 'color', 'k', 'fontsize', 6);
 pulse_start_time = ceil((long_ecg_len_in_seconds + stripe_left_offset_in_seconds + major_time_ticks_in_seconds)/major_time_ticks_in_seconds)*major_time_ticks_in_seconds;
 plot(ax1, pulse_time + pulse_start_time, pulse + strip_row_vertical_offset, 'k', 'linewidth', 0.5);
-text(ax1, pulse_time(end) + pulse_start_time, strip_row_vertical_offset, '1mV/0.2s', 'color', 'k', 'fontsize', 6);
+text(ax1, pulse_time(end) + pulse_start_time, strip_row_vertical_offset, '1mV/0.2s', 'color', 'k', 'fontsize', 12);
 
 % % % set(ax1,'GridLineStyle','-')
-set(ax1, 'fontsize', 8);
+set(ax1, 'fontsize', 12);
 set(ax1,'LineWidth', 0.25)
 % set(ax1, 'xtick', 0 : major_time_ticks_in_seconds : ecg_paper_width);
 % set(ax1, 'ytick', 0 : major_amp_ticks_in_mV : ecg_paper_height);
@@ -252,7 +252,7 @@ if 0
     % % % aa(4) = 1.1 * max([ECG_mean, ECG_median]);
     % % % axis(aa);
 end
-sgtitle(Title, 'fontsize', 8)
+sgtitle(Title, 'fontsize', 12)
 % ax1.Units = 'centimeters';
 % axis 'tight';
 % aa = axis;
