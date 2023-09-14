@@ -94,7 +94,7 @@ for i = 1 : L1
         end
     end
     switch method
-        case 'BEAT_EIG'
+        case 'STACKED_BEAT_EIG'
             stacked_beats = EventStacker(x(i, :), peak_indexes, beat_width);
             [~, D] = eig(stacked_beats*stacked_beats');
             eigs_sorted = sort(diag(D), 'descend');
