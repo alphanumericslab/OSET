@@ -102,7 +102,7 @@ integrated_data = integrated_data./std(integrated_data);
 filtered_data = [filtered_data(filter_delay:end); repelem(filtered_data(end),filter_delay-1,1)]';
 filtered_data = resample(filtered_data,fs/G ,fs_pt/G);
 
-if ~isempty(ecg_polarity)
+if isempty(ecg_polarity)
     filtered_data = filtered_data * sign(skew(filtered_data));
 else
     filtered_data = filtered_data * sign(ecg_polarity-0.5);
