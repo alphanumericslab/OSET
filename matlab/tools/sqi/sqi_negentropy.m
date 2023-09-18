@@ -7,6 +7,8 @@ function [index, rank] = sqi_negentropy(x, varargin)
 % Inputs:
 %   x: Input signal matrix with dimensions [L1, L2]
 %   ranking_mode: Optional argument for sorting mode ('ascend' or 'descend'). Default: 'ascend'
+%   method: Optional argument for negentropy method computation ('J',
+%   'Ja',' Jb'). Default: 'J'
 %
 % Outputs:
 %   index: Channel index vector with dimensions [L1, 1]
@@ -33,7 +35,15 @@ if nargin > 1 && ~isempty(varargin{1})
 else
     ranking_mode = 'ascend';
 end
-
+% Check for method argument
+if nargin > 1 && ~isempty(varargin{2})
+    method = varargin{2};
+    if ~isequal(method, 'J') && ~isequal(method, 'Ja') && ~isequal(method, 'Jb')
+        error('Undefined method. Please use ''J'', ''Ja'' or ''Jb''.');
+    end
+else
+    method = 'J';
+end
 L1 = size(x, 1);
 
 index = zeros(L1, 1);
