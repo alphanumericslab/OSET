@@ -19,6 +19,9 @@ function [ecg, phi] = ecg_gen_warping(N, fs, params, phase_bins, warping_order)
 %       params.delta_b: Percentage of Gaussian wave width deviations added per beat
 %       params.theta: Phase of Gaussian functions used for ECG modeling
 %       params.delta_theta: Percentage of Gaussian center deviations added per beat
+%       params.randomize_start (optional): whether or not start the ECG from a random
+%           initial position in the beat (true or false). Default: true (randomizes
+%           the initial start point)
 %   phase_bins: Number of bins in the phase domain for Gaussian template
 %   warping_order: Interpolation order for time-warping transformation
 %
@@ -38,6 +41,10 @@ function [ecg, phi] = ecg_gen_warping(N, fs, params, phase_bins, warping_order)
 % The Open-Source Electrophysiological Toolbox
 % https://github.com/alphanumericslab/OSET
 
+if ~isfield(params, 'randomize_start')
+    params.randomize_start = true;
+end
+
 % Generate phase values
 theta = linspace(-pi, pi, phase_bins);
 
@@ -47,8 +54,11 @@ n_gmm = length(params.alpha);
 ecg = [];
 phi = [];
 
+% Average beat length in samples
+avg_beat_len = round(fs / params.f);
+
 % Generate the ECG signal iteratively until reaching the desired length
-while signal_len < N
+while signal_len < N + avg_beat_len
     % Determine beat length based on average heart rate and deviations
     beat_len = round(fs / (params.f * max(0, (1 + (rand - 0.5) * params.f_deviations))));
 
@@ -79,5 +89,11 @@ while signal_len < N
 end
 
 % Truncate the ECG and phase matrices to the desired length
-ecg = ecg(1:N)';
-phi = phi(1:N)';
+if params.randomize_start
+    start_index = randi(avg_beat_len, 1);
+    ecg = ecg(start_index : N + start_index - 1)';
+    phi = phi(start_index : N + start_index - 1)';
+else
+    ecg = ecg(1:N)';
+    phi = phi(1:N)';
+end
