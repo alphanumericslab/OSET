@@ -35,7 +35,7 @@ else
 end
 
 % Check for method argument
-if nargin > 1 && ~isempty(varargin{2})
+if nargin > 2 && ~isempty(varargin{2})
     method = varargin{2};
     if ~isequal(method, 'J') && ~isequal(method, 'Ja') && ~isequal(method, 'Jb')
         error('Undefined method. Please use ''J'', ''Ja'' or ''Jb''.');
