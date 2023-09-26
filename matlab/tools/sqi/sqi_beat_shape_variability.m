@@ -1,5 +1,5 @@
 function [index, rank] = sqi_beat_shape_variability(x, ff, fs, varargin)
-% SQI_BEAT_SHAPE_VARIABILITY - Signal quality index (SQI) based on pseudo-periodicity measures
+% sqi_beat_shape_variability - Signal quality index (SQI) based on pseudo-periodicity measures
 %
 %   [index, rank] = sqi_beat_shape_variability(x, ff, fs, method, num_peak_det_itr, beat_width, ranking_mode, plot_results)
 %
@@ -94,7 +94,7 @@ for i = 1 : L1
         end
     end
     switch method
-        case 'BEAT_EIG'
+        case 'STACKED_BEAT_EIG'
             stacked_beats = EventStacker(x(i, :), peak_indexes, beat_width);
             [~, D] = eig(stacked_beats*stacked_beats');
             eigs_sorted = sort(diag(D), 'descend');

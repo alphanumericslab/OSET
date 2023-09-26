@@ -8,9 +8,9 @@ function [stacked_events, num_non_zeros] = event_stacker(signal, event_indexes, 
 %   signal: The input signal in vector form.
 %   event_indexes: A vector of event indexes.
 %   event_bounds:
-%       - If scalar: event_width, the time width of the stacked events
+%       - If integer scalar: event_width, the time width of the stacked events
 %           (must be odd valued)
-%       - if a 2-element vector: [left_wing_len, right_wing_len], a two
+%       - if a 2-element integer vector: [left_wing_len, right_wing_len], a two
 %           element vector containing the number of samples from the left and
 %           right sides of each event (used for asymmetric events)
 %   method (optional): Stacking method (default: 'unnormalized').
