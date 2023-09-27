@@ -47,7 +47,7 @@ half_len = floor(event_width/2); % Half the window length
 center_index = half_len + 1; % The center index with equal half_len samples on either side
 signal_len = length(signal); % Signal length
 num_events = length(event_indexes); % The number of events
-stacked_events = zeros(num_events, round(event_width)); % The matrix for stacking the events
+stacked_events = zeros(num_events, event_width); % The matrix for stacking the events
 num_non_zeros = zeros(1, num_events);
 
 % Separate the events using the specified method

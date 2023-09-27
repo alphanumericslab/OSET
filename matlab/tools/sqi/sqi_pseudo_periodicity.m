@@ -103,7 +103,7 @@ for i = 1 : L1
         case 'TRACE'
             index(i) = trace(A)/trace(B);
         case 'STACKED_BEATS'
-            event_width = mean(peak_indexes);
+            event_width = round(mean(diff(peak_indexes)));
             if mod(event_width, 2) == 0
                 event_width = event_width + 1;
             end
