@@ -1,9 +1,9 @@
-function [y, W, A, B, C] = nonstationary_component_analysis(x, I, J)
+function [y, W, A, B, C, lambda] = nonstationary_component_analysis(x, I, J)
 % nonstationary_component_analysis - Nonstationary Component Analysis (NSCA)
 %   algorithm to extract temporal nonstationarities from multichannel data
 %
 % Usage:
-%   [y, W, A, B, C] = nonstationary_component_analysis(x, I, J)
+%   [y, W, A, B, C, lambda] = nonstationary_component_analysis(x, I, J)
 %
 % Inputs:
 %   x: Mixture of signals, where each row represents a different signal (N x T).
@@ -16,6 +16,7 @@ function [y, W, A, B, C] = nonstationary_component_analysis(x, I, J)
 %   A: Inverse of separation filters.
 %   B: Covariance matrix computed from time window I.
 %   C: Covariance matrix computed from time window J.
+%   lambda: generalized eigenvalues sorted in descending order
 %
 % Note: The time window indices I and J specify subsets of the input signals
 % for performing generalized eigenvalue decomposition.
@@ -24,7 +25,7 @@ function [y, W, A, B, C] = nonstationary_component_analysis(x, I, J)
 %   x = ... % Define the mixture of signals
 %   I = ... % Define the time window indices for covariance matrix B
 %   J = ... % Define the time window indices for covariance matrix C
-%   [y, W, A, B, C] = nsca_source_separation(x, I, J);
+%   [y, W, A, B, C, lambda] = nsca_source_separation(x, I, J);
 %
 % References:
 % - Sameni, R., Jutten, C., and Shamsollahi, M. B. (2010). A Deflation 
@@ -36,7 +37,7 @@ function [y, W, A, B, C] = nonstationary_component_analysis(x, I, J)
 %
 % Revision History:
 %   2014: First release
-%   2023: Renamed from deprecated version NSCA()
+%   2023: Renamed from deprecated version NSCA
 %
 % Reza Sameni, 2014-2023
 % The Open-Source Electrophysiological Toolbox
@@ -54,7 +55,8 @@ B = (B + B') / 2;
 [V, D] = eig(B, C, 'chol');
 
 % Sort eigenvalues in descending order
-[~, II] = sort(diag(D), 'descend');
+D_diag = diag(D);
+[lambda, II] = sort(D_diag, 'descend');
 
 % Extract separation filters
 W = V(:, II)';

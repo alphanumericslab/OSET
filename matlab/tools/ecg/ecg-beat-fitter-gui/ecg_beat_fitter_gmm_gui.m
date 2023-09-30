@@ -1,7 +1,7 @@
-function varargout = ECGBeatFitter(varargin)
+function varargout = ecg_beat_fitter_gmm_gui(varargin)
 %
-% ECGBeatFitter(ECG,Phase,ExpParamName),
-% Graphical user interface for ECG approximation with Gaussian kernels.
+% ecg_beat_fitter_gmm_gui(ECG,Phase,ExpParamName),
+% Graphical user interface for ECG approximation with sum of Gaussian kernels.
 %
 % inputs:
 % ECG: a single ECG waveform used for model training
@@ -10,54 +10,46 @@ function varargout = ECGBeatFitter(varargin)
 % ExpParamName (optional): The name of the vector containing the exported parameter (default:OptimumParams)
 % Title (optional): The title of the plot
 %
-%
-% Open Source ECG Toolbox, version 2.0, April 2008
-% Released under the GNU General Public License
-% Copyright (C) 2008  Reza Sameni
-% Sharif University of Technology, Tehran, Iran -- GIPSA-LAB, INPG, Grenoble, France
-% reza.sameni@gmail.com
+%   Revision History:
+%       2006: First release
+%       2023: Renamed from deprecated version ECGBeatFitter
+% 
+%   Reza Sameni, 2006-2023
+%   The Open-Source Electrophysiological Toolbox
+%   https://github.com/alphanumericslab/OSET
 
-% This program is free software; you can redistribute it and/or modify it
-% under the terms of the GNU General Public License as published by the
-% Free Software Foundation; either version 2 of the License, or (at your
-% option) any later version.
-% This program is distributed in the hope that it will be useful, but
-% WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-% Public License for more details.
-
-% ECGBEATFITTER M-file for ECGBeatFitter.fig
-%      ECGBEATFITTER, by itself, creates a new ECGBEATFITTER or raises the existing
+% ECG_BEAT_FITTER_GMM_GUI M-file for ecg_beat_fitter_gmm_gui.fig
+%      ECG_BEAT_FITTER_GMM_GUI, by itself, creates a new ECG_BEAT_FITTER_GMM_GUI or raises the existing
 %      singleton*.
 %
-%      H = ECGBEATFITTER returns the handle to a new ECGBEATFITTER or the handle to
+%      H = ECG_BEAT_FITTER_GMM_GUI returns the handle to a new ECG_BEAT_FITTER_GMM_GUI or the handle to
 %      the existing singleton*.
 %
-%      ECGBEATFITTER('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in ECGBEATFITTER.M with the given input arguments.
+%      ECG_BEAT_FITTER_GMM_GUI('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in ECG_BEAT_FITTER_GMM_GUI.M with the given input arguments.
 %
-%      ECGBEATFITTER('Property','Value',...) creates a new ECGBEATFITTER or raises the
+%      ECG_BEAT_FITTER_GMM_GUI('Property','Value',...) creates a new ECG_BEAT_FITTER_GMM_GUI or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
 %      applied to the GUI before ECGBeatFitter_OpeningFunction gets called.  An
 %      unrecognized property name or invalid value makes property
 %      application
-%      stop.  All inputs are passed to ECGBeatFitter_OpeningFcn via varargin.
+%      stop.  All inputs are passed to ecg_beat_fitter_gmm_gui_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help ECGBeatFitter
+% Edit the above text to modify the response to help ecg_beat_fitter_gmm_gui
 
-% Last Modified by GUIDE v2.5 08-Oct-2007 13:42:43
+% Last Modified by GUIDE v2.5 29-Sep-2023 21:52:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
-    'gui_OpeningFcn', @ECGBeatFitter_OpeningFcn, ...
-    'gui_OutputFcn',  @ECGBeatFitter_OutputFcn, ...
+    'gui_OpeningFcn', @ecg_beat_fitter_gmm_gui_OpeningFcn, ...
+    'gui_OutputFcn',  @ecg_beat_fitter_gmm_gui_OutputFcn, ...
     'gui_LayoutFcn',  [] , ...
     'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -72,13 +64,13 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before ECGBeatFitter is made visible.
-function ECGBeatFitter_OpeningFcn(hObject, ~, handles, varargin)
+% --- Executes just before ecg_beat_fitter_gmm_gui is made visible.
+function ecg_beat_fitter_gmm_gui_OpeningFcn(hObject, ~, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to ECGBeatFitter (see VARARGIN)
+% varargin   command line arguments to ecg_beat_fitter_gmm_gui (see VARARGIN)
 
 %setappdata(hObject,'SelectedIndeces',0);
 mn = varargin{1};
@@ -118,19 +110,20 @@ ECGcurve = get(handles.axes1,'Children');
 set(ECGcurve,'ButtonDownFcn',@MyButtonDownFcn);
 axis tight;
 set(handles.figure1,'Pointer','crosshair');
+set(handles.axes1, 'fontsize', 16)
 
-% Choose default command line output for ECGBeatFitter
+% Choose default command line output for ecg_beat_fitter_gmm_gui
 handles.output = hObject;
 %handles.output = 0;
 
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes ECGBeatFitter wait for user response (see UIRESUME)
+% UIWAIT makes ecg_beat_fitter_gmm_gui wait for user response (see UIRESUME)
 uiwait(handles.figure1);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = ECGBeatFitter_OutputFcn(~, ~, handles)
+function varargout = ecg_beat_fitter_gmm_gui_OutputFcn(~, ~, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -221,7 +214,6 @@ end
 % % % % localpeaks(I) = 1;
 % % %
 % % % tetai = data.ECGphase(I(1:P));
-
 
 
 axis(ax);

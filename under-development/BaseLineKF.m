@@ -54,7 +54,8 @@ for i = 1:size(y,1)
     % Parameters
     k = .7; % cut-off value
     alpha = (1-k*cos(2*pi*fc)-sqrt(2*k*(1-cos(2*pi*fc))-k^2*sin(2*pi*fc)^2))/(1-k);
-    bw = BaseLine2(y(i,:),winlen1,winlen2,approach);
+    % bw = BaseLine2(y(i,:),winlen1,winlen2,approach);
+    bw = lp_filter_zero_phase(y(i,:), fc);
     bw2 = filtfilt(1-alpha,[1 -alpha],bw);
 
     Q = var(bw);
@@ -113,8 +114,8 @@ for i = 1:size(y,1)
     X = zeros(size(Xhat));
     PSmoothed(Samples) = Phat(Samples);
     X(Samples) = Xhat(Samples);
-    for k = Samples-1 : -1 : 1,
-        S = Phat(k) * A' * inv(Pbar(k+1));
+    for k = Samples-1 : -1 : 1
+        S = Phat(k) * A' * pinv(Pbar(k+1));
         X(k) = Xhat(k) + S * (X(k+1) - Xbar(k+1));
         PSmoothed(k) = Phat(k) - S * (Pbar(k+1) - PSmoothed(k+1)) * S';
     end

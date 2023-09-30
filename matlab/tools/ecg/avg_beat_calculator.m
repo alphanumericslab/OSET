@@ -1,8 +1,8 @@
-function [ECGmean, ECGsd] = average_beat_calculator(x, peaks, wlen, varargin)
-% average_beat_calculator - Calculation of the mean and standard deviation of ECG waveforms in different beats.
+function [ECGmean, ECGsd] = avg_beat_calculator(x, peaks, wlen, varargin)
+% avg_beat_calculator - Calculation of the mean and standard deviation of ECG waveforms in different beats.
 %
 % Usage:
-%   [ECGmean, ECGsd] = average_beat_calculator(x, peaks, wlen, offset_method)
+%   [ECGmean, ECGsd] = avg_beat_calculator(x, peaks, wlen, offset_method)
 %
 % Inputs:
 %   x: Input ECG signal
