@@ -168,7 +168,7 @@ if ~isfield(params, 'wlen_power_env')
     params.wlen_power_env = 0.03;
 end
 wlen_power_env = ceil(params.wlen_power_env * fs);
-data_filtered_env = filtfilt(ones(1, wlen_power_env), wlen_power_env, sqrt(mean(data_filtered.^2, 1)));
+data_filtered_env = filtfilt(ones(wlen_power_env, 1), wlen_power_env, sqrt(mean(data_filtered.^2, 1)));
 
 % pick the top percentage of the signal's power envelope for R-peak search
 if ~isfield(params, 'hist_search_th')

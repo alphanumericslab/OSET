@@ -14,7 +14,8 @@ function [mn, vr_mn, md, vr_md] = robust_weighted_average(x)
 %   vr_md: The variance of the median beat across the N rows of x
 %
 % Reference:
-%   J.M. Leski. Robust weighted averaging of biomedical signals. IEEE Trans. Biomed. Eng., 49(8):796-804, 2002.
+%   J.M. Leski. Robust weighted averaging of biomedical signals. IEEE
+%       Trans. Biomed. Eng., 49(8):796-804, 2002.
 %
 % Revision History:
 %   2008: First release
