@@ -29,10 +29,10 @@ fs = 500;       % desired sampling rate
 snr = 500;       % signal to noise ratio
 beta  = 1.5;    % noise color
 % Dipole parameters
-HR = 60;                    % heart rate in BPM
+HR = 75;                    % heart rate in BPM
 F = HR/60;                  % heart rate in Hz
 k = 1;                      % dipole attenuation parameter
-R0 = Rotate3D(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
+R0 = rotation_matrix_3d(0,0,0);       % dipole rotation matrices (tetax,tetay,tetaz)
 Lambda = eye(3);
 teta0 = -pi/3;              % initial phase of the ECG
 n_bins = 250;
@@ -66,17 +66,17 @@ noise =  cumsum(randn(1, N),2);
 
 %//////////////////////////////////////////////////////////////////////////
 % ECG calculation
-[ECG, teta] = SingleChannelECGGeneratorStochastic(N, fs, F, F_deviations, alphai, amp_deviations, bi, width_deviations, tetai,center_deviations, teta0);
+[ECG, teta] = ecg_gen_stoochastic(N, fs, F, F_deviations, alphai, amp_deviations, bi, width_deviations, tetai,center_deviations, teta0);
 
 s = ECG + (sqrt(sum(ECG.^2,2))./sqrt(sum(noise.^2,2))/sqrt(10^(snr/10))*ones(1,size(ECG,2))).*noise;
 
-[peaks, peak_indexes] = PeakDetection(s, F/fs);
-[phase, ~] = PhaseCalculation(peaks); % phase calculation
+[peaks, peak_indexes] = peak_det_local_search(s, F/fs);
+[phase, ~] = phase_calculator(peaks); % phase calculation
 
 %//////////////////////////////////////////////////////////////////////////
 % find the beat covariances
 phaseshift = pi/n_bins;
-pphase = PhaseShifting(phase, phaseshift); % phase shifting to compensate half a bin shift
+pphase = phase_shifter(phase, phaseshift); % phase shifting to compensate half a bin shift
 
 [M, end_of_beat_indexes] = ECGPhaseToMatrix(pphase, n_bins); % Convert ECG phase into a (phase x time) matrix
 
@@ -93,7 +93,7 @@ end
 ECG_mean = mean(x_stacked, 1);
 ECG_median = median(x_stacked, 1);
 
-[~, ~, meanphase, ~, ECGSamplesPerBin] = MeanECGExtraction(ECG, phase, n_bins, 1); % mean ECG extraction
+[~, ~, meanphase, ~, ECGSamplesPerBin] = avg_beat_calculator_phase_domain(ECG, phase, n_bins, 1); % mean ECG extraction
 
 %     x_stacked_zero_mean = x_stacked - ECG_avg(ones(1, size(x_stacked, 1)), :);
 %     K_x_ph = x_stacked_zero_mean' * x_stacked_zero_mean / size(x_stacked_zero_mean, 1);

@@ -98,8 +98,8 @@ data_posterior_est = zeros(size(data));
 for ch = 1 : size(data, 1)
     x = data(ch, :); % the active channel
 
-    stacked_beats = EventStacker(x, peak_indexes, event_width);
-    [ECG_mean, ECG_var_mn, ECG_median, ECG_var_md] = RWAverage(stacked_beats);
+    stacked_beats = event_stacker(x, peak_indexes, event_width);
+    [ECG_mean, ECG_var_mn, ECG_median, ECG_var_md] = robust_weighted_average(stacked_beats);
     sample_indexes = (0 : size(stacked_beats, 2) - 1) - (size(stacked_beats, 2)/2);
 
     switch params.BEAT_AVG_METHOD

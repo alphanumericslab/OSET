@@ -43,7 +43,7 @@ function [data_posterior_est, data_prior_est, n_var] = ecg_den_phase_domain_gp(d
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 
-[phase, ~] = PhaseCalculation(peaks); % phase calculation
+[phase, ~] = phase_calculator(peaks); % phase calculation
 
 if ~isfield(params, 'bins') % number of phase bins
     params.bins = median(diff(find(peaks))); % use median of RR-intervals in samples by default
@@ -77,7 +77,7 @@ end
 
 
 phaseshift = pi/params.bins;
-pphase = PhaseShifting(phase, phaseshift); % phase shifting to compensate half a bin shift
+pphase = phase_shifter(phase, phaseshift); % phase shifting to compensate half a bin shift
 
 M = ECGPhaseToMatrix(pphase, params.bins); % Convert ECG phase into a (phase x time) matrix
 
@@ -86,7 +86,7 @@ data_posterior_est = zeros(size(data));
 for ch = 1 : size(data, 1)
     x = data(ch, :); % the active channel
 
-    [ECG_mean, ECG_std, meanphase, ECG_median, ECGSamplesPerBin] = MeanECGExtraction(x, phase, params.bins, 1); % mean ECG extraction
+    [ECG_mean, ECG_std, meanphase, ECG_median, ECGSamplesPerBin] = avg_beat_calculator_phase_domain(x, phase, params.bins, 1); % mean ECG extraction
 
     switch params.BEAT_AVG_METHOD
         case 'MEAN'
