@@ -1,6 +1,6 @@
 function [valindSQI, indSQI] = SQI4(x, Fs)
 % 
-% [valindSQI, indSQI] = SQI4(x)
+% [valindSQI, indSQI] = SQI4(x, Fs)
 % Channel selection based on spectral energy ratio
 %
 % Fahimeh Jamshidian Tehrani,
