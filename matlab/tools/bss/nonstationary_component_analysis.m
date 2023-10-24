@@ -9,8 +9,8 @@ function [y, W, A, B, C, lambda] = nonstationary_component_analysis(x, I, J, var
 %   x: Mixture of signals, where each row represents a different signal (N x T)
 %   I: Desired time window indices (in 1:T)
 %   J: Desired time window indices (in 1:T)
-%   mode (optional): Calculate covariance ('COV') or correlation ('CORR')
-%       matrices. Default: 'COV'
+%   mode (optional): Calculate covariance ('COV'), correlation ('CORR') or
+%       symmetrized covariance ('SYMM-COV') matrices. Default: 'COV'
 %
 % Outputs:
 %   y: Separated components of the input signals (N x T).
@@ -24,7 +24,9 @@ function [y, W, A, B, C, lambda] = nonstationary_component_analysis(x, I, J, var
 %   for performing generalized eigenvalue decomposition. In 'COV' mode the
 %   time indexes are used to calculate covariance matrices, and in 'CORR' 
 %   mode correlation matrices are calculated (the channel-wise means are 
-%   preserved contrasting the 'COV' mode)  
+%   preserved contrasting the 'COV' mode). In 'SYMM-COV' mode the data is
+%   artificially zero-meaned by mirroring the samples. See reference [3]
+%   for details of this mode.
 %
 % Example usage:
 %   x = ... % Define the mixture of signals
@@ -34,12 +36,20 @@ function [y, W, A, B, C, lambda] = nonstationary_component_analysis(x, I, J, var
 %   [y, W, A, B, C, lambda] = nsca_source_separation(x, I, J, nsca_mode);
 %
 % References:
-% - Sameni, R., Jutten, C., and Shamsollahi, M. B. (2010). A Deflation 
-%   Procedure for Subspace Decomposition. In IEEE Transactions on Signal Processing
-%   (Vol. 58, Issue 4, pp. 2363–2374). doi: 10.1109/tsp.2009.2037353
-% - Sameni, R., and Gouy-Pailler, C. (2014). An iterative subspace denoising algorithm 
-%   for removing electroencephalogram ocular artifacts. In Journal of Neuroscience Methods
-%   (Vol. 225, pp. 97–105). doi: 10.1016/j.jneumeth.2014.01.024
+%   1- Sameni, R., Jutten, C., and Shamsollahi, M. B. (2010). A Deflation
+%   Procedure for Subspace Decomposition. In IEEE Transactions on Signal
+%   Processing, (Vol. 58, Issue 4, pp. 2363–2374). doi:
+%   10.1109/tsp.2009.2037353
+% 
+%   2- Sameni, R., and Gouy-Pailler, C. (2014). An iterative subspace
+%   denoising algorithm for removing electroencephalogram ocular artifacts.
+%   In Journal of Neuroscience Methods (Vol. 225, pp. 97–105). doi:
+%   10.1016/j.jneumeth.2014.01.024
+% 
+%   3- Sameni R, Jutten C, Shamsollahi MB. What ICA provides for ECG
+%   processing: Application to noninvasive fetal ECG extraction. In2006
+%   IEEE International Symposium on Signal Processing and Information
+%   Technology 2006 Aug 27 (pp. 656-661). IEEE.
 %
 % Revision History:
 %   2014: First release
@@ -57,12 +67,15 @@ end
 
 % Compute covariance matrices for the desired time windows
 switch mode
-    case 'COV'
+    case 'COV' % covariance
         B = cov(x(:, I)');
         C = cov(x(:, J)');
-    case 'CORR'
-        B = x(:, I) * x(:, I)';
-        C = x(:, J) * x(:, J)';
+    case 'SYMM-COV' % artificially symmetrized covariance. See ref. [3]
+        B = cov([x(:, I), -x(:, I)]');
+        C = cov([x(:, J), -x(:, J)]');
+    case 'CORR' % correlation
+        B = x(:, I) * x(:, I)' / length(I);
+        C = x(:, J) * x(:, J)' / length(J);
     otherwise
         error('Undefined mode');
 end
@@ -70,8 +83,6 @@ end
 % Symmetrize the covariance matrices
 C = (C + C') / 2;
 B = (B + B') / 2;
-
-[W_a, lambda_a, W_b, lambda_b] = orthogonal_gevd(B, C);
 
 % Perform eigenvalue decomposition using Cholesky decomposition
 [V, D] = eig(B, C, 'chol');

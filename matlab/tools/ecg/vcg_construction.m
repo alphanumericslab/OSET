@@ -57,42 +57,48 @@ end
 if isfield(lead_vectors, 'V1') && isempty(lead_vectors.V1)
     V1 = lead_vectors.V1;
 else
-    V1 = [6, -4, 3]'; % 4th Intercostal Space on the Right Border of the Sternum
+    % V1 = [6, -4, 3]'; % 4th Intercostal Space on the Right Border of the Sternum
+    V1 = [10, -10, 60]'; % 4th Intercostal Space on the Right Border of the Sternum
 end
 V1 = V1/norm(V1);
 
 if isfield(lead_vectors, 'V2')  && isempty(lead_vectors.V2)
     V2 = lead_vectors.V2;
 else
-    V2 = [6, 2, 3]'; % 4th Intercostal Space on the Left Border of the Sternum
+    % V2 = [6, 2, 3]'; % 4th Intercostal Space on the Left Border of the Sternum
+    V2 = [10, 10, 60]'; % 4th Intercostal Space on the Left Border of the Sternum
 end
 V2 = V2/norm(V2);
 
 if isfield(lead_vectors, 'V3')  && isempty(lead_vectors.V3)
     V3 = lead_vectors.V3;
 else
-    V3 = [7, 5.5, 2.5]';  % midway between ECG chest lead V2(C2) and ECG chest lead V4(C4)
+    % V3 = [7, 5.5, 2.5]';  % midway between ECG chest lead V2(C2) and ECG chest lead V4(C4)
+    V3 = [15, 15, 60]';  % midway between ECG chest lead V2(C2) and ECG chest lead V4(C4)
 end
 V3 = V3/norm(V3);
 
 if isfield(lead_vectors, 'V4')  && isempty(lead_vectors.V4)
     V4 = lead_vectors.V4;
 else
-    V4 = [8, 9, 2]';  % 5th Intercostal Space on the Left Mid-Clavicular Line, the vertical line which passes through the center of the Clavicle
+    % V4 = [8, 9, 2]';  % 5th Intercostal Space on the Left Mid-Clavicular Line, the vertical line which passes through the center of the Clavicle
+    V4 = [20, 25, 60]';  % 5th Intercostal Space on the Left Mid-Clavicular Line, the vertical line which passes through the center of the Clavicle
 end
 V4 = V4/norm(V4);
 
 if isfield(lead_vectors, 'V5')  && isempty(lead_vectors.V5)
     V5 = lead_vectors.V5;
 else
-    V5 = [8, 13, 2]';  % positioned at the same level as the ECG chest lead V4(C4) on the Left Anterior Axillary Line, the vertical line that goes along the Anterior Axillary Fold
+    % V5 = [8, 13, 2]';  % positioned at the same level as the ECG chest lead V4(C4) on the Left Anterior Axillary Line, the vertical line that goes along the Anterior Axillary Fold
+    V5 = [20, 35, 60]';  % positioned at the same level as the ECG chest lead V4(C4) on the Left Anterior Axillary Line, the vertical line that goes along the Anterior Axillary Fold
 end
 V5 = V5/norm(V5);
 
 if isfield(lead_vectors, 'V6')  && isempty(lead_vectors.V6)
     V6 = lead_vectors.V6;
 else
-    V6 = [8, 16, 2]'; % positioned at the same level as ECG chest lead V4(C4) and ECG chest lead V5(C5) on the Left Mid-Axillary Line, the vertical line that goes midway between the Anterior Axillary Fold and the Posterior Axillary Fold
+    % V6 = [8, 16, 2]'; % positioned at the same level as ECG chest lead V4(C4) and ECG chest lead V5(C5) on the Left Mid-Axillary Line, the vertical line that goes midway between the Anterior Axillary Fold and the Posterior Axillary Fold
+    V6 = [20, 45, 60]'; % positioned at the same level as ECG chest lead V4(C4) and ECG chest lead V5(C5) on the Left Mid-Axillary Line, the vertical line that goes midway between the Anterior Axillary Fold and the Posterior Axillary Fold
 end
 V6 = V6/norm(V6);
 
@@ -219,21 +225,21 @@ vcg = vcg ./ mean_lead; % weighted mean of the available leads
 if plot_flag
     figure
     hold on
-    h_v1 = quiver3(0, 0, 0, V1(1), V1(2), V1(3));
-    h_v2 = quiver3(0, 0, 0, V2(1), V2(2), V2(3));
-    h_v3 = quiver3(0, 0, 0, V3(1), V3(2), V3(3));
-    h_v4 = quiver3(0, 0, 0, V4(1), V4(2), V4(3));
-    h_v5 = quiver3(0, 0, 0, V5(1), V5(2), V5(3));
-    h_v6 = quiver3(0, 0, 0, V6(1), V6(2), V6(3));
+    h_v1 = quiver3(0, 0, 0, V1(1), V1(2), V1(3), 'linewidth', 2);
+    h_v2 = quiver3(0, 0, 0, V2(1), V2(2), V2(3), 'linewidth', 2);
+    h_v3 = quiver3(0, 0, 0, V3(1), V3(2), V3(3), 'linewidth', 2);
+    h_v4 = quiver3(0, 0, 0, V4(1), V4(2), V4(3), 'linewidth', 2);
+    h_v5 = quiver3(0, 0, 0, V5(1), V5(2), V5(3), 'linewidth', 2);
+    h_v6 = quiver3(0, 0, 0, V6(1), V6(2), V6(3), 'linewidth', 2);
     h_i = quiver3(0, 0, 0, I(1), I(2), I(3));
     h_ii = quiver3(0, 0, 0, II(1), II(2), II(3));
     h_iii = quiver3(0, 0, 0, III(1), III(2), III(3));
-    h_avl = quiver3(0, 0, 0, aVL(1), aVL(2), aVL(3));
-    h_avr = quiver3(0, 0, 0, aVR(1), aVR(2), aVR(3));
-    h_avf = quiver3(0, 0, 0, aVF(1), aVF(2), aVF(3));
-    h_vx = quiver3(0, 0, 0, Vx(1), Vx(2), Vx(3));
-    h_vy = quiver3(0, 0, 0, Vy(1), Vy(2), Vy(3));
-    h_vz = quiver3(0, 0, 0, Vz(1), Vz(2), Vz(3));
+    h_avl = quiver3(0, 0, 0, aVL(1), aVL(2), aVL(3), '--');
+    h_avr = quiver3(0, 0, 0, aVR(1), aVR(2), aVR(3), '--');
+    h_avf = quiver3(0, 0, 0, aVF(1), aVF(2), aVF(3), '--');
+    h_vx = quiver3(0, 0, 0, Vx(1), Vx(2), Vx(3), ':', 'linewidth', 2);
+    h_vy = quiver3(0, 0, 0, Vy(1), Vy(2), Vy(3), ':', 'linewidth', 2);
+    h_vz = quiver3(0, 0, 0, Vz(1), Vz(2), Vz(3), ':', 'linewidth', 2);
     legend([h_v1, h_v2, h_v3, h_v4, h_v5, h_v6, h_i, h_ii, h_iii, h_avl, h_avr, h_avf, h_vx, h_vy, h_vz], {'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'I', 'II', 'III', 'aVL', 'aVR', 'aVF', 'Vx', 'Vy', 'Vz'});
     xlabel('x');
     ylabel('y');
@@ -241,6 +247,9 @@ if plot_flag
     grid
     set(gca, 'fontsize', 16)
     title('ECG lead vectors');
+    xlim([0, 2])
+    ylim([-1, 1])
+    zlim([-1, 1])
 
     figure
     plot3(vcg(1, :), vcg(2, :), vcg(3, :))
