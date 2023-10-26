@@ -66,7 +66,7 @@ for seg = 1 : noSegLen
     
     [valindSQI3, indSQI3] = SQI3(JADEcomp);
     
-    [valindSQI4, indSQI4] = SQI4(JADEcomp);
+    [valindSQI4, indSQI4] = SQI4(JADEcomp, fs);
     
     [valindSQI5, indSQI5] = SQI5(JADEcomp, winLen);
     

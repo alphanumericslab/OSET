@@ -1,6 +1,6 @@
-function [valindSQI, indSQI] = SQI4(x)
+function [valindSQI, indSQI] = SQI4(x, Fs)
 % 
-% [valindSQI, indSQI] = SQI4(x)
+% [valindSQI, indSQI] = SQI4(x, Fs)
 % Channel selection based on spectral energy ratio
 %
 % Fahimeh Jamshidian Tehrani,
@@ -10,6 +10,7 @@ function [valindSQI, indSQI] = SQI4(x)
 %
 % input:
 %   x: input JADE component of fetal ECG record
+%   Fs: sampling Frequency (Hz)
 % output:
 %   valindSQI: values of "spectral energy ratio" measure
 %   corresponding to the channel number of "indSQI" parameter
@@ -32,7 +33,7 @@ function [valindSQI, indSQI] = SQI4(x)
 
 % Parameter nitializing
 [CH, ~] = size(x);
-Fs = 1000;                                                  % Sampling Frequency (Hz)
+% Fs = 1000;                                                  % Sampling Frequency (Hz)
 Fn = Fs/2;                                                  % Nyquist Frequency (Hz)
 Wp = [1.0   70]/Fn;                                         % Passband Frequency (Normalised)
 Ws = [0.5   71]/Fn;                                         % Stopband Frequency (Normalised)
