@@ -21,6 +21,8 @@ function [peaks, peak_indexes] = peak_det_simple(x, ff, flag, varargin)
 %       2006: First release
 %       2023: Replaced deprecated version PeakDetection
 %       2023: Added mode = 2 to automatically detect sign
+%       2023: Added "&& sum(abs(x(index))) > 0" to avoid trivial all-zeros
+%             peaks
 %
 %   Reza Sameni, Davood Fattahi, 2006-2023
 %   The Open-Source Electrophysiological Toolbox
@@ -48,7 +50,7 @@ for j = 1 : N
         index = 1 : 2 * rng;
     end
 
-    if max(x(index)) == x(j)
+    if max(x(index)) == x(j) && sum(abs(x(index))) > 0
         peaks(j) = 1;
     end
 end
@@ -64,7 +66,7 @@ for j = 1 : N
         index = 1 : 2 * rng;
     end
 
-    if min(x(index)) == x(j)
+    if min(x(index)) == x(j) && sum(abs(x(index))) > 0
         nadirs(j) = 1;
     end
 end
