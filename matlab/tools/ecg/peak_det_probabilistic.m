@@ -1,18 +1,28 @@
 function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic(data, fs, varargin)
-% function [peaks, peak_indexes, qrs_likelihood] = peak_det_probabilistic(data, fs, varargin)
+% function [peaks, peak_indexes, qrs_likelihood] = peak_det_probabilistic(data, fs)
 % A probabilistic R-peak detector based on local peaks sorting
 %
 % Note: Under development
 %
 % Usage:
-%   [peaks, qrs_likelihood, peak_indexes] = peak_det_probabilistic(data, fs, params)
+%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic(data, fs)
+%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic(data, fs, params)
 %
 % Inputs:
 %   data: single or multichannel ECG signal with row-wise channels
 %   fs: sampling frequency
-%   params: a structure containing the algorithm parameters (all parameters have default values if not given as input)
-%       params.saturate: saturate (1) the channels before processing or not (0). Default = 0
-%       params.filter_type: preprocessing filter type ('MATCHED_FILTER', or 'BANDPASS_FILTER'); Default = 'BANDPASS_FILTER'
+%   params: a structure containing the algorithm parameters as follows (all
+%       parameters have default values if not provided as input):
+%       params.verbose: true (all default settings will be displayed as the
+%           function is called); or false (silent mode)
+%       params.PLOT_DIAGNOSTIC: true (all intermediate peak refinement
+%           figures will be plotted); or false (no intermediate figures are generated)
+%       params.saturate: true (saturate the channels before R-peak detection) or false (no saturation). Default is true
+%       params.filter_type: preprocessing filter type. Options: 'MDMN',
+%           'BANDPASS_FILTER', 'MD3MN', 'GAUSSIAN_MATCHED_FILTER',
+%           'MULT_MATCHED_FILTER_ENV', or 'WAVELET'. Default is 'WAVELET'
+%       Note: each mode has predefined parameters that 
+
 %       params.bp_lower_cutoff: lower cutoff frequency of R-peak detector bandpass filter (in Hz), when params.filter_type = 'BANDPASS_FILTER'. Default = 1
 %       params.bp_upper_cutoff: upper cutoff frequency of R-peak detector bandpass filter (in Hz), when params.filter_type = 'BANDPASS_FILTER'. Default = 40
 %       params.gauss_match_filt_span: the preprocessing gaussian shape matched filter span, when params.filter_type = 'MATCHED_FILTER'. Default = 0.2
@@ -34,6 +44,7 @@ function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_de
 % Revision History:
 %   2021: First release
 %   2023: Replaced deprecated function PeakDetectionProbabilistic
+%   2023: Expanded excess peak rejection functions
 %
 % Reza Sameni, 2009-2023
 % The Open-Source Electrophysiological Toolbox
@@ -48,14 +59,14 @@ else
 end
 
 if ~isfield(params, 'verbose')
-    params.verbose = true;
+    params.verbose = false;
 end
 if params.verbose
     disp('Operating in verbose mode. Default settings will be displayed.')
 end
 
 if ~isfield(params, 'PLOT_DIAGNOSTIC')
-    params.PLOT_DIAGNOSTIC = true;
+    params.PLOT_DIAGNOSTIC = false;
 end
 if params.PLOT_DIAGNOSTIC
     disp('Operating in diagnostic plot mode. All peak refinement figures will be plotted.')
@@ -209,7 +220,7 @@ if ~isfield(params, 'saturate')
 end
 if isequal(params.saturate, 1)
     if ~isfield(params, 'sat_k_sigma')
-        params.sat_k_sigma = 12.0;
+        params.sat_k_sigma = 8.0;
         if params.verbose, disp(['params.sat_k_sigma = ', num2str(params.sat_k_sigma)]), end
     end
     data_filtered = tanh_saturation(data_filtered, params.sat_k_sigma, 'ksigma');
@@ -223,7 +234,13 @@ if ~isfield(params, 'power_env_wlen')
     if params.verbose, disp(['params.power_env_wlen = ', num2str(params.power_env_wlen)]), end
 end
 power_env_wlen = ceil(params.power_env_wlen * fs);
-data_filtered_env1 = filtfilt(ones(power_env_wlen, 1), power_env_wlen, sqrt(mean(data_filtered.^2, 1)));
+% data_filtered_env1 = filtfilt(ones(power_env_wlen, 1), power_env_wlen, sqrt(mean(data_filtered.^2, 1)));
+padding_len = round(1.0*fs);
+if params.verbose, disp(['padding_len = ', num2str(padding_len)]), end
+% data_filtered_padded = [repmat(data_filtered(:, 1), 1, padding_len), data_filtered, repmat(data_filtered(:, end), 1, padding_len)];
+data_filtered_padded = [zeros(size(data_filtered, 1), padding_len), data_filtered, zeros(size(data_filtered, 1), padding_len)];
+data_filtered_env1 = filtfilt(ones(power_env_wlen, 1), power_env_wlen, sqrt(mean(data_filtered_padded.^2, 1)));
+data_filtered_env1 = data_filtered_env1(padding_len + 1 : padding_len + size(data_filtered, 2));
 
 %% calculate the power envelope of one or all channels (stateg 2)
 if ~isfield(params, 'two_stage_env')
@@ -235,8 +252,10 @@ if isequal(params.two_stage_env, 1)
         params.power_env_wlen2 = 0.075;
         if params.verbose, disp(['   params.power_env_wlen2 = ', num2str(params.power_env_wlen2)]), end
         power_env_wlen2 = ceil(params.power_env_wlen2 * fs);
-        data_filtered_env2 = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_filtered.^2, 1)));
-
+        % data_filtered_padded = [repmat(data_filtered(:, 1), 1, padding_len), data_filtered, repmat(data_filtered(:, end), 1, padding_len)];
+        data_filtered_padded = [zeros(size(data_filtered, 1), padding_len), data_filtered, zeros(size(data_filtered, 1), padding_len)];
+        data_filtered_env2 = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_filtered_padded.^2, 1)));
+        data_filtered_env2 = data_filtered_env2(padding_len + 1 : padding_len + size(data_filtered, 2));
     end
     data_filtered_env = sqrt(data_filtered_env1 .* data_filtered_env2);
     % figure
@@ -311,165 +330,196 @@ peaks = zeros(1, sig_len);
 peaks(peak_indexes) = 1;
 refinement_methods = {'PRE_REFINEMENT'};
 
-% refinement_methods = {};
-if ~isfield(params, 'REMOVE_LOW_AMP_PEAKS')
-    params.REMOVE_LOW_AMP_PEAKS = true;
-    if params.verbose, disp(['params.REMOVE_LOW_AMP_PEAKS = ', num2str(params.REMOVE_LOW_AMP_PEAKS)]), end
+% Refine the extracted beats
+if ~isfield(params, 'REFINE_PEAKS')
+    params.REFINE_PEAKS = true;
+    if params.verbose, disp(['params.REFINE_PEAKS = ', num2str(params.REFINE_PEAKS)]), end
 end
-% remove excess beats with extreme amplitude deviations from other peaks
-if params.REMOVE_LOW_AMP_PEAKS
-    pparams.percentile = 90.0;
-    pparams.percentile_fraction = 0.4;
-    if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
-    if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
-    [~, peaks1] = refine_peaks_low_amp_peaks_prctile_fraction(data_filtered_env, peak_indexes, pparams, params.PLOT_DIAGNOSTIC);
-    peaks = cat(1, peaks, peaks1);
-    refinement_methods = cat(2, refinement_methods, 'REMOVE_LOW_AMP_PEAKS');
-end
+if params.REFINE_PEAKS
 
-% negative correlations
-if ~isfield(params, 'REMOVE_NEG_CORR')
-    params.REMOVE_NEG_CORR = true;
-    if params.verbose, disp(['params.REMOVE_NEG_CORR = ', num2str(params.REMOVE_NEG_CORR)]), end
-end
-if params.REMOVE_NEG_CORR
-    [~, peaks2] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels, peak_indexes, [], 'NEG-CORR', params.PLOT_DIAGNOSTIC);
-    peaks = cat(1, peaks, peaks2);
-    refinement_methods = cat(2, refinement_methods, 'REMOVE_NEG_CORR');
-end
+    if ~isfield(params, 'OMIT_LOW_AMP_PEAKS_PRCTL_FRAC')
+        params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC = true;
+        if params.verbose, disp(['params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC = ', num2str(params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC)]), end
+    end
+    % remove excess beats with extreme amplitude deviations from other peaks
+    if params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC
+        pparams.percentile = 90.0;
+        pparams.percentile_fraction = 0.4;
+        if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
+        if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
+        [~, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_FRAC] = refine_peaks_low_amp_peaks_prctile_fraction(data_filtered_env, peak_indexes, pparams, params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_FRAC);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_LOW_AMP_PEAKS_PRCTL_FRAC');
+    end
 
-% omit beats with low variance
-if ~isfield(params, 'REMOVE_LOW_ENERGY_BEATS')
-    params.REMOVE_LOW_ENERGY_BEATS = true;
-    % max_amp_k_sigma = 2.0;
-    pparams.beat_std_med_frac_th = 0.5;
-    pparams.max_amp_prctile = 90.0;
-    if params.verbose, disp(['params.REMOVE_LOW_ENERGY_BEATS = ', num2str(params.REMOVE_LOW_ENERGY_BEATS)]), end
-    if params.verbose, disp(['   pparams.beat_std_med_frac_th = ', num2str(pparams.beat_std_med_frac_th)]), end
-    if params.verbose, disp(['   pparams.max_amp_prctile = ', num2str(pparams.max_amp_prctile)]), end
-end
-if params.REMOVE_LOW_ENERGY_BEATS
-    % peak_indexes_refined3 = refine_peaks_low_power_beats(data_filtered_env, peak_indexes, max_amp_k_sigma, beat_std_med_frac_th, params.PLOT_DIAGNOSTIC);
-    [~, peaks3] = refine_peaks_low_power_beats(data_filtered_mn_all_channels, peak_indexes, pparams.max_amp_prctile, pparams.beat_std_med_frac_th, params.PLOT_DIAGNOSTIC);
-    peaks = cat(1, peaks, peaks3);
-    refinement_methods = cat(2, refinement_methods, 'REMOVE_LOW_ENERGY_BEATS');
-end
+    % omit beats with low variance
+    if ~isfield(params, 'OMIT_LOW_POWER_BEATS')
+        params.OMIT_LOW_POWER_BEATS = true;
+        % max_amp_k_sigma = 2.0;
+        pparams.beat_std_med_frac_th = 0.5;
+        pparams.max_amp_prctile = 90.0;
+        if params.verbose, disp(['params.OMIT_LOW_POWER_BEATS = ', num2str(params.OMIT_LOW_POWER_BEATS)]), end
+        if params.verbose, disp(['   pparams.beat_std_med_frac_th = ', num2str(pparams.beat_std_med_frac_th)]), end
+        if params.verbose, disp(['   pparams.max_amp_prctile = ', num2str(pparams.max_amp_prctile)]), end
+    end
+    if params.OMIT_LOW_POWER_BEATS
+        % peak_indexes_refined = refine_peaks_low_power_beats(data_filtered_env, peak_indexes, max_amp_k_sigma, beat_std_med_frac_th, params.PLOT_DIAGNOSTIC);
+        [~, peaks_OMIT_LOW_POWER_BEATS] = refine_peaks_low_power_beats(data_filtered_mn_all_channels, peak_indexes, pparams.max_amp_prctile, pparams.beat_std_med_frac_th, params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_LOW_POWER_BEATS);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_LOW_POWER_BEATS');
+    end
 
-% omit beats with low correlations
-if ~isfield(params, 'REMOVE_LOW_CORR_BEATS')
-    params.REMOVE_LOW_CORR_BEATS = true;
-    pparams.k_sigma = 3.0;
-    if params.verbose, disp(['params.REMOVE_LOW_CORR_BEATS = ', num2str(params.REMOVE_LOW_CORR_BEATS)]), end
-    if params.verbose, disp(['   pparams.k_sigma = 3.0', num2str(pparams.k_sigma)]), end
-end
-if params.REMOVE_LOW_CORR_BEATS
-    [~, peaks4] = refine_peaks_waveform_similarity(data_filtered_env, peak_indexes, pparams, 'BEAT-STD', params.PLOT_DIAGNOSTIC);
-    %[~, peaks4] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels, peak_indexes, pparams, 'BEAT-STD', params.PLOT_DIAGNOSTIC);
-    peaks = cat(1, peaks, peaks4);
-    refinement_methods = cat(2, refinement_methods, 'REMOVE_LOW_CORR_BEATS');
-end
+    % negative correlations
+    if ~isfield(params, 'OMIT_NEG_CORRCOEF_BEATS')
+        params.OMIT_NEG_CORRCOEF_BEATS = true;
+        if params.verbose, disp(['params.OMIT_NEG_CORRCOEF_BEATS = ', num2str(params.OMIT_NEG_CORRCOEF_BEATS)]), end
+    end
+    if params.OMIT_NEG_CORRCOEF_BEATS
+        [~, peaks_OMIT_NEG_CORRCOEF_BEATS] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels, peak_indexes, [], 'NEG-CORR', params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_NEG_CORRCOEF_BEATS);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_NEG_CORRCOEF_BEATS');
+    end
 
-% if ~isfield(params, 'REMOVE_LOW_AMP_PRCTILE')
-%     params.REMOVE_LOW_AMP_PRCTILE = true;
-%     if params.verbose, disp('params.REMOVE_LOW_AMP_PRCTILE = true'), end
-%     if ~isfield(params, 'peak_amps_hist_prctile')
-%         pparams.peak_amps_hist_prctile = 25.0;
-%         if params.verbose, disp('   pparams.peak_amps_hist_prctile = 25.0'), end
-%     end
-% end
-% if params.REMOVE_LOW_AMP_PRCTILE
-%     [~, peaks5] = refine_peaks_low_amp_peaks_prctile(data_filtered_env, peak_indexes, pparams.peak_amps_hist_prctile, params.PLOT_DIAGNOSTIC);
-%     peaks = cat(1, peaks, peaks5);
-%     refinement_methods = cat(2, refinement_methods, 'REMOVE_LOW_AMP_PRCTILE');
-% end
+    % omit beats with low correlations
+    if ~isfield(params, 'OMIT_LOW_CORRCOEF_BEATS')
+        params.OMIT_LOW_CORRCOEF_BEATS = true;
+        pparams.k_sigma = 3.0;
+        if params.verbose, disp(['params.OMIT_LOW_CORRCOEF_BEATS = ', num2str(params.OMIT_LOW_CORRCOEF_BEATS)]), end
+        if params.verbose, disp(['   pparams.k_sigma = ', num2str(pparams.k_sigma)]), end
+    end
+    if params.OMIT_LOW_CORRCOEF_BEATS
+        [~, peaks_OMIT_LOW_CORRCOEF_BEATS] = refine_peaks_waveform_similarity(data_filtered_env, peak_indexes, pparams, 'BEAT-STD', params.PLOT_DIAGNOSTIC);
+        %[~, peaks_OMIT_LOW_CORRCOEF_BEATS] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels, peak_indexes, pparams, 'BEAT-STD', params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_LOW_CORRCOEF_BEATS);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_LOW_CORRCOEF_BEATS');
+    end
 
-% Omit beats that increase average beat SNR and increase HR variance. not applicable to the first and last beats
-if ~isfield(params, 'REMOVE_BEAT_HRV_INCREASING_BEATS')
-    params.REMOVE_BEAT_HRV_INCREASING_BEATS = true;
-    if params.verbose, disp(['params.REMOVE_BEAT_HRV_INCREASING_BEATS = ', num2str(params.REMOVE_BEAT_HRV_INCREASING_BEATS)]), end
-end
-if params.REMOVE_BEAT_HRV_INCREASING_BEATS
-    mmode = 'HEARTRATE'; % 'MORPHOLOGY' or 'HEARTRATE' or 'MORPHOLOGY-HEARTRATE'
-    if params.verbose, disp(['   mmode = ', mmode]), end
-    % [~, peaks5] = refine_peaks_low_snr_beats(data_filtered_mn_all_channels, peak_indexes, mmode, params.PLOT_DIAGNOSTIC);
-    [~, peaks5] = refine_peaks_low_snr_beats(data_filtered_env, peak_indexes, mmode, params.PLOT_DIAGNOSTIC);
-    peaks = cat(1, peaks, peaks5);
-    refinement_methods = cat(2, refinement_methods, 'REMOVE_BEAT_HRV_INCREASING_BEATS');
-end
+    % remove excess beats based on waveform similarity
+    if ~isfield(params, 'OMIT_LOW_CORR_BEATS')
+        params.OMIT_LOW_CORR_BEATS = true;
+        pparams.percentile = 90.0;
+        pparams.percentile_fraction = 0.3;
+        if params.verbose, disp(['params.OMIT_LOW_CORR_BEATS = ', num2str(params.OMIT_LOW_CORR_BEATS)]), end
+        if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
+        if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
+    end
+    if params.OMIT_LOW_CORR_BEATS
+        [~, peaks_OMIT_LOW_CORR_BEATS] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels, peak_indexes, pparams, 'CORR', params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_LOW_CORR_BEATS);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_LOW_CORR_BEATS');
+    end
 
-% Omit beats that increase average beat SNR and increase HR variance. not applicable to the first and last beats
-if ~isfield(params, 'REMOVE_BEAT_SNR_REDUCING_BEATS')
-    params.REMOVE_BEAT_SNR_REDUCING_BEATS = true;
-    if params.verbose, disp(['params.REMOVE_BEAT_SNR_REDUCING_BEATS = ', num2str(params.REMOVE_BEAT_SNR_REDUCING_BEATS)]), end
-end
-if params.REMOVE_BEAT_SNR_REDUCING_BEATS
-    mmode = 'MORPHOLOGY'; % 'MORPHOLOGY' or 'HEARTRATE' or 'MORPHOLOGY-HEARTRATE'
-    if params.verbose, disp(['   mmode = ', mmode]), end
-    % [~, peaks6] = refine_peaks_low_snr_beats(data_filtered_mn_all_channels, peak_indexes, mmode, params.PLOT_DIAGNOSTIC);
-    [~, peaks6] = refine_peaks_low_snr_beats(data_filtered_env, peak_indexes, mmode, params.PLOT_DIAGNOSTIC);
-    peaks = cat(1, peaks, peaks6);
-    refinement_methods = cat(2, refinement_methods, 'REMOVE_BEAT_SNR_REDUCING_BEATS');
-end
+    % remove excess beats based on waveform similarity
+    if ~isfield(params, 'OMIT_LOW_CORRCOEF_BEATS')
+        params.OMIT_LOW_CORRCOEF_BEATS = true;
+        pparams.percentile = 90.0;
+        pparams.percentile_fraction = 0.3;
+        if params.verbose, disp(['params.OMIT_LOW_CORRCOEF_BEATS = ', num2str(params.OMIT_LOW_CORRCOEF_BEATS)]), end
+        if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
+        if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
+    end
+    if params.OMIT_LOW_CORRCOEF_BEATS
+        [~, peaks_OMIT_LOW_CORRCOEF_BEATS] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels, peak_indexes, pparams, 'CORRCOEF', params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_LOW_CORRCOEF_BEATS);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_LOW_CORRCOEF_BEATS');
+    end
 
-% remove excess beats based on waveform similarity
-if ~isfield(params, 'REMOVE_LOW_WAVEFORM_SIMILARITY')
-    params.REMOVE_LOW_WAVEFORM_SIMILARITY = true;
-    pparams.percentile = 90.0;
-    pparams.percentile_fraction = 0.3;
-    if params.verbose, disp(['params.REMOVE_LOW_WAVEFORM_SIMILARITY = ', num2str(params.REMOVE_LOW_WAVEFORM_SIMILARITY)]), end
-    if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
-    if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
-end
-if params.REMOVE_LOW_WAVEFORM_SIMILARITY
-    [~, peaks7] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels, peak_indexes, pparams, 'CORR', params.PLOT_DIAGNOSTIC);
-    peaks = cat(1, peaks, peaks7);
-    refinement_methods = cat(2, refinement_methods, 'REMOVE_LOW_WAVEFORM_SIMILARITY');
-end
+    if ~isfield(params, 'OMIT_LOW_AMP_PEAKS_PRCTL_ABS')
+        params.OMIT_LOW_AMP_PEAKS_PRCTL_ABS = true;
+        if params.verbose, disp('params.OMIT_LOW_AMP_PEAKS_PRCTL_ABS = true'), end
+        if ~isfield(params, 'peak_amps_hist_prctile')
+            pparams.peak_amps_hist_prctile = 25.0;
+            if params.verbose, disp('   pparams.peak_amps_hist_prctile = 25.0'), end
+        end
+    end
+    if params.OMIT_LOW_AMP_PEAKS_PRCTL_ABS
+        [~, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS] = refine_peaks_low_amp_peaks_prctile(data_filtered_env, peak_indexes, pparams.peak_amps_hist_prctile, params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_LOW_AMP_PEAKS_PRCTL_ABS');
+    end
 
-% remove excess beats based on ampliture thresholding (removes below a fraction of the defined percentile)
-if ~isfield(params, 'REMOVE_HIGH_AMP_STD')
-    params.REMOVE_HIGH_AMP_STD = true;
-    if params.verbose, disp(['params.REMOVE_HIGH_AMP_STD = ', num2str(params.REMOVE_HIGH_AMP_STD)]), end
-    pparams.k_sigma = 2.0;
-    if params.verbose, disp(['   pparams.k_sigma = ', num2str(pparams.k_sigma)]), end
-end
-if params.REMOVE_HIGH_AMP_STD
-    [~, peaks8] = refine_peaks_high_amp_std(data_filtered_mn_all_channels, peak_indexes, pparams.k_sigma, params.PLOT_DIAGNOSTIC);
-    peaks = cat(1, peaks, peaks8);
-    refinement_methods = cat(2, refinement_methods, 'REMOVE_HIGH_AMP_STD');
-end
+    % Omit beats that increase average beat SNR and increase HR variance. not applicable to the first and last beats
+    if ~isfield(params, 'OMIT_BEAT_HRV_INCR_BEATS')
+        params.OMIT_BEAT_HRV_INCR_BEATS = true;
+        if params.verbose, disp(['params.OMIT_BEAT_HRV_INCR_BEATS = ', num2str(params.OMIT_BEAT_HRV_INCR_BEATS)]), end
+    end
+    if params.OMIT_BEAT_HRV_INCR_BEATS
+        mmode = 'HEARTRATE'; % 'MORPHOLOGY' or 'HEARTRATE' or 'MORPHOLOGY-HEARTRATE'
+        if params.verbose, disp(['   mmode = ', mmode]), end
+        % [~, peaks_OMIT_BEAT_HRV_INCR_BEATS] = refine_peaks_low_snr_beats(data_filtered_mn_all_channels, peak_indexes, mmode, params.PLOT_DIAGNOSTIC);
+        [~, peaks_OMIT_BEAT_HRV_INCR_BEATS] = refine_peaks_low_snr_beats(data_filtered_env, peak_indexes, mmode, params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_BEAT_HRV_INCR_BEATS);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_BEAT_HRV_INCR_BEATS');
+    end
 
-% search for local peaks with sign of most frequent among previously found peaks
-% Likelihood-based refinement of the R-peaks
-if ~isfield(params, 'LIKELIHOOD_BASED_REFINEMENT')
-    params.LIKELIHOOD_BASED_REFINEMENT = true;
-    if params.verbose, disp(['params.LIKELIHOOD_BASED_REFINEMENT = ', num2str(params.LIKELIHOOD_BASED_REFINEMENT)]), end
-end
-if params.LIKELIHOOD_BASED_REFINEMENT
-    qrs_likelihood = peak_surrounding_likelihood(sig_len, peak_indexes, fs, params.max_likelihood_span, params.max_likelihood_span);
-    f_to_fs = 1.0/median(diff(peak_indexes));
-    polarity = mode(sign(data_filtered_mn_all_channels(peak_indexes)));
-    [peaks9, ~] = peak_det_local_search(polarity * data_filtered_mn_all_channels .* qrs_likelihood, f_to_fs, 1);
-    % [~, peak_indexes_refined9] = peak_det_local_search(data_filtered_env .* qrs_likelihood, 1.0/median(diff(peak_indexes)));
-    % % [~, peak_indexes_refined9] = peak_det_local_search(mean(data_filtered, 1).*qrs_likelihood, 1.0/median(diff(peak_indexes)));
-    % % [~, peak_indexes_refined9] = peak_det_local_search(mean(data, 1) .* qrs_likelihood, 1.0/median(diff(peak_indexes)));
-    % % [~, peak_indexes_refined9] = peak_det_local_search(mean(data_filtered_enhanced, 1) .* qrs_likelihood, 1.0/median(diff(peak_indexes)));
-    % % [~, peak_indexes_refined9] = peak_det_local_search(sign(skew(mean(data_filtered, 1))) * mean(data_filtered, 1).*qrs_likelihood, 1.0/median(diff(peak_indexes)), 1);
-    % nn = (0 : length(data_filtered_env) - 1)/fs;
-    % figure
-    % plot(nn, data_filtered_env)
-    % hold on
-    % plot(nn, qrs_likelihood .* data_filtered_env)
-    % plot(nn(peak_indexes), data_filtered_env(peak_indexes), 'ro')
-    % grid
-    peaks = cat(1, peaks, peaks9);
-    refinement_methods = cat(2, refinement_methods, 'LIKELIHOOD_BASED_REFINEMENT');
+    % Omit beats that increase average beat SNR and increase HR variance. not applicable to the first and last beats
+    if ~isfield(params, 'OMIT_BEAT_SNR_REDUC_BEATS')
+        params.OMIT_BEAT_SNR_REDUC_BEATS = true;
+        if params.verbose, disp(['params.OMIT_BEAT_SNR_REDUC_BEATS = ', num2str(params.OMIT_BEAT_SNR_REDUC_BEATS)]), end
+    end
+    if params.OMIT_BEAT_SNR_REDUC_BEATS
+        mmode = 'MORPHOLOGY'; % 'MORPHOLOGY' or 'HEARTRATE' or 'MORPHOLOGY-HEARTRATE'
+        if params.verbose, disp(['   mmode = ', mmode]), end
+        [~, peaks_OMIT_BEAT_SNR_REDUC_BEATS] = refine_peaks_low_snr_beats(data_filtered_mn_all_channels, peak_indexes, mmode, params.PLOT_DIAGNOSTIC);
+        % [~, peaks_OMIT_BEAT_SNR_REDUC_BEATS] = refine_peaks_low_snr_beats(data_filtered_env, peak_indexes, mmode, params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_BEAT_SNR_REDUC_BEATS);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_BEAT_SNR_REDUC_BEATS');
+    end
+
+    % remove excess beats based on ampliture thresholding (removes below a fraction of the defined percentile)
+    if ~isfield(params, 'OMIT_HIGH_STD_AMP')
+        params.OMIT_HIGH_STD_AMP = true;
+        if params.verbose, disp(['params.OMIT_HIGH_STD_AMP = ', num2str(params.OMIT_HIGH_STD_AMP)]), end
+        pparams.k_sigma = 4.0;
+        if params.verbose, disp(['   pparams.k_sigma = ', num2str(pparams.k_sigma)]), end
+    end
+    if params.OMIT_HIGH_STD_AMP
+        [~, peaks_OMIT_HIGH_STD_AMP] = refine_peaks_high_amp_std(data_filtered_env, peak_indexes, pparams.k_sigma, params.PLOT_DIAGNOSTIC);
+        peaks = cat(1, peaks, peaks_OMIT_HIGH_STD_AMP);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_HIGH_STD_AMP');
+    end
 end
 
 %% merge the peaks through consensus
 peaks_consensus = sum(peaks, 1);
-% peak_indexes_consensus = peaks_consensus >= ceil(size(peaks, 1) / 2);
-peak_indexes_consensus = peaks_consensus >= max(1, size(peaks, 1) - 3);
+num_peak_refinement_algorithms = size(peaks, 1);
+
+if ~isfield(params, 'NUM_VOTES_TO_KEEP_PEAK')
+    params.NUM_VOTES_TO_KEEP_PEAK = ceil(num_peak_refinement_algorithms / 2); % majority vote
+    if params.verbose, disp(['num_peak_refinement_algorithms = ', num2str(num_peak_refinement_algorithms), ', params.NUM_VOTES_TO_KEEP_PEAK = ', num2str(params.NUM_VOTES_TO_KEEP_PEAK)]), end
+end
+
+if params.NUM_VOTES_TO_KEEP_PEAK > num_peak_refinement_algorithms
+    error('Number of required votes to keep a peak exceeds the number of voting algorithms');
+end
+peak_indexes_consensus = peaks_consensus >= params.NUM_VOTES_TO_KEEP_PEAK;
+
+
+%% Likelihood-based refinement of the R-peaks (if required)
+% search for local peaks with sign of most frequent among previously found peaks
+if ~isfield(params, 'CORRECT_PEAKS_LIKELIHOOD_PEAKS')
+    params.CORRECT_PEAKS_LIKELIHOOD_PEAKS = false;
+    if params.verbose, disp(['params.CORRECT_PEAKS_LIKELIHOOD_PEAKS = ', num2str(params.CORRECT_PEAKS_LIKELIHOOD_PEAKS)]), end
+    if ~isfield(params, 'likelihood_power_env_hist_peak_th')
+        params.likelihood_power_env_hist_peak_th = 85.0;
+        if params.verbose, disp(['params.likelihood_power_env_hist_peak_th = ', num2str(params.likelihood_power_env_hist_peak_th)]), end
+    end
+end
+if params.CORRECT_PEAKS_LIKELIHOOD_PEAKS
+    qrs_likelihood = peak_surrounding_likelihood(sig_len, peak_indexes_consensus, fs, params.max_likelihood_span, params.max_likelihood_span);
+    % bumps_indexes = refine_peaks_low_amp_peaks_prctile(data_filtered_mn_all_channels.* qrs_likelihood, 1:sig_len, params.likelihood_power_env_hist_peak_th, params.PLOT_DIAGNOSTIC);
+    bumps_indexes = refine_peaks_low_amp_peaks_prctile(data_filtered_env.* qrs_likelihood, 1:sig_len, params.likelihood_power_env_hist_peak_th, params.PLOT_DIAGNOSTIC);
+
+% search for all local peaks within a given sliding window length
+if ~isfield(params, 'min_peak_distance')
+    params.min_peak_distance = 0.18;
+    if params.verbose, disp(['params.min_peak_distance = ', num2str(params.min_peak_distance)]), end
+end
+rpeak_search_half_wlen = floor(fs * params.min_peak_distance);
+env_pk_detect_mode = 'POS';
+if params.verbose, disp(['env_pk_detect_mode = ', env_pk_detect_mode]), end
+peak_indexes_consensus = refine_peaks_too_close_low_amp(data_filtered_env, bumps_indexes, rpeak_search_half_wlen, env_pk_detect_mode, params.PLOT_DIAGNOSTIC);
+end
 
 %% replace envelope peaks with original signal peaks, if required
 if ~isfield(params, 'RETURN_SIGNAL_PEAKS')
@@ -486,7 +536,7 @@ if params.RETURN_SIGNAL_PEAKS
         if params.verbose, disp(['   params.envelope_to_peak_search_wlen = ', num2str(params.envelope_to_peak_search_wlen)]), end
     end
     envelope_to_peak_search_wlen = floor(fs * params.envelope_to_peak_search_wlen / 2);
-    peak_indexes = find_closest_peaks(data_filtered, peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
+    peak_indexes = find_closest_peaks(abs(data), peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
     % peak_indexes_consensus = find_closest_peaks(data_filtered, peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 end
 
@@ -501,17 +551,10 @@ if params.POST_EXT_LIKELIHOOD_BASED_IMPROVEMENT
     likelihood_threshold = 0.4;
     if params.verbose, disp(['   likelihood_threshold = ', num2str(likelihood_threshold)]), end
     peak_indexes_consensus = refine_peaks_low_likelihood(data_filtered, peak_indexes_consensus, qrs_likelihood, likelihood_threshold, rpeak_search_half_wlen, params.PLOT_DIAGNOSTIC);
+    qrs_likelihood = peak_surrounding_likelihood(sig_len, peak_indexes_consensus, fs, params.max_likelihood_span, params.max_likelihood_span);
 end
 
 if isfield(params, 'PLOT_RESULTS') && isequal(params.PLOT_RESULTS, 1)
-    % time = (0 : sig_len - 1) / fs;
-    % figure
-    % scatter(time, data', 28, qrs_likelihood(:)*[1 0 0], 'filled');
-    % hold on
-    % plot(time, data_filtered_env);
-    % % plot(time, signal_likelihood);
-    % grid
-
     lgnds = {};
     tt = (0 : length(data) - 1) / fs;
     figure('units','normalized','outerposition',[0 0.25 1 0.5])
@@ -534,9 +577,19 @@ if isfield(params, 'PLOT_RESULTS') && isequal(params.PLOT_RESULTS, 1)
     ylabel('Amplitude');
     set(gca, 'fontsize', 16)
 end
+
+% return final peaks
 peaks = zeros(1, sig_len);
 peaks(peak_indexes) = 1;
+
+% clear consenus-based peaks, if no refinement was requested
+if ~params.REFINE_PEAKS
+    peak_indexes_consensus = [];
 end
+
+end
+
+%% INTERNAL FUNCTIONS
 
 %% remove local peaks, which have nearby peaks with absolute higher amplitudes
 function [peak_indexes, peaks] = find_closest_peaks(data, peak_indexes_candidates, peak_search_half_wlen, mode, plot_results)
@@ -704,6 +757,8 @@ switch method
         rho_beats = corrcoef(stacked_beats');
         avg_beat_corr_with_others = mean(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitmissing");
         I_omit = abs(avg_beat_corr_with_others - mean(avg_beat_corr_with_others)) > pparams.k_sigma * std(avg_beat_corr_with_others); %%%% & avg_beat_corr_with_others < pparams.beat_corrcoef_th;
+    otherwise
+        error('undefined mode')
 end
 peak_indexes_refined = peak_indexes;
 peak_indexes_refined(I_omit) = [];
@@ -785,70 +840,75 @@ end
 %% omit beats that increase average beat SNR and increase HR variance. not applicable to the first and last beats
 function [peak_indexes_refined, peaks] = refine_peaks_low_snr_beats(data, peak_indexes, mmode, plot_results)
 max_itr = length(peak_indexes);
-peak_indexes_refined = peak_indexes;
+event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
+stacked_beats = event_stacker(data, peak_indexes, event_width);
+%     ECG_robust_mean = RWAverage(stacked_beats);
+ECG_robust_mean = mean(stacked_beats, 1);
+ECG_robust_mean_replicated = ones(length(peak_indexes), 1) * ECG_robust_mean;
+noise = stacked_beats - ECG_robust_mean_replicated;
+%snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
+snr_initial = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
+
+% peak_indexes_refined = peak_indexes;
+included_indexes = 1 : length(peak_indexes);
 for itr = 1 : max_itr
-    num_beats = length(peak_indexes_refined);
-    event_width = 2 * round(median(diff(peak_indexes_refined))/2) + 1;
-    stacked_beats = event_stacker(data, peak_indexes_refined, event_width);
+    num_includes_beats = length(peak_indexes(included_indexes));
+    rr_std = std(diff(peak_indexes(included_indexes)));
+    snr_excluding_this_beat = zeros(1, num_includes_beats);
+    rr_std_excluding_this_beat = zeros(1, num_includes_beats);
+    for p = 1 : num_includes_beats
+        all_included_indexes_but_this_beat = included_indexes;
+        % this_beat_index = find(peak_indexes == peak_indexes(included_indexes(p)), 1,'first');
+        all_included_indexes_but_this_beat(p) = [];
 
-    %     ECG_robust_mean = RWAverage(stacked_beats);
-    ECG_robust_mean = mean(stacked_beats, 1);
-    ECG_robust_mean_replicated = ones(num_beats, 1) * ECG_robust_mean;
-    noise = stacked_beats - ECG_robust_mean_replicated;
-
-    %snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
-    snr = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
-
-    % hr_std = max(abs(diff(peak_indexes)));
-    % hr_std = std(diff([1, peak_indexes, sig_len]));
-    rr_std = std(diff(peak_indexes_refined));
-
-    snr_excluding_this_beat = zeros(1, num_beats);
-    rr_std_excluding_this_beat = zeros(1, num_beats);
-    for p = 1 : num_beats
-        all_but_this_beat_index = 1 : num_beats;
-        all_but_this_beat_index(p) = [];
-
-        % ECG_robust_mean = robust_weighted_average(stacked_beats(all_but_this_beat_index, :));
-        ECG_robust_mean = mean(stacked_beats(all_but_this_beat_index, :), 1);
-        ECG_robust_mean_replicated = ones(num_beats - 1, 1) * ECG_robust_mean;
+        % ECG_robust_mean = robust_weighted_average(stacked_beats(all_included_indexes_but_this_beat, :));
+        ECG_robust_mean = mean(stacked_beats(all_included_indexes_but_this_beat, :), 1);
+        ECG_robust_mean_replicated = ones(length(all_included_indexes_but_this_beat), 1) * ECG_robust_mean;
 
         % estimate channel quality SNR
-        noise = stacked_beats(all_but_this_beat_index, :) - ECG_robust_mean_replicated;
+        noise = stacked_beats(all_included_indexes_but_this_beat, :) - ECG_robust_mean_replicated;
 
         %snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
         snr_excluding_this_beat(p) = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
 
         % rr_std_excluding_this_beat(p) = max(abs(diff(peak_indexes(all_but_this_beat_index))));
         % rr_std_excluding_this_beat(p) = std(diff([1, peak_indexes(all_but_this_beat_index), sig_len]));
-        rr_std_excluding_this_beat(p) = std(diff(peak_indexes_refined(all_but_this_beat_index)));
+        rr_std_excluding_this_beat(p) = std(diff(peak_indexes(all_included_indexes_but_this_beat)));
     end
-    [max_snr_excluding_this_beat, I_snr_excluding_this_beat] = max(snr_excluding_this_beat);
-    if I_snr_excluding_this_beat > 1 && I_snr_excluding_this_beat < num_beats
-        switch mmode
-            case 'MORPHOLOGY' % 'MORPHOLOGY' or 'HEARTRATE'
-                if max_snr_excluding_this_beat > snr
-                    peak_indexes_refined(I_snr_excluding_this_beat) = [];
-                else
-                    break;
-                end
-            case 'HEARTRATE'
-                if rr_std_excluding_this_beat(I_snr_excluding_this_beat) < rr_std
-                    peak_indexes_refined(I_snr_excluding_this_beat) = [];
-                else
-                    break;
-                end
-            case 'MORPHOLOGY-HEARTRATE'
-                if max_snr_excluding_this_beat > snr && rr_std_excluding_this_beat(I_snr_excluding_this_beat) < rr_std
-                    % && data_filtered_env(peak_indexes(I_snr_excluding_this_beat)) < (peak_amps_max + peak_amps_med)/2% && hr_std <= rr_std_excluding_this_beat(I_snr_excluding_this_beat)
-                    peak_indexes_refined(I_snr_excluding_this_beat) = [];
-                else
-                    break;
-                end
-        end
+    [snr_excluding_worse_beat, I_worse_beat] = max(snr_excluding_this_beat);
+    % beat_index = find(peak_indexes == peak_indexes(included_indexes(I_worse_beat)), 1,'first');
+    switch mmode
+        case 'MORPHOLOGY' % 'MORPHOLOGY' or 'HEARTRATE'
+            if snr_excluding_worse_beat > snr_initial
+                included_indexes(I_worse_beat) = [];
+            else
+                break;
+            end
+        case 'HEARTRATE'
+            if rr_std_excluding_this_beat(I_worse_beat) < rr_std
+                included_indexes(I_worse_beat) = [];
+            else
+                break;
+            end
+        case 'MORPHOLOGY-HEARTRATE'
+            if snr_excluding_worse_beat > snr_initial && rr_std_excluding_this_beat(I_worse_beat) < rr_std
+                % && data_filtered_env(peak_indexes(I_snr_excluding_this_beat)) < (peak_amps_max + peak_amps_med)/2% && hr_std <= rr_std_excluding_this_beat(I_snr_excluding_this_beat)
+                included_indexes(I_worse_beat) = [];
+            else
+                break;
+            end
     end
 end
 
+% make sure the first and last indexes are not removed
+% if included_indexes(1) > 1
+%     included_indexes = cat(2, 1, included_indexes);
+% end
+% if included_indexes(end) < length(peak_indexes)
+%     included_indexes = cat(2, included_indexes, length(peak_indexes));
+% end
+
+peak_indexes_refined = peak_indexes(included_indexes);
 peaks = zeros(1, length(data));
 peaks(peak_indexes_refined) = 1;
 
@@ -895,90 +955,3 @@ qrs_likelihood = conv(template, peaks);
 qrs_likelihood = qrs_likelihood(lag : sig_len + lag - 1);
 % qrs_likelihood = filtfilt(template, sum(template), peaks);
 end
-
-
-% if 1
-%     f0 = 1/params.min_peak_distance;
-%     peaks = PeakDetection(data_filtered_env, f0/fs);
-%     peak_indexes = find(peaks);
-%     peak_amps = data_filtered_env(peak_indexes);
-%     peak_amps_max = max(peak_amps);
-%     peak_amps_min = min(peak_amps);
-%     peak_amps_med = median(peak_amps);
-%
-%     figure
-%     hold on
-%     grid
-%     plot(data)
-%     plot(data_sat)
-%     plot(data_filtered)
-%     plot(data_filtered_env)
-%     plot(peak_indexes, data_filtered_env(peak_indexes), 'ko', 'markersize', 14, 'linewidth', 3)
-%     for itr = 1 : 150
-%         num_beats = length(peak_indexes);
-%         event_width = 2 * round(0.75    *           median(diff(peak_indexes))/2) + 1;
-%         %     event_width = 2 * round(fs * params.min_peak_distance/2) + 1;
-%
-%
-%
-%         %     stacked_beats = EventStacker(data_filtered, peak_indexes, event_width);
-%         stacked_beats = EventStacker(data_filtered_env, peak_indexes, event_width);
-%
-%
-%
-%         %     ECG_robust_mean = RWAverage(stacked_beats);
-%         ECG_robust_mean = mean(stacked_beats, 1);
-%         ECG_robust_mean_replicated = ones(num_beats, 1) * ECG_robust_mean;
-%         noise = stacked_beats - ECG_robust_mean_replicated;
-%         %snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
-%         snr = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
-%
-%         %     hr_std = max(abs(diff(peak_indexes)));
-%         hr_std = std(diff([1, peak_indexes, sig_len]));
-%         snr_excluding_this_beat = zeros(1, num_beats);
-%         rr_std_excluding_this_beat = zeros(1, num_beats);
-%         for p = 1 : num_beats
-%             all_but_this_beat_index = 1 : num_beats;
-%             all_but_this_beat_index(p) = [];
-%             %         ECG_robust_mean = RWAverage(stacked_beats(all_but_this_beat_index, :));
-%             ECG_robust_mean = mean(stacked_beats(all_but_this_beat_index, :), 1);
-%             ECG_robust_mean_replicated = ones(num_beats - 1, 1) * ECG_robust_mean;
-%             % estimate channel quality SNR
-%             noise = stacked_beats(all_but_this_beat_index, :) - ECG_robust_mean_replicated;
-%             %snr_excluding_this_beat(p) = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
-%             snr_excluding_this_beat(p) = 20*log10(norm(ECG_robust_mean_replicated, 'fro')/norm(noise,'fro'));
-%
-%             %         rr_std_excluding_this_beat(p) = max(abs(diff(peak_indexes(all_but_this_beat_index))));
-%             rr_std_excluding_this_beat(p) = std(diff([1, peak_indexes(all_but_this_beat_index), sig_len]));
-%             %         if snr < snr_excluding_this_beat(p)
-%             %             peaks(peak_indexes(p)) = 0;
-%             %         end
-%         end
-%         [max_snr_excluding_this_beat, I_snr_excluding_this_beat] = max(snr_excluding_this_beat);
-%         % % %     if snr >= max_snr_excluding_this_beat% && hr_std <= rr_std_excluding_this_beat(I_snr_excluding_this_beat)
-%         % % %         continue
-%         % % %         %     elseif data_filtered_env(peak_indexes(I_snr_excluding_this_beat)) < (peak_amps_max + peak_amps_min)/2 %if hr_std > rr_std_excluding_this_beat(I_snr_excluding_this_beat)
-%         % % %     elseif data_filtered_env(peak_indexes(I_snr_excluding_this_beat)) < (peak_amps_max + peak_amps_med)/2 %if hr_std > rr_std_excluding_this_beat(I_snr_excluding_this_beat)
-%         % % %         peaks(peak_indexes(I_snr_excluding_this_beat)) = 0;
-%         % % %         peak_indexes = find(peaks);
-%         % % %     end
-%         if max_snr_excluding_this_beat > snr% && data_filtered_env(peak_indexes(I_snr_excluding_this_beat)) < (peak_amps_max + peak_amps_med)/2% && hr_std <= rr_std_excluding_this_beat(I_snr_excluding_this_beat)
-%             peaks(peak_indexes(I_snr_excluding_this_beat)) = 0;
-%             peak_indexes = find(peaks);
-%             %     elseif data_filtered_env(peak_indexes(I_snr_excluding_this_beat)) < (peak_amps_max + peak_amps_min)/2 %if hr_std > rr_std_excluding_this_beat(I_snr_excluding_this_beat)
-%             %     elseif data_filtered_env(peak_indexes(I_snr_excluding_this_beat)) < (peak_amps_max + peak_amps_med)/2 %if hr_std > rr_std_excluding_this_beat(I_snr_excluding_this_beat)
-%             %
-%         end
-%         %     peak_indexes = find(peaks);
-%     end
-%     plot(peak_indexes, data_filtered_env(peak_indexes), 'ro', 'markersize', 16, 'linewidth', 3)
-%
-%     figure
-%     hold on
-%     plot((0:size(stacked_beats, 2)-1)/fs, stacked_beats');
-%     plot((0:size(stacked_beats, 2)-1)/fs, mean(stacked_beats, 1), 'k', 'linewidth', 3);
-%     grid
-%
-% end
-%
-
