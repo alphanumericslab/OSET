@@ -21,7 +21,7 @@ function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_de
 %       params.filter_type: preprocessing filter type. Options: 'MDMN',
 %           'BANDPASS_FILTER', 'MD3MN', 'GAUSSIAN_MATCHED_FILTER',
 %           'MULT_MATCHED_FILTER_ENV', or 'WAVELET'. Default is 'WAVELET'
-%       Note: each mode has predefined parameters that 
+%       Note: each mode has predefined parameters that
 
 %       params.bp_lower_cutoff: lower cutoff frequency of R-peak detector bandpass filter (in Hz), when params.filter_type = 'BANDPASS_FILTER'. Default = 1
 %       params.bp_upper_cutoff: upper cutoff frequency of R-peak detector bandpass filter (in Hz), when params.filter_type = 'BANDPASS_FILTER'. Default = 40
@@ -75,9 +75,17 @@ end
 sig_len = size(data, 2); % signal length
 
 % left and right paddings for signal continuity
-left_pad_len = round(1.0*fs);
-if ~isfield(params, 'left_pad') || isempty(params.left_pad)
+if ~isfield(params, 'left_pad_len') || isempty(params.left_pad_len)
+    left_pad_len = round(1.0*fs);
     if params.verbose, disp(['left_pad_len = ', num2str(left_pad_len)]), end
+end
+
+if ~isfield(params, 'right_pad_len') || isempty(params.right_pad_len)
+    right_pad_len = round(1.0*fs);
+    if params.verbose, disp(['right_pad_len = ', num2str(right_pad_len)]), end
+end
+
+if ~isfield(params, 'left_pad') || isempty(params.left_pad)
     left_pad = zeros(size(data, 1), left_pad_len);
 else
     if size(data, 1) ~= size(params.left_pad, 1)
@@ -87,7 +95,6 @@ else
     left_pad_len = size(left_pad, 2);
 end
 
-right_pad_len = round(1.0*fs);
 if ~isfield(params, 'right_pad') || isempty(params.right_pad)
     if params.verbose, disp(['right_pad_len = ', num2str(right_pad_len)]), end
     right_pad = zeros(size(data, 1), right_pad_len);
@@ -96,7 +103,7 @@ else
         error('size(data, 1) ~= size(params.left_pad, 1)');
     end
     right_pad = params.right_pad;
-    % right_pad_len = size(right_pad, 2);    
+    % right_pad_len = size(right_pad, 2);
 end
 
 
@@ -334,7 +341,7 @@ peak_indexes(peak_indexes > sig_len) = [];
 % if peak_indexes(1) == 1
 %     peak_indexes = peak_indexes(2:end);
 % end
-% 
+%
 % if peak_indexes(end) == sig_len
 %     peak_indexes = peak_indexes(1:end - 1);
 % end
@@ -421,7 +428,7 @@ if params.REFINE_PEAKS
         if params.verbose, disp(['   pparams.beat_std_med_frac_th = ', num2str(pparams.beat_std_med_frac_th)]), end
         if params.verbose, disp(['   pparams.max_amp_prctile = ', num2str(pparams.max_amp_prctile)]), end
     end
-    if params.OMIT_LOW_POWER_BEATS 
+    if params.OMIT_LOW_POWER_BEATS
         % peak_indexes_refined = refine_peaks_low_power_beats(data_filtered_env, peak_indexes, max_amp_k_sigma, beat_std_med_frac_th, params.PLOT_DIAGNOSTIC);
         [~, peaks_OMIT_LOW_POWER_BEATS] = refine_peaks_low_power_beats(data_filtered_mn_all_channels_padded, peak_indexes_padded, pparams.max_amp_prctile, pparams.beat_std_med_frac_th, params.PLOT_DIAGNOSTIC);
         peaks_OMIT_LOW_POWER_BEATS = peaks_OMIT_LOW_POWER_BEATS(left_pad_len + 1 : left_pad_len + sig_len);
@@ -443,7 +450,7 @@ if params.REFINE_PEAKS
     if params.OMIT_NEG_CORRCOEF_BEATS
         [~, peaks_OMIT_NEG_CORRCOEF_BEATS] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels_padded, peak_indexes_padded, [], 'NEG-CORR', params.PLOT_DIAGNOSTIC);
         peaks_OMIT_NEG_CORRCOEF_BEATS = peaks_OMIT_NEG_CORRCOEF_BEATS(left_pad_len + 1 : left_pad_len + sig_len);
-        
+
         peaks_all_method = cat(1, peaks_all_method, peaks_OMIT_NEG_CORRCOEF_BEATS);
         refinement_methods = cat(2, refinement_methods, 'OMIT_NEG_CORRCOEF_BEATS');
         if ~isfield(params, 'weight_OMIT_NEG_CORRCOEF_BEATS') || isempty(params.weight_OMIT_NEG_CORRCOEF_BEATS)
@@ -620,13 +627,13 @@ if isfield(params, 'CONSENSUS_WEIGHTS_THRESHOLD') || isempty(params.CONSENSUS_WE
         error('params.CONSENSUS_WEIGHTS_THRESHOLD must be between 0 and 1');
     end
     peaks_weighted_average = sum(diag(consensus_weights) * peaks_all_method, 1) / sum(consensus_weights);
-    peak_indexes_consensus = peaks_weighted_average >= params.CONSENSUS_WEIGHTS_THRESHOLD;
+    peak_indexes_consensus = find(peaks_weighted_average >= params.CONSENSUS_WEIGHTS_THRESHOLD);
 elseif isfield(params, 'NUM_VOTES_TO_KEEP_PEAK') || isempty(params.NUM_VOTES_TO_KEEP_PEAK)
     if params.NUM_VOTES_TO_KEEP_PEAK > num_peak_refinement_algorithms
         error('Number of required votes to keep a peak exceeds the number of voting algorithms');
     end
     peaks_consensus = sum(diag(consensus_weights) * peaks_all_method, 1);
-    peak_indexes_consensus = peaks_consensus >= params.NUM_VOTES_TO_KEEP_PEAK;
+    peak_indexes_consensus = find(peaks_consensus >= params.NUM_VOTES_TO_KEEP_PEAK);
 end
 
 %% Likelihood-based refinement of the R-peaks (if required)
@@ -644,15 +651,15 @@ if params.CORRECT_PEAKS_LIKELIHOOD_PEAKS
     % bumps_indexes = refine_peaks_low_amp_peaks_prctile(data_filtered_mn_all_channels.* qrs_likelihood, 1:sig_len, params.likelihood_power_env_hist_peak_th, params.PLOT_DIAGNOSTIC);
     bumps_indexes = refine_peaks_low_amp_peaks_prctile(data_filtered_env.* qrs_likelihood, 1:sig_len, params.likelihood_power_env_hist_peak_th, params.PLOT_DIAGNOSTIC);
 
-% search for all local peaks within a given sliding window length
-if ~isfield(params, 'min_peak_distance') || isempty(params.min_peak_distance)
-    params.min_peak_distance = 0.18;
-    if params.verbose, disp(['params.min_peak_distance = ', num2str(params.min_peak_distance)]), end
-end
-rpeak_search_half_wlen = floor(fs * params.min_peak_distance);
-env_pk_detect_mode = 'POS';
-if params.verbose, disp(['env_pk_detect_mode = ', env_pk_detect_mode]), end
-peak_indexes_consensus = refine_peaks_too_close_low_amp(data_filtered_env, bumps_indexes, rpeak_search_half_wlen, env_pk_detect_mode, params.PLOT_DIAGNOSTIC);
+    % search for all local peaks within a given sliding window length
+    if ~isfield(params, 'min_peak_distance') || isempty(params.min_peak_distance)
+        params.min_peak_distance = 0.18;
+        if params.verbose, disp(['params.min_peak_distance = ', num2str(params.min_peak_distance)]), end
+    end
+    rpeak_search_half_wlen = floor(fs * params.min_peak_distance);
+    env_pk_detect_mode = 'POS';
+    if params.verbose, disp(['env_pk_detect_mode = ', env_pk_detect_mode]), end
+    peak_indexes_consensus = refine_peaks_too_close_low_amp(data_filtered_env, bumps_indexes, rpeak_search_half_wlen, env_pk_detect_mode, params.PLOT_DIAGNOSTIC);
 end
 
 %% replace envelope peaks with original signal peaks, if required
@@ -666,12 +673,12 @@ if params.RETURN_SIGNAL_PEAKS
         if params.verbose, disp(['params.PEAK_SIGN = ', params.PEAK_SIGN]), end
     end
     if ~isfield(params, 'envelope_to_peak_search_wlen')
-        params.envelope_to_peak_search_wlen = 0.05;
+        params.envelope_to_peak_search_wlen = 0.01;
         if params.verbose, disp(['   params.envelope_to_peak_search_wlen = ', num2str(params.envelope_to_peak_search_wlen)]), end
     end
     envelope_to_peak_search_wlen = floor(fs * params.envelope_to_peak_search_wlen / 2);
     peak_indexes = find_closest_peaks(abs(data), peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
-    % peak_indexes_consensus = find_closest_peaks(data_filtered, peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
+    % peak_indexes_consensus = find_closest_peaks(abs(data), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 end
 
 qrs_likelihood = peak_surrounding_likelihood(sig_len, peak_indexes_consensus, fs, params.max_likelihood_span, params.max_likelihood_span);
