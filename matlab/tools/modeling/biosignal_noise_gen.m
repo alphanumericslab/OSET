@@ -143,7 +143,7 @@ switch noisetype
         artifact = resample(artifact, fs, 360);
         M = length(artifact);
         if nargin == 7
-            n0 = max(1, min(varargin{3}, length(artifact)-N+1));
+            n0 = max(1, varargin{3}); %min(varargin{3}, length(artifact)-N+1));
         else
             n0 = 1;
         end
