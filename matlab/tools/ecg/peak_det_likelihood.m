@@ -232,12 +232,17 @@ switch params.filter_type
             if params.verbose, disp(['params.wden_type = ', params.wden_type]), end
         end
         if ~isfield(params, 'wden_upper_level') || isempty(params.wden_upper_level)
-            params.wden_upper_level = floor(log2(fs/80.0)); % Upper frequency range for the wavelet denoiser
+            f_high = min(49.0, fs/2);
+            params.wden_upper_level = round(log2(fs/f_high)); % Upper frequency range for the wavelet denoiser
             if params.verbose, disp(['params.wden_upper_level = ', num2str(params.wden_upper_level)]), end
         end
         if ~isfield(params, 'wden_lower_level') || isempty(params.wden_lower_level)
-            params.wden_lower_level = ceil(log2(fs/27.0)); % Lower frequency range for the wavelet denoiser
+            f_low = 27.0; % lower cutoff frequency
+            params.wden_lower_level = round(log2(fs/f_low)); % Lower frequency range for the wavelet denoiser
             if params.verbose, disp(['params.wden_lower_level = ', num2str(params.wden_lower_level)]), end
+        end
+        if params.wden_upper_level > params.wden_lower_level
+            error('requested wavelet band too narrow, or sampling frequency is too low.')
         end
 
         data_filtered_padded = zeros(size(data_padded));

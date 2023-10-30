@@ -33,7 +33,7 @@ peak_detector_params.PLOT_DIAGNOSTIC = false; % diagnostic mode (do not activate
 peak_detector_params.verbose = false; % reports all the default values for the internal parameters of peak_det_likelihood, which can be modified through this data structure if needed. 
 
 overlap_time = 1.0; % overlap between segments for continuity (1.0-2.0 seconds is enough)
-seg_len_time = 30.0; % segment length in seconds
+seg_len_time = 10.0; % segment length in seconds
 
 filelist = dir(fullfile([datafilepath, '**/*.mat']));  % get list of all mat files of interest
 for k = 1 : length(filelist) % Sweep over all or specific records
@@ -81,7 +81,7 @@ for k = 1 : length(filelist) % Sweep over all or specific records
             scatter(tm, data(ch, :), 75, qrs_likelihood'*[0.5, 0, 0] + 0.5, 'filled'); lgnds = cat(2, lgnds, 'QRS likelihood (color-coded from gray to red)');
             hold on
             plot(tm , data(ch, :), 'b', 'linewidth', 2); lgnds = cat(2, lgnds, 'signal');
-            plot(tm(peaks_indexes), data(ch, peaks_indexes), 'go', 'MarkerFaceColor','g', 'markersize', 12); lgnds = cat(2, lgnds, 'R-peaks');
+            plot(tm(peaks_indexes), data(ch, peaks_indexes), 'go', 'MarkerFaceColor','g', 'markersize', 12); lgnds = cat(2, lgnds, 'R-peaks detected');
             plot(tm(peak_indexes_consensus), data(ch, peak_indexes_consensus), 'ro', 'MarkerFaceColor','r', 'markersize', 11);  lgnds = cat(2, lgnds, 'R-peaks corrected');
             grid
             set(gca, 'fontsize', 18, 'box', 'on')
@@ -121,8 +121,8 @@ for k = 1 : length(filelist) % Sweep over all or specific records
         end
      
         % SET A BREAK-POINT HERE TO SEE THE FIGURES
-        keyboard % for debugging and visualization only; remove this line during batch runs
+        %keyboard % for debugging and visualization only; remove this line during batch runs
         close(fig)
-        disp(full_fname)
+        disp(strcat('record #', num2str(k), ' fname: ', full_fname, ' channel #', num2str(ch)))
     end
 end
