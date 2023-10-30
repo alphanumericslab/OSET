@@ -1,16 +1,16 @@
-function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic_long_recs(data, fs, varargin)
-% PEAK_DET_PROBABILISTIC_LONG_RECS - Block-wise ECG R-peak detector for long records.
+function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood_long_recs(data, fs, varargin)
+% PEAK_DET_LIKELIHOOD_LONG_RECS - Block-wise ECG R-peak detector for long records.
 %
-% This function is an efficient version of peak_det_probabilistic,
+% This function is an efficient version of peak_det_likelihood,
 % designed for long ECG records. It processes the input data in
 % segments (blocks) and combines the results to detect R-peaks across the
 % entire record.
 %
 % Usage:
-%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic_long_recs(data, fs)
-%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic_long_recs(data, fs, seg_len_time)
-%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic_long_recs(data, fs, seg_len_time, pad_len_time)
-%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic_long_recs(data, fs, seg_len_time, pad_len_time, peak_detector_params)
+%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood_long_recs(data, fs)
+%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood_long_recs(data, fs, seg_len_time)
+%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood_long_recs(data, fs, seg_len_time, pad_len_time)
+%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood_long_recs(data, fs, seg_len_time, pad_len_time, peak_detector_params)
 %
 % Inputs:
 %   - data: The ECG signal data, with each row representing a lead and each
@@ -21,8 +21,8 @@ function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_de
 %   - pad_len_time (optional): The padding length at the beginning and end
 %     of each segment in seconds, for continuity. Default is 1.0 second.
 %   - peak_detector_params (optional): Additional parameters for the peak
-%     detector passed to peak_det_probabilistic(). See the help for
-%     peak_det_probabilistic, for details
+%     detector passed to peak_det_likelihood(). See the help for
+%     peak_det_likelihood, for details
 %
 % Outputs:
 %   - peaks: The detected R-peaks.
@@ -95,8 +95,8 @@ for segment = 1 : num_seg
         peak_detector_params.right_pad = [];
     end
     
-    % Call peak_det_probabilistic for the current segment
-    [peaks_segment, peak_indexes_segment, peak_indexes_consensus_segment, qrs_likelihood_segment] = peak_det_probabilistic(data_segment, fs, peak_detector_params);
+    % Call peak_det_likelihood for the current segment
+    [peaks_segment, peak_indexes_segment, peak_indexes_consensus_segment, qrs_likelihood_segment] = peak_det_likelihood(data_segment, fs, peak_detector_params);
     
     % Concatenate results for the current segment with previous segments
     peak_indexes = cat(2, peak_indexes, peak_indexes_segment + length(peaks));

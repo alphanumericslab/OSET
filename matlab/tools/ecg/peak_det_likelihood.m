@@ -1,12 +1,14 @@
-function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic(data, fs, varargin)
-% function [peaks, peak_indexes, qrs_likelihood] = peak_det_probabilistic(data, fs)
-% A probabilistic R-peak detector based on local peaks sorting
+function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood(data, fs, varargin)
+% function [peaks, peak_indexes, qrs_likelihood] = peak_det_likelihood(data, fs)
+% A probabilistic R-peak detector based on local peak setection and
+% refinement using multiple methods
 %
-% Note: Under development
+% NOTE: Under development - works quite well, but the help below doesn't
+%   match the actual implementation
 %
 % Usage:
-%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic(data, fs)
-%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_probabilistic(data, fs, params)
+%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood(data, fs)
+%   [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood(data, fs, params)
 %
 % Inputs:
 %   data: single or multichannel ECG signal with row-wise channels
@@ -54,7 +56,7 @@ function [peaks, peak_indexes, peak_indexes_consensus, qrs_likelihood] = peak_de
 %% read and parse input params - initial settings
 
 if (size(data, 2) / fs) > 60.0
-    warning(['The signal is ', num2str((size(data, 2) / fs), '%.1f'), 's long; consider using peak_det_probabilistic_long_recs for this signal, which supports segment-wise R-peak detection.']);
+    warning(['The signal is ', num2str((size(data, 2) / fs), '%.1f'), 's long; consider using peak_det_likelihood_long_recs for this signal, which supports segment-wise R-peak detection.']);
 end
 
 % use default values when no parameters are set
@@ -176,9 +178,9 @@ switch params.filter_type
         end
         data_filtered_padded = zeros(size(data_padded));
         for kk = 1 : size(data_padded, 1)
-            bl1 = baseline_sliding_window(data(kk, :), round(params.wlen_md1 * fs), 'md');
-            bl2 = baseline_sliding_window(data(kk, :), round(params.wlen_md2 * fs), 'md');
-            bl3 = baseline_sliding_window(data(kk, :), round(params.wlen_md3 * fs), 'md');
+            bl1 = baseline_sliding_window(data_padded(kk, :), round(params.wlen_md1 * fs), 'md');
+            bl2 = baseline_sliding_window(data_padded(kk, :), round(params.wlen_md2 * fs), 'md');
+            bl3 = baseline_sliding_window(data_padded(kk, :), round(params.wlen_md3 * fs), 'md');
             baseline = baseline_sliding_window((bl1 + bl2 + bl3) / 3, round(params.wlen_mn * fs), 'mn');
             data_filtered_padded(kk, :) = data_padded(kk, :) - baseline;
         end
@@ -234,7 +236,7 @@ switch params.filter_type
             if params.verbose, disp(['params.wden_upper_level = ', num2str(params.wden_upper_level)]), end
         end
         if ~isfield(params, 'wden_lower_level') || isempty(params.wden_lower_level)
-            params.wden_lower_level = ceil(log2(fs/25.0)); % Lower frequency range for the wavelet denoiser
+            params.wden_lower_level = ceil(log2(fs/27.0)); % Lower frequency range for the wavelet denoiser
             if params.verbose, disp(['params.wden_lower_level = ', num2str(params.wden_lower_level)]), end
         end
 
@@ -709,6 +711,10 @@ if isfield(params, 'PLOT_RESULTS') && isequal(params.PLOT_RESULTS, 1)
     set(gca, 'fontsize', 16)
     xlim([tt(1), tt(end)])
 end
+
+% make sure there are no peplicated peak indexes
+peak_indexes = unique(peak_indexes);
+peak_indexes_consensus = unique(peak_indexes_consensus);
 
 % return final peaks
 peaks = zeros(1, sig_len);

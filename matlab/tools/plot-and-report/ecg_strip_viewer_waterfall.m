@@ -317,12 +317,13 @@ SignalLen = size(x_denoised, 2);
 peaks_all_channels = zeros(size(x_denoised));
 snr = -inf(1, size(x_denoised, 1));
 for ch = 1 : size(x_denoised, 1)
-    peak_detector_params.saturate = 1;
-    peak_detector_params.k_sigma = 4;
-    peak_detector_params.hist_search_th = 0.9;
-    peak_detector_params.rpeak_search_wlen = 0.4; % MAX detectable HR (in BPM) = 60/rpeak_search_wlen
-    peak_detector_params.filter_type = 'MDMN';%'MULT_MATCHED_FILTER';%'BANDPASS_FILTER', 'MATCHED_FILTER', 'MULT_MATCHED_FILTER', 'MDMN', 'WAVELET'
-    [peaks_all_channels(ch, :), peak_indexes, ~] = peak_det_probabilistic(x_denoised(ch, :), fs, peak_detector_params); % qrs_likelihood
+    % peak_detector_params.saturate = 1;
+    % peak_detector_params.k_sigma = 4;
+    % peak_detector_params.hist_search_th = 0.9;
+    % peak_detector_params.rpeak_search_wlen = 0.4; % MAX detectable HR (in BPM) = 60/rpeak_search_wlen
+    % peak_detector_params.filter_type = 'MDMN';%'MULT_MATCHED_FILTER';%'BANDPASS_FILTER', 'MATCHED_FILTER', 'MULT_MATCHED_FILTER', 'MDMN', 'WAVELET'
+    % [peaks_all_channels(ch, :), peak_indexes, ~] = peak_det_likelihood(x_denoised(ch, :), fs, peak_detector_params); % qrs_likelihood
+    [peaks_all_channels(ch, :), peak_indexes, ~] = peak_det_likelihood(x_denoised(ch, :), fs); % qrs_likelihood
     NumBeats = length(peak_indexes);
     if NumBeats == 0
         continue;
