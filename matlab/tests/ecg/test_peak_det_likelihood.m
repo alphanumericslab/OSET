@@ -8,10 +8,11 @@ clc
 % Note: if needed, convert WFDB dat files in bash using this command:
 %   find ./*/ -type f -execdir wfdb2mat -r {} \;
 
-datafilepath = '../../../../../DataFiles/Physionet.org/files/qtdb/1.0.0/';fs = 250.0; % Sampling frequency of the data (put it in the loop and read it from the data if not fixed across all records)
-% datafilepath = '../../../../../DataFiles/physionet.org/files/ptb-xl/1.0.3/records500/'; fs = 500.0;
+% datafilepath = '../../../../../DataFiles/Physionet.org/files/qtdb/1.0.0/';fs = 250.0; % Sampling frequency of the data (put it in the loop and read it from the data if not fixed across all records)
+%%% datafilepath = '../../../../../DataFiles/physionet.org/files/ptb-xl/1.0.3/records500/'; fs = 500.0;
+% datafilepath = '../../../../../DataFiles/physionet.org/files/ptb-xl/1.0.3/records100/'; fs = 100.0;
 % datafilepath = '../../../../../DataFiles/physionet.org/files/ptbdb/1.0.0/'; fs = 1000.0;
-% datafilepath = '../../../../../DataFiles/physionet.org/files/mitdb/1.0.0/'; fs = 360.0;
+datafilepath = '../../../../../DataFiles/physionet.org/files/mitdb/1.0.0/'; fs = 360.0;
 
 PLOT_FIGURES = true; % plot figures or not
 SAVE_FIGURES = false; % save r-peak figures or not (figure is not displayed if this flag is active)
@@ -37,6 +38,7 @@ seg_len_time = 10.0; % segment length in seconds
 
 filelist = dir(fullfile([datafilepath, '**/*.mat']));  % get list of all mat files of interest
 for k = 1 : length(filelist) % Sweep over all or specific records
+    % TSTART = tic;
     record_name = filelist(k).name;
     datafilename = fullfile(filelist(k).folder, record_name);
     full_fname = string(record_name(1:end-4));
@@ -81,10 +83,11 @@ for k = 1 : length(filelist) % Sweep over all or specific records
             scatter(tm, data(ch, :), 75, qrs_likelihood'*[0.5, 0, 0] + 0.5, 'filled'); lgnds = cat(2, lgnds, 'QRS likelihood (color-coded from gray to red)');
             hold on
             plot(tm , data(ch, :), 'b', 'linewidth', 2); lgnds = cat(2, lgnds, 'signal');
-            plot(tm(peaks_indexes), data(ch, peaks_indexes), 'go', 'MarkerFaceColor','g', 'markersize', 12); lgnds = cat(2, lgnds, 'R-peaks detected');
-            plot(tm(peak_indexes_consensus), data(ch, peak_indexes_consensus), 'ro', 'MarkerFaceColor','r', 'markersize', 11);  lgnds = cat(2, lgnds, 'R-peaks corrected');
+            plot(tm(peaks_indexes), data(ch, peaks_indexes), 'ro', 'MarkerFaceColor','r', 'markersize', 12); lgnds = cat(2, lgnds, 'R-peaks detected');
+            plot(tm(peak_indexes_consensus), data(ch, peak_indexes_consensus), 'go', 'MarkerFaceColor','g', 'markersize', 11);  lgnds = cat(2, lgnds, 'R-peaks corrected');
             grid
             set(gca, 'fontsize', 18, 'box', 'on')
+            xlim([tm(1), tm(end)])
             xlabel('time[s]');
             ylabel('Amplitude');
             legend(lgnds, 'orientation', 'horizontal');
@@ -100,6 +103,7 @@ for k = 1 : length(filelist) % Sweep over all or specific records
             title('Heart rate');
             legend({'heart rate', 'heart rate corrected'}, 'orientation', 'horizontal')
             set(gca, 'fontsize', 18, 'box', 'on')
+            % xlim([tm(peaks_indexes(2)), tm(peaks_indexes(end))])
             xlim([tm(1), tm(end)])
             ylim([10*floor(min(hr_consensus)/10), 10*ceil(max(hr_consensus)/10)])
 
@@ -120,6 +124,8 @@ for k = 1 : length(filelist) % Sweep over all or specific records
             save(outfname, 'peaks_indexes', 'peak_indexes_consensus');
         end
      
+        % T_ELAPSED_PER_second_in_ms = 1000*toc(TSTART) / (length(data) / fs)
+
         % SET A BREAK-POINT HERE TO SEE THE FIGURES
         %keyboard % for debugging and visualization only; remove this line during batch runs
         close(fig)

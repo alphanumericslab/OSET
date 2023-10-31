@@ -194,7 +194,8 @@ switch params.filter_type
             params.gaus_match_filt_sigma = 0.01;
             if params.verbose, disp(['params.gaus_match_filt_sigma = ', num2str(params.gaus_match_filt_sigma)]), end
         end
-        t_matched = -params.gaus_match_filt_span/2 : 1 / fs : params.gaus_match_filt_span/2;
+        half_span = round(fs * params.gaus_match_filt_span/2);
+        t_matched = (-half_span : half_span) / fs;
         match_filt_template = exp(-t_matched.^2/(2 * params.gaus_match_filt_sigma ^ 2));
         lag_match = round(length(match_filt_template)/2);
         data_filtered_padded = zeros(size(data_padded));
@@ -211,7 +212,8 @@ switch params.filter_type
             params.gaus_match_filt_sigma = 0.005;
             if params.verbose, disp(['params.gaus_match_filt_sigma = ', num2str(params.gaus_match_filt_sigma)]), end
         end
-        t_matched = -params.gaus_match_filt_span/2 : 1 / fs : params.gaus_match_filt_span/2;
+        half_span_in_samples = round(fs * params.gaus_match_filt_span/2);
+        t_matched = (-half_span_in_samples : half_span_in_samples) / fs;
         match_filt_template1 = exp(-t_matched.^2/(2 * params.gaus_match_filt_sigma ^ 2));
         match_filt_template2 = diff(match_filt_template1);
         lag_match1 = round(length(match_filt_template1)/2);
@@ -232,12 +234,13 @@ switch params.filter_type
             if params.verbose, disp(['params.wden_type = ', params.wden_type]), end
         end
         if ~isfield(params, 'wden_upper_level') || isempty(params.wden_upper_level)
-            f_high = min(49.0, fs/2);
+            f_high = min(49.0, fs/2); % rejects the powerline as well, either 50Hz or 60Hz
             params.wden_upper_level = round(log2(fs/f_high)); % Upper frequency range for the wavelet denoiser
             if params.verbose, disp(['params.wden_upper_level = ', num2str(params.wden_upper_level)]), end
         end
         if ~isfield(params, 'wden_lower_level') || isempty(params.wden_lower_level)
-            f_low = 27.0; % lower cutoff frequency
+            % f_low = 27.0; % lower cutoff frequency
+            f_low = 18.0; % lower cutoff frequency
             params.wden_lower_level = round(log2(fs/f_low)); % Lower frequency range for the wavelet denoiser
             if params.verbose, disp(['params.wden_lower_level = ', num2str(params.wden_lower_level)]), end
         end
@@ -329,9 +332,10 @@ end
 
 % the average challen (for multichannel inputs)
 % data_filtered_mn_all_channels = mean(data_filtered, 1);
+data_mn_all_channels_padded = mean(data_padded, 1);
 data_filtered_mn_all_channels_padded = mean(data_filtered_padded, 1);
 
-%% find the envelope bunps (the top percentage of the signal's power envelope) for R-peak search
+%% find the envelope bumps (the top percentage of the signal's power envelope) for R-peak search
 if ~isfield(params, 'power_env_hist_peak_th') || isempty(params.power_env_hist_peak_th)
     params.power_env_hist_peak_th = 85.0;
     if params.verbose, disp(['params.power_env_hist_peak_th = ', num2str(params.power_env_hist_peak_th)]), end
@@ -343,7 +347,7 @@ bumps_indexes(bumps_indexes > sig_len) = [];
 
 %% search for all local peaks within a given minimal sliding window length
 if ~isfield(params, 'min_peak_distance') || isempty(params.min_peak_distance)
-    params.min_peak_distance = 0.18;
+    params.min_peak_distance = 0.2;
     if params.verbose, disp(['params.min_peak_distance = ', num2str(params.min_peak_distance)]), end
 end
 rpeak_search_half_wlen = floor(fs * params.min_peak_distance);
@@ -365,7 +369,7 @@ peak_indexes(peak_indexes > sig_len) = [];
 
 %% matched filter using average beat shape
 if ~isfield(params, 'ENHANCE_MATCHED_FILTER') || isempty(params.ENHANCE_MATCHED_FILTER)
-    params.ENHANCE_MATCHED_FILTER = false;
+    params.ENHANCE_MATCHED_FILTER = true;
     if params.verbose, disp(['params.ENHANCE_MATCHED_FILTER = ', num2str(params.ENHANCE_MATCHED_FILTER)]), end
 end
 if params.ENHANCE_MATCHED_FILTER
@@ -404,14 +408,41 @@ if ~isfield(params, 'REFINE_PEAKS') || isempty(params.REFINE_PEAKS)
 end
 if params.REFINE_PEAKS
 
+    %% detect beats that were most impacted by preprocessing filter (for T-wave detection purposes)
+    if ~isfield(params, 'OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC') || isempty(params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC)
+        params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC = true;
+        if params.verbose, disp(['params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC = ', num2str(params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC)]), end
+        pparams.ff_low_cutoff = 3.0/fs;
+        pparams.ff_high_cutoff = min(0.5, 50.0/fs);
+        pparams.pre_to_post_filter_power_ratio_th = 3.0;
+        pparams.percentile = 90.0;
+        pparams.percentile_fraction = 0.25;
+        if params.verbose, disp(['   pparams.ff_low_cutoff = ', num2str(pparams.ff_low_cutoff)]), end
+        if params.verbose, disp(['   pparams.ff_high_cutoff = ', num2str(pparams.ff_high_cutoff)]), end
+        if params.verbose, disp(['   pparams.pre_to_post_filter_power_ratio_th = ', num2str(pparams.pre_to_post_filter_power_ratio_th)]), end
+        if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
+        if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
+    end
+    if params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC
+        [~, peaks_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC] = refine_peaks_filter_energy_impacted_beats(data_mn_all_channels_padded, data_filtered_mn_all_channels_padded, peak_indexes_padded, pparams);
+        peaks_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC = peaks_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC(left_pad_len + 1 : left_pad_len + sig_len);
+        peaks_all_method = cat(1, peaks_all_method, peaks_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC);
+        refinement_methods = cat(2, refinement_methods, 'OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC');
+        if ~isfield(params, 'weight_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC')
+            params.weight_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC = 1.0;
+            if params.verbose, disp(['params.weight_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC = ', num2str(params.weight_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC)]), end
+        end
+        consensus_weights = cat(2, consensus_weights, params.weight_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC);
+    end
+
+    %% detect beats with extreme amplitude deviations from other peaks
     if ~isfield(params, 'OMIT_LOW_AMP_PEAKS_PRCTL_FRAC') || isempty(params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC)
         params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC = true;
         if params.verbose, disp(['params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC = ', num2str(params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC)]), end
     end
-    %% detect beats with extreme amplitude deviations from other peaks
     if params.OMIT_LOW_AMP_PEAKS_PRCTL_FRAC
         pparams.percentile = 90.0;
-        pparams.percentile_fraction = 0.4;
+        pparams.percentile_fraction = 0.3;
         if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
         if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
         [~, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_FRAC] = refine_peaks_low_amp_peaks_prctile_fraction(data_filtered_env, peak_indexes, pparams, params.PLOT_DIAGNOSTIC);
@@ -511,7 +542,7 @@ if params.REFINE_PEAKS
 
     %% detect beats with low correlation coefficient with other beats
     if ~isfield(params, 'OMIT_LOW_CORRCOEF_BEATS') || isempty(params.OMIT_LOW_CORRCOEF_BEATS)
-        params.OMIT_LOW_CORRCOEF_BEATS = true;
+        params.OMIT_LOW_CORRCOEF_BEATS = false;
         pparams.percentile = 90.0;
         pparams.percentile_fraction = 0.3;
         if params.verbose, disp(['params.OMIT_LOW_CORRCOEF_BEATS = ', num2str(params.OMIT_LOW_CORRCOEF_BEATS)]), end
@@ -568,7 +599,7 @@ if params.REFINE_PEAKS
         peaks_all_method = cat(1, peaks_all_method, peaks_OMIT_BEAT_HRV_INCR_BEATS);
         refinement_methods = cat(2, refinement_methods, 'OMIT_BEAT_HRV_INCR_BEATS');
         if ~isfield(params, 'weight_OMIT_BEAT_HRV_INCR_BEATS') || isempty(params.weight_OMIT_BEAT_HRV_INCR_BEATS)
-            params.weight_OMIT_BEAT_HRV_INCR_BEATS = 2.0;
+            params.weight_OMIT_BEAT_HRV_INCR_BEATS = 3.0;
             if params.verbose, disp(['params.weight_OMIT_BEAT_HRV_INCR_BEATS = ', num2str(params.weight_OMIT_BEAT_HRV_INCR_BEATS)]), end
         end
         consensus_weights = cat(2, consensus_weights, params.weight_OMIT_BEAT_HRV_INCR_BEATS);
@@ -654,7 +685,7 @@ if ~isfield(params, 'max_likelihood_span') || isempty(params.max_likelihood_span
 end
 qrs_likelihoods = zeros(num_peak_refinement_algorithms, sig_len);
 for kk = 1 : num_peak_refinement_algorithms
-    qrs_likelihoods(kk, :) = peak_surrounding_likelihood(sig_len, find(peaks_all_method(kk, :)), fs, params.max_likelihood_span, params.likelihood_sigma);
+    qrs_likelihoods(kk, :) = peak_surrounding_likelihood(sig_len, find(peaks_all_method(kk, :)), fs, 'GAUSSIAN', params.max_likelihood_span, params.likelihood_sigma);
 end
 qrs_likelihood = sum(diag(consensus_weights) * qrs_likelihoods, 1) / sum(consensus_weights);
 
@@ -669,12 +700,17 @@ if params.RETURN_SIGNAL_PEAKS
         if params.verbose, disp(['params.PEAK_SIGN = ', params.PEAK_SIGN]), end
     end
     if ~isfield(params, 'envelope_to_peak_search_wlen')
-        params.envelope_to_peak_search_wlen = 0.01;
+        params.envelope_to_peak_search_wlen = 0.03;
         if params.verbose, disp(['   params.envelope_to_peak_search_wlen = ', num2str(params.envelope_to_peak_search_wlen)]), end
     end
+
     envelope_to_peak_search_wlen = floor(fs * params.envelope_to_peak_search_wlen / 2);
-    peak_indexes = find_closest_peaks(abs(data), peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
-    % peak_indexes_consensus = find_closest_peaks(abs(data), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
+
+    peak_likelihood_boxes = peak_surrounding_likelihood(sig_len, peak_indexes, fs, 'BOX', params.envelope_to_peak_search_wlen, []);
+    peak_indexes = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1)), :), peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
+
+    peak_likelihood_boxes = peak_surrounding_likelihood(sig_len, peak_indexes_consensus, fs, 'BOX', params.envelope_to_peak_search_wlen, []);
+    peak_indexes_consensus = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1)), :), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 end
 
 % post-extraction peak refinement based on likelihoods
@@ -735,16 +771,21 @@ end
 %% INTERNAL FUNCTIONS
 
 %% detect local peaks, which have nearby peaks with absolute higher amplitudes
-function [peak_indexes, peaks] = find_closest_peaks(data, peak_indexes_candidates, peak_search_half_wlen, mode, plot_results)
+function [peak_indexes, peaks] = find_closest_peaks(data, peak_indexes_candidates, peak_search_half_wlen, operation_mode, plot_results)
 sig_len = length(data);
-polarity = sign(skew(data));
+% polarity = sign(skew(data));
+polarity = sign(data(peak_indexes_candidates));
+polarity_dominant = mode(polarity);
 peak_indexes = [];
 for jj = 1 : length(peak_indexes_candidates)
     segment = max(1, peak_indexes_candidates(jj) - peak_search_half_wlen) : min(sig_len, peak_indexes_candidates(jj) + peak_search_half_wlen);
     segment_first_index = segment(1);
-    switch mode
+    switch operation_mode
+        case 'AUTO-BEAT-WISE'
+            [~, I_max_min] = max(polarity(jj) * data(segment));
+            pk_indx = I_max_min + segment_first_index - 1;
         case 'AUTO'
-            [~, I_max_min] = max(polarity * data(segment));
+            [~, I_max_min] = max(polarity_dominant * data(segment));
             pk_indx = I_max_min + segment_first_index - 1;
         case 'POS'
             [~, I_max] = max(data(segment));
@@ -951,7 +992,9 @@ end
 function [peak_indexes_refined, peaks] = refine_peaks_low_likelihood(data, peak_indexes, qrs_likelihood, likelihood_threshold, peak_search_half_wlen, plot_results)
 sig_len = length(data);
 signal_abs = sqrt(mean(data.^2, 1));
-signal_likelihood = qrs_likelihood .* signal_abs/max(signal_abs);
+if max(signal_abs) > 0
+    signal_likelihood = qrs_likelihood .* signal_abs/max(signal_abs);
+end
 bumps_indexes = find(signal_likelihood >= likelihood_threshold);
 peak_indexes_refined = [];
 for jj = 1 : length(bumps_indexes)
@@ -985,8 +1028,8 @@ function [peak_indexes_refined, peaks] = refine_peaks_low_snr_beats(data, peak_i
 max_itr = length(peak_indexes);
 event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
 stacked_beats = event_stacker(data, peak_indexes, event_width);
-%     ECG_robust_mean = RWAverage(stacked_beats);
-ECG_robust_mean = mean(stacked_beats, 1);
+ECG_robust_mean = robust_weighted_average(stacked_beats);
+% ECG_robust_mean = mean(stacked_beats, 1);
 ECG_robust_mean_replicated = ones(length(peak_indexes), 1) * ECG_robust_mean;
 noise = stacked_beats - ECG_robust_mean_replicated;
 %snr = 10*log10(trace(ECG_robust_mean_replicated*ECG_robust_mean_replicated')/trace(noise*noise'));
@@ -1004,8 +1047,12 @@ for itr = 1 : max_itr
         % this_beat_index = find(peak_indexes == peak_indexes(included_indexes(p)), 1,'first');
         all_included_indexes_but_this_beat(p) = [];
 
-        % ECG_robust_mean = robust_weighted_average(stacked_beats(all_included_indexes_but_this_beat, :));
-        ECG_robust_mean = mean(stacked_beats(all_included_indexes_but_this_beat, :), 1);
+        if ~isempty(all_included_indexes_but_this_beat)
+            ECG_robust_mean = robust_weighted_average(stacked_beats(all_included_indexes_but_this_beat, :));
+        else
+            ECG_robust_mean = mean(stacked_beats(all_included_indexes_but_this_beat, :), 1);
+        end
+
         ECG_robust_mean_replicated = ones(length(all_included_indexes_but_this_beat), 1) * ECG_robust_mean;
 
         % estimate channel quality SNR
@@ -1070,6 +1117,48 @@ end
 
 end
 
+%% detect beats that were most impacted by preprocessing filter (for T-wave detection purposes)
+function [peak_indexes_refined, peaks] = refine_peaks_filter_energy_impacted_beats(data_pre_filter, data_post_filter, peak_indexes, pparams)
+
+% remove out-of band low and high frequency components if required
+if isfield(pparams, 'ff_low_cutoff') && ~isempty(pparams.ff_low_cutoff)
+    data_pre_filter = data_pre_filter - lp_filter_zero_phase(data_pre_filter, pparams.ff_low_cutoff);
+    data_post_filter = data_post_filter - lp_filter_zero_phase(data_post_filter, pparams.ff_low_cutoff);
+end
+if isfield(pparams, 'ff_high_cutoff') && ~isempty(pparams.ff_high_cutoff)
+    data_pre_filter = lp_filter_zero_phase(data_pre_filter, pparams.ff_high_cutoff);
+    data_post_filter = lp_filter_zero_phase(data_post_filter, pparams.ff_high_cutoff);
+end
+
+% stack the pre- and post-filter beats
+event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
+stacked_beats_pre_filter = event_stacker(data_pre_filter, peak_indexes, event_width);
+stacked_beats_post_filter = event_stacker(data_post_filter, peak_indexes, event_width);
+
+% calculate the power ratios of the beats before vs after filtering
+pre_filter_beat_vars = var(stacked_beats_pre_filter, [], 2);
+post_filter_beat_vars = var(stacked_beats_post_filter, [], 2);
+pre_to_post_power_ratio =  pre_filter_beat_vars ./ post_filter_beat_vars;
+
+I_include = pre_to_post_power_ratio > pparams.pre_to_post_filter_power_ratio_th ...
+            & post_filter_beat_vars > pparams.percentile_fraction * prctile(post_filter_beat_vars, pparams.percentile);
+
+% threshold the ratios
+peak_indexes_refined = peak_indexes(I_include);
+peaks = zeros(1, size(data_pre_filter, 2));
+peaks(peak_indexes_refined) = 1;
+
+% close all
+% figure
+% plot(data_pre_filter)
+% hold on
+% plot(data_post_filter)
+% nn = 1 : length(data_pre_filter);
+% plot(nn(peak_indexes), data_pre_filter(peak_indexes), 'go', 'markersize', 18)
+% grid on
+
+end
+
 %% matched filter using average beat shape
 function [data_enhanced, data_enhanced_env] = signal_specific_matched_filter(data, peak_indexes)
 event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
@@ -1087,23 +1176,31 @@ data_enhanced_env = sqrt(sum(data_enhanced.^2, 1));
 end
 
 %% likelihood of peaks as we move towards or away a peak
-function qrs_likelihood = peak_surrounding_likelihood(sig_len, peak_indexes, fs, max_span, likelihood_sigma)
+function qrs_likelihood = peak_surrounding_likelihood(sig_len, peak_indexes, fs, method, max_span, likelihood_sigma)
 peaks = zeros(1, sig_len);
 peaks(peak_indexes) = 1;
 sig_len = length(peaks);
-tt = -max_span/2 : 1 / fs : max_span/2;
-template = exp(-tt.^2/(2 * likelihood_sigma ^ 2));
-lag = round(length(template)/2);
+
+half_span = round(fs * max_span/2);
+switch method
+    case 'GAUSSIAN'
+        tt = (-half_span : half_span) / fs;
+        template = exp(-tt.^2/(2 * likelihood_sigma ^ 2));
+    case 'BOX'
+        template = ones(1, 2*half_span + 1);
+end
+lag = half_span + 1;
 qrs_likelihood = conv(template, peaks);
 qrs_likelihood = qrs_likelihood(lag : sig_len + lag - 1);
-% qrs_likelihood = filtfilt(template, sum(template), peaks);
-
 if max(qrs_likelihood(:)) > 1
     qrs_likelihood = qrs_likelihood / max(qrs_likelihood(:));
 end
 
 end
 
+
+
+%% DRAFTS - UNDER-DEV OR TO BE REMOVED
 %{
 if 0
     if ~isfield(params, 'CORRECT_PEAKS_LIKELIHOOD_PEAKS') || isempty(params.CORRECT_PEAKS_LIKELIHOOD_PEAKS)
