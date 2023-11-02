@@ -67,7 +67,7 @@ switch noisetype
             rng(varargin{3});
         end
         NoisePower = SignalPower / 10^(snr/10);
-        noise = ColoredNoise(sqrt(NoisePower), N, fs, beta);
+        noise = colored_noise_gen(sqrt(NoisePower), N, fs, beta);
 
     case 2     % Real Muscle Artifacts
         fs = varargin{1};

@@ -132,7 +132,7 @@ switch params.filter_type
             if params.verbose, disp(['params.wlen_mn = ', num2str(params.wlen_mn)]), end
         end
         data_filtered_padded = zeros(size(data_padded));
-        for kk = 1 : size(data, 1)
+        for kk = 1 : size(data_padded, 1)
             bl1 = baseline_sliding_window(data_padded(kk, :), round(params.wlen_md * fs), 'md');
             bl2 = baseline_sliding_window(bl1, round(params.wlen_mn * fs), 'mn');
             data_filtered_padded(kk, :) = data_padded(kk, :) - bl2;
@@ -249,7 +249,7 @@ switch params.filter_type
         end
 
         data_filtered_padded = zeros(size(data_padded));
-        for kk = 1 : size(data, 1)
+        for kk = 1 : size(data_padded, 1)
             wt = modwt(data_padded(kk, :), params.wden_lower_level);
             wtrec = zeros(size(wt));
             wtrec(params.wden_upper_level : params.wden_lower_level,:) = wt(params.wden_upper_level : params.wden_lower_level,:);
@@ -289,11 +289,9 @@ if ~isfield(params, 'power_env_wlen') || isempty(params.power_env_wlen)
 end
 power_env_wlen = ceil(params.power_env_wlen * fs);
 % data_filtered_env1 = filtfilt(ones(power_env_wlen, 1), power_env_wlen, sqrt(mean(data_filtered.^2, 1)));
-% data_filtered_padded = [repmat(data_filtered(:, 1), 1, pad_len), data_filtered, repmat(data_filtered(:, end), 1, pad_len)];
 
 
 data_filtered = data_filtered_padded(:, left_pad_len + 1 : left_pad_len + sig_len);
-% data_filtered_padded = [left_pad, data_filtered, right_pad];
 data_filtered_env1_padded = filtfilt(ones(power_env_wlen, 1), power_env_wlen, sqrt(mean(data_filtered_padded.^2, 1)));
 data_filtered_env1 = data_filtered_env1_padded(left_pad_len + 1 : left_pad_len + sig_len);
 
@@ -307,7 +305,6 @@ if isequal(params.two_stage_env, 1)
         params.power_env_wlen2 = 0.075;
         if params.verbose, disp(['   params.power_env_wlen2 = ', num2str(params.power_env_wlen2)]), end
         power_env_wlen2 = ceil(params.power_env_wlen2 * fs);
-        % data_filtered_padded = [repmat(data_filtered(:, 1), 1, pad_len), data_filtered, repmat(data_filtered(:, end), 1, pad_len)];
         data_filtered_env2_padded = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_filtered_padded.^2, 1)));
         data_filtered_env2 = data_filtered_env2_padded(left_pad_len + 1 : left_pad_len + sig_len);
     end
@@ -315,13 +312,14 @@ if isequal(params.two_stage_env, 1)
     data_filtered_env = sqrt(abs(data_filtered_env1 .* data_filtered_env2));
     if params.PLOT_DIAGNOSTIC
         figure
-        plot(data_filtered')
+        plot(data')
         hold on
+        plot(data_filtered')
         plot(data_filtered_env1)
         plot(data_filtered_env2)
         plot(data_filtered_env)
         grid
-        legend({'data_filtered', 'data_filtered_env1', 'data_filtered_env2', 'data_filtered_env'}, 'interpreter', 'none')
+        legend({'data', 'data_filtered', 'data_filtered_env1', 'data_filtered_env2', 'data_filtered_env'}, 'interpreter', 'none')
         set(gca, 'fontsize', 18)
         title('signal envelope estimates')
     end
@@ -373,13 +371,14 @@ if ~isfield(params, 'ENHANCE_MATCHED_FILTER') || isempty(params.ENHANCE_MATCHED_
     if params.verbose, disp(['params.ENHANCE_MATCHED_FILTER = ', num2str(params.ENHANCE_MATCHED_FILTER)]), end
 end
 if params.ENHANCE_MATCHED_FILTER
-    [data_filtered_enhanced_padded, data_filtered_enhanced_env_padded] = signal_specific_matched_filter(data_filtered_padded, peak_indexes);
+    [data_filtered_enhanced_padded, data_filtered_enhanced_env_padded] = signal_specific_matched_filter(data_filtered_padded, peak_indexes_padded);
     data_filtered_enhanced = data_filtered_enhanced_padded(:, left_pad_len + 1 : left_pad_len + sig_len);
     data_filtered_enhanced_env = data_filtered_enhanced_env_padded(:, left_pad_len + 1 : left_pad_len + sig_len);
     if params.PLOT_DIAGNOSTIC
         figure
         plot(data_filtered);
         hold on
+        plot(data);
         plot(data_filtered_enhanced);
         plot(data_filtered_enhanced_env);
         grid
@@ -387,8 +386,10 @@ if params.ENHANCE_MATCHED_FILTER
     end
     data_filtered = data_filtered_enhanced;
     data_filtered_env = data_filtered_enhanced_env;
-    % data_filtered_padded = data_filtered_enhanced_padded;
+    data_filtered_padded = data_filtered_enhanced_padded;
     data_filtered_env_padded = data_filtered_enhanced_env_padded;
+    data_mn_all_channels_padded = mean(data_padded, 1);
+    data_filtered_mn_all_channels_padded = mean(data_filtered_padded, 1);
 end
 
 %% Refine the extracted R-peaks
@@ -690,6 +691,19 @@ end
 qrs_likelihood = sum(diag(consensus_weights) * qrs_likelihoods, 1) / sum(consensus_weights);
 
 %% replace envelope peaks with original signal peaks, if required
+
+% if params.PLOT_DIAGNOSTIC
+%     tt = (0 : size(data, 2) - 1) / fs;
+%     fg = figure;
+%     plot(tt, data')
+%     hold on
+%     plot(tt, data_filtered')
+%     plot(tt, data_filtered_env)
+%     plot(tt(bumps_indexes), data_filtered_env(bumps_indexes), 'go')
+%     plot(tt(peak_indexes), data_filtered_env(peak_indexes), 'rx', 'markersize', 18)
+%     plot(tt(peak_indexes_consensus), data_filtered_env(peak_indexes_consensus), 'ko', 'markersize', 24)
+% end
+
 if ~isfield(params, 'RETURN_SIGNAL_PEAKS') || isempty(params.RETURN_SIGNAL_PEAKS)
     params.RETURN_SIGNAL_PEAKS = true;
     if params.verbose, disp(['params.RETURN_SIGNAL_PEAKS = ', num2str(params.RETURN_SIGNAL_PEAKS )]), end
@@ -700,7 +714,7 @@ if params.RETURN_SIGNAL_PEAKS
         if params.verbose, disp(['params.PEAK_SIGN = ', params.PEAK_SIGN]), end
     end
     if ~isfield(params, 'envelope_to_peak_search_wlen')
-        params.envelope_to_peak_search_wlen = 0.03;
+        params.envelope_to_peak_search_wlen = 0.1;
         if params.verbose, disp(['   params.envelope_to_peak_search_wlen = ', num2str(params.envelope_to_peak_search_wlen)]), end
     end
 
@@ -712,6 +726,17 @@ if params.RETURN_SIGNAL_PEAKS
     peak_likelihood_boxes = peak_surrounding_likelihood(sig_len, peak_indexes_consensus, fs, 'BOX', params.envelope_to_peak_search_wlen, []);
     peak_indexes_consensus = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1)), :), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 end
+
+% if params.PLOT_DIAGNOSTIC
+%     figure(fg)
+%     plot(tt(peak_indexes), data(peak_indexes), 'mx', 'markersize', 18)
+%     plot(tt(peak_indexes_consensus), data(peak_indexes_consensus), 'co', 'markersize', 24)
+%     grid
+%     legend({'data', 'data_filtered', 'data_filtered_env', 'bumps_indexes', 'peak_indexes(pre)', 'peak_indexes_consensus(pre)', 'peak_indexes(post)', 'peak_indexes_consensus(post)'}, 'interpreter', 'none')
+%     set(gca, 'fontsize', 18)
+%     title('signal, filtered signal, signal envelope and bumps_indexes (all before refinement)')
+%     set(gca, 'fontsize', 18)
+% end
 
 % post-extraction peak refinement based on likelihoods
 if ~isfield(params, 'POST_EXT_LIKELIHOOD_BASED_IMPROVEMENT') || isempty(params.POST_EXT_LIKELIHOOD_BASED_IMPROVEMENT)
