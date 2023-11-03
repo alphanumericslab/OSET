@@ -269,6 +269,15 @@ switch params.filter_type
         error('Unknown preprocessing filter');
 end
 
+
+%% calculate the residual signal (after filtering)
+data_residual_padded = data_padded - data_filtered_padded;
+if ~isfield(params, 'f_baseline_cutoff') || isempty(params.f_baseline_cutoff)
+    params.f_baseline_cutoff = 0.5;
+    if params.verbose, disp(['params.f_baseline_cutoff = ', num2str(params.f_baseline_cutoff)]), end
+end
+data_residual_padded = data_residual_padded - lp_filter_zero_phase(data_residual_padded, params.f_baseline_cutoff/fs);
+
 %% saturate the channels at k_sigma times the STD of each channel
 if ~isfield(params, 'saturate') || isempty(params.saturate)
     params.saturate = 1;
@@ -280,6 +289,7 @@ if isequal(params.saturate, 1) || isempty(params.sat_k_sigma)
         if params.verbose, disp(['params.sat_k_sigma = ', num2str(params.sat_k_sigma)]), end
     end
     data_filtered_padded = tanh_saturation(data_filtered_padded, params.sat_k_sigma, 'ksigma');
+    data_residual_padded = tanh_saturation(data_residual_padded, params.sat_k_sigma, 'ksigma');
 end
 
 %% calculate the power envelope of one or all channels (stage 1)
@@ -287,13 +297,16 @@ if ~isfield(params, 'power_env_wlen') || isempty(params.power_env_wlen)
     params.power_env_wlen = 0.025;
     if params.verbose, disp(['params.power_env_wlen = ', num2str(params.power_env_wlen)]), end
 end
+% signal power
 power_env_wlen = ceil(params.power_env_wlen * fs);
-% data_filtered_env1 = filtfilt(ones(power_env_wlen, 1), power_env_wlen, sqrt(mean(data_filtered.^2, 1)));
-
-
 data_filtered = data_filtered_padded(:, left_pad_len + 1 : left_pad_len + sig_len);
 data_filtered_env1_padded = filtfilt(ones(power_env_wlen, 1), power_env_wlen, sqrt(mean(data_filtered_padded.^2, 1)));
 data_filtered_env1 = data_filtered_env1_padded(left_pad_len + 1 : left_pad_len + sig_len);
+
+% residual power
+data_residual = data_residual_padded(:, left_pad_len + 1 : left_pad_len + sig_len);
+data_residual_env1_padded = filtfilt(ones(power_env_wlen, 1), power_env_wlen, sqrt(mean(data_residual_padded.^2, 1)));
+% data_residual_env1 = data_residual_env1_padded(left_pad_len + 1 : left_pad_len + sig_len);
 
 %% calculate the power envelope of one or all channels (stage 2)
 if ~isfield(params, 'two_stage_env') || isempty(params.two_stage_env)
@@ -304,12 +317,22 @@ if isequal(params.two_stage_env, 1)
     if ~isfield(params, 'power_env_wlen2') || isempty(params.power_env_wlen2)
         params.power_env_wlen2 = 0.075;
         if params.verbose, disp(['   params.power_env_wlen2 = ', num2str(params.power_env_wlen2)]), end
+        % signal power
         power_env_wlen2 = ceil(params.power_env_wlen2 * fs);
         data_filtered_env2_padded = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_filtered_padded.^2, 1)));
         data_filtered_env2 = data_filtered_env2_padded(left_pad_len + 1 : left_pad_len + sig_len);
+        % residual power
+        data_residual_env2_padded = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_residual_padded.^2, 1)));
+        % data_residual_env2 = data_residual_env2_padded(left_pad_len + 1 : left_pad_len + sig_len);
     end
+    % signal power combined (two stages)
     data_filtered_env_padded = sqrt(abs(data_filtered_env1_padded .* data_filtered_env2_padded));
     data_filtered_env = sqrt(abs(data_filtered_env1 .* data_filtered_env2));
+
+    % residual power combined (two stages)
+    data_residual_env_padded = sqrt(abs(data_residual_env1_padded .* data_residual_env2_padded));
+    % data_residual_env = sqrt(abs(data_residual_env1 .* data_residual_env2));
+    
     if params.PLOT_DIAGNOSTIC
         figure
         plot(data')
@@ -326,6 +349,9 @@ if isequal(params.two_stage_env, 1)
 else
     data_filtered_env = data_filtered_env1;
     data_filtered_env_padded = data_filtered_env1_padded;
+
+    % data_residual_env = data_residual_env1;
+    data_residual_env_padded = data_residual_env1_padded;
 end
 
 % the average challen (for multichannel inputs)
@@ -333,12 +359,22 @@ end
 data_mn_all_channels_padded = mean(data_padded, 1);
 data_filtered_mn_all_channels_padded = mean(data_filtered_padded, 1);
 
-%% find the envelope bumps (the top percentage of the signal's power envelope) for R-peak search
+%% find the envelope bumps (the top percentile of the signal's power envelope and above the noise level) for R-peak search
 if ~isfield(params, 'power_env_hist_peak_th') || isempty(params.power_env_hist_peak_th)
-    params.power_env_hist_peak_th = 85.0;
+    % params.power_env_hist_peak_th = 85.0;
+    p_residual = prctile(data_residual_env_padded, 95.0);
+    p_signal = prctile(data_filtered_env_padded, 85.0);
+    if p_signal > p_residual
+        params.power_env_hist_peak_th = (p_residual + p_signal)/2;
+    else
+        params.power_env_hist_peak_th  = p_signal;
+    end
     if params.verbose, disp(['params.power_env_hist_peak_th = ', num2str(params.power_env_hist_peak_th)]), end
+    if params.verbose, disp(['   p_residual = ', num2str(p_residual)]), end
+    if params.verbose, disp(['   p_signal = ', num2str(p_signal)]), end
 end
-bumps_indexes_padded = refine_peaks_low_amp_peaks_prctile(data_filtered_env_padded, 1:length(data_filtered_env_padded), params.power_env_hist_peak_th, params.PLOT_DIAGNOSTIC);
+bumps_indexes_padded = refine_peaks_low_amp_peaks_prctile(data_filtered_env_padded, 1:length(data_filtered_env_padded), 'LEVEL', params.power_env_hist_peak_th, params.PLOT_DIAGNOSTIC);
+% bumps_indexes_padded = refine_peaks_low_amp_peaks_prctile(data_filtered_env_padded, 1:length(data_filtered_env_padded), 'PRCTILE', params.power_env_hist_peak_th, params.PLOT_DIAGNOSTIC);
 bumps_indexes = bumps_indexes_padded - left_pad_len;
 bumps_indexes(bumps_indexes < 1) = [];
 bumps_indexes(bumps_indexes > sig_len) = [];
@@ -407,7 +443,7 @@ if ~isfield(params, 'REFINE_PEAKS') || isempty(params.REFINE_PEAKS)
     params.REFINE_PEAKS = true;
     if params.verbose, disp(['params.REFINE_PEAKS = ', num2str(params.REFINE_PEAKS)]), end
 end
-if params.REFINE_PEAKS
+if params.REFINE_PEAKS && length(peak_indexes) > 1
 
     %% detect beats that were most impacted by preprocessing filter (for T-wave detection purposes)
     if ~isfield(params, 'OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC') || isempty(params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC)
@@ -573,7 +609,7 @@ if params.REFINE_PEAKS
         end
     end
     if params.OMIT_LOW_AMP_PEAKS_PRCTL_ABS
-        [~, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS] = refine_peaks_low_amp_peaks_prctile(data_filtered_env_padded, peak_indexes_padded, pparams.peak_amps_hist_prctile, params.PLOT_DIAGNOSTIC);
+        [~, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS] = refine_peaks_low_amp_peaks_prctile(data_filtered_env_padded, peak_indexes_padded, 'PRCTILE', pparams.peak_amps_hist_prctile, params.PLOT_DIAGNOSTIC);
         peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS = peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS(left_pad_len + 1 : left_pad_len + sig_len);
 
         peaks_all_method = cat(1, peaks_all_method, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS);
@@ -646,34 +682,39 @@ if params.REFINE_PEAKS
         end
         consensus_weights = cat(2, consensus_weights, params.weight_OMIT_HIGH_STD_AMP);
     end
-end
 
-%% merge the peaks through consensus
-num_peak_refinement_algorithms = size(peaks_all_method, 1);
+    %% merge the peaks through consensus
+    num_peak_refinement_algorithms = size(peaks_all_method, 1);
 
-if isfield(params, 'NUM_VOTES_TO_KEEP_PEAK') && isfield(params, 'CONSENSUS_WEIGHTS_THRESHOLD') && ~isempty(params.NUM_VOTES_TO_KEEP_PEAK) && ~isempty(params.CONSENSUS_WEIGHTS_THRESHOLD)
-    warning('params.NUM_VOTES_TO_KEEP_PEAK and params.CONSENSUS_WEIGHTS_THRESHOLD may not be set together; using only params.CONSENSUS_WEIGHTS_THRESHOLD');
-end
-
-if (~isfield(params, 'NUM_VOTES_TO_KEEP_PEAK') || isempty(params.NUM_VOTES_TO_KEEP_PEAK)) && (~isfield(params, 'CONSENSUS_WEIGHTS_THRESHOLD') || isempty(params.CONSENSUS_WEIGHTS_THRESHOLD))
-    % params.NUM_VOTES_TO_KEEP_PEAK = ceil(num_peak_refinement_algorithms / 2); % majority vote
-    params.CONSENSUS_WEIGHTS_THRESHOLD = 0.5; % majority vote
-    if params.verbose, disp(['num_peak_refinement_algorithms = ', num2str(num_peak_refinement_algorithms), ', params.CONSENSUS_WEIGHTS_THRESHOLD = ', num2str(params.CONSENSUS_WEIGHTS_THRESHOLD)]), end
-end
-
-if isfield(params, 'CONSENSUS_WEIGHTS_THRESHOLD') || isempty(params.CONSENSUS_WEIGHTS_THRESHOLD)
-    if params.CONSENSUS_WEIGHTS_THRESHOLD < 0 || params.CONSENSUS_WEIGHTS_THRESHOLD > 1
-        error('params.CONSENSUS_WEIGHTS_THRESHOLD must be between 0 and 1');
+    if isfield(params, 'NUM_VOTES_TO_KEEP_PEAK') && isfield(params, 'CONSENSUS_WEIGHTS_THRESHOLD') && ~isempty(params.NUM_VOTES_TO_KEEP_PEAK) && ~isempty(params.CONSENSUS_WEIGHTS_THRESHOLD)
+        warning('params.NUM_VOTES_TO_KEEP_PEAK and params.CONSENSUS_WEIGHTS_THRESHOLD may not be set together; using only params.CONSENSUS_WEIGHTS_THRESHOLD');
     end
-    peaks_weighted_average = sum(diag(consensus_weights) * peaks_all_method, 1) / sum(consensus_weights);
-    peak_indexes_consensus = find(peaks_weighted_average >= params.CONSENSUS_WEIGHTS_THRESHOLD);
-elseif isfield(params, 'NUM_VOTES_TO_KEEP_PEAK') || isempty(params.NUM_VOTES_TO_KEEP_PEAK)
-    if params.NUM_VOTES_TO_KEEP_PEAK > num_peak_refinement_algorithms
-        error('Number of required votes to keep a peak exceeds the number of voting algorithms');
+
+    if (~isfield(params, 'NUM_VOTES_TO_KEEP_PEAK') || isempty(params.NUM_VOTES_TO_KEEP_PEAK)) && (~isfield(params, 'CONSENSUS_WEIGHTS_THRESHOLD') || isempty(params.CONSENSUS_WEIGHTS_THRESHOLD))
+        % params.NUM_VOTES_TO_KEEP_PEAK = ceil(num_peak_refinement_algorithms / 2); % majority vote
+        params.CONSENSUS_WEIGHTS_THRESHOLD = 0.5; % majority vote
+        if params.verbose, disp(['num_peak_refinement_algorithms = ', num2str(num_peak_refinement_algorithms), ', params.CONSENSUS_WEIGHTS_THRESHOLD = ', num2str(params.CONSENSUS_WEIGHTS_THRESHOLD)]), end
     end
-    peaks_consensus = sum(diag(consensus_weights) * peaks_all_method, 1);
-    peak_indexes_consensus = find(peaks_consensus >= params.NUM_VOTES_TO_KEEP_PEAK);
+
+    if isfield(params, 'CONSENSUS_WEIGHTS_THRESHOLD') || isempty(params.CONSENSUS_WEIGHTS_THRESHOLD)
+        if params.CONSENSUS_WEIGHTS_THRESHOLD < 0 || params.CONSENSUS_WEIGHTS_THRESHOLD > 1
+            error('params.CONSENSUS_WEIGHTS_THRESHOLD must be between 0 and 1');
+        end
+        peaks_weighted_average = sum(diag(consensus_weights) * peaks_all_method, 1) / sum(consensus_weights);
+        peak_indexes_consensus = find(peaks_weighted_average >= params.CONSENSUS_WEIGHTS_THRESHOLD);
+    elseif isfield(params, 'NUM_VOTES_TO_KEEP_PEAK') || isempty(params.NUM_VOTES_TO_KEEP_PEAK)
+        if params.NUM_VOTES_TO_KEEP_PEAK > num_peak_refinement_algorithms
+            error('Number of required votes to keep a peak exceeds the number of voting algorithms');
+        end
+        peaks_consensus = sum(diag(consensus_weights) * peaks_all_method, 1);
+        peak_indexes_consensus = find(peaks_consensus >= params.NUM_VOTES_TO_KEEP_PEAK);
+    end
+
+else
+    peak_indexes_consensus = peak_indexes;
+    num_peak_refinement_algorithms = 1;
 end
+
 
 %% calculate a likelihood function for the R-peaks (useful for classification and scoring purposes)
 if ~isfield(params, 'likelihood_sigma') || isempty(params.likelihood_sigma)
@@ -692,17 +733,19 @@ qrs_likelihood = sum(diag(consensus_weights) * qrs_likelihoods, 1) / sum(consens
 
 %% replace envelope peaks with original signal peaks, if required
 
-% if params.PLOT_DIAGNOSTIC
-%     tt = (0 : size(data, 2) - 1) / fs;
-%     fg = figure;
-%     plot(tt, data')
-%     hold on
-%     plot(tt, data_filtered')
-%     plot(tt, data_filtered_env)
-%     plot(tt(bumps_indexes), data_filtered_env(bumps_indexes), 'go')
-%     plot(tt(peak_indexes), data_filtered_env(peak_indexes), 'rx', 'markersize', 18)
-%     plot(tt(peak_indexes_consensus), data_filtered_env(peak_indexes_consensus), 'ko', 'markersize', 24)
-% end
+if params.PLOT_DIAGNOSTIC
+    tt = (0 : size(data, 2) - 1) / fs;
+    fg = figure;
+    lgnd = {};
+    plot(tt, data'); lgnd = cat(2, lgnd, 'data');
+    hold on
+    plot(tt, data_filtered'); lgnd = cat(2, lgnd, 'data_filtered');
+    plot(tt, data_residual'); lgnd = cat(2, lgnd, 'data_residual');
+    plot(tt, data_filtered_env); lgnd = cat(2, lgnd, 'data_filtered_env');
+    plot(tt(bumps_indexes), data_filtered_env(bumps_indexes), 'go'); lgnd = cat(2, lgnd, 'bumps_indexes');
+    plot(tt(peak_indexes), data_filtered_env(peak_indexes), 'rx', 'markersize', 18); lgnd = cat(2, lgnd, 'peak_indexes');
+    plot(tt(peak_indexes_consensus), data_filtered_env(peak_indexes_consensus), 'ko', 'markersize', 24); lgnd = cat(2, lgnd, 'peak_indexes_consensus');
+end
 
 if ~isfield(params, 'RETURN_SIGNAL_PEAKS') || isempty(params.RETURN_SIGNAL_PEAKS)
     params.RETURN_SIGNAL_PEAKS = true;
@@ -727,16 +770,16 @@ if params.RETURN_SIGNAL_PEAKS
     peak_indexes_consensus = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1)), :), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 end
 
-% if params.PLOT_DIAGNOSTIC
-%     figure(fg)
-%     plot(tt(peak_indexes), data(peak_indexes), 'mx', 'markersize', 18)
-%     plot(tt(peak_indexes_consensus), data(peak_indexes_consensus), 'co', 'markersize', 24)
-%     grid
-%     legend({'data', 'data_filtered', 'data_filtered_env', 'bumps_indexes', 'peak_indexes(pre)', 'peak_indexes_consensus(pre)', 'peak_indexes(post)', 'peak_indexes_consensus(post)'}, 'interpreter', 'none')
-%     set(gca, 'fontsize', 18)
-%     title('signal, filtered signal, signal envelope and bumps_indexes (all before refinement)')
-%     set(gca, 'fontsize', 18)
-% end
+if params.PLOT_DIAGNOSTIC
+    figure(fg)
+    plot(tt(peak_indexes), data(peak_indexes), 'mx', 'markersize', 18); lgnd = cat(2, lgnd, 'peak_indexes (post)');
+    plot(tt(peak_indexes_consensus), data(peak_indexes_consensus), 'co', 'markersize', 24); lgnd = cat(2, lgnd, 'peak_indexes_consensus (post)');
+    grid
+    legend(lgnd, 'interpreter', 'none')
+    set(gca, 'fontsize', 18)
+    title('signal, filtered signal, signal envelope and bumps_indexes (all before refinement)')
+    set(gca, 'fontsize', 18)
+end
 
 % post-extraction peak refinement based on likelihoods
 if ~isfield(params, 'POST_EXT_LIKELIHOOD_BASED_IMPROVEMENT') || isempty(params.POST_EXT_LIKELIHOOD_BASED_IMPROVEMENT)
@@ -787,9 +830,9 @@ peaks = zeros(1, sig_len);
 peaks(peak_indexes) = 1;
 
 % clear consenus-based peaks, if no refinement was requested
-if ~params.REFINE_PEAKS
-    peak_indexes_consensus = [];
-end
+% if ~params.REFINE_PEAKS
+%     peak_indexes_consensus = [];
+% end
 
 end
 
@@ -874,8 +917,14 @@ end
 end
 
 %% detect beats based on ampliture thresholding (removes below the given percentile)
-function [peak_indexes_refined, peaks] = refine_peaks_low_amp_peaks_prctile(data_env, peak_indexes, percentile, plot_results)
-bumps_amp_threshold = prctile(data_env(peak_indexes), percentile);
+function [peak_indexes_refined, peaks] = refine_peaks_low_amp_peaks_prctile(data_env, peak_indexes, method, pparam, plot_results)
+switch method
+    case 'PRCTILE'
+        percentile = pparam;
+        bumps_amp_threshold = prctile(data_env(peak_indexes), percentile);
+    case 'LEVEL'
+        bumps_amp_threshold = pparam;
+end
 peak_indexes_refined = peak_indexes(data_env(peak_indexes) >= bumps_amp_threshold);
 peaks = zeros(1, length(data_env));
 peaks(peak_indexes_refined) = 1;
@@ -1166,7 +1215,7 @@ post_filter_beat_vars = var(stacked_beats_post_filter, [], 2);
 pre_to_post_power_ratio =  pre_filter_beat_vars ./ post_filter_beat_vars;
 
 I_include = pre_to_post_power_ratio > pparams.pre_to_post_filter_power_ratio_th ...
-            & post_filter_beat_vars > pparams.percentile_fraction * prctile(post_filter_beat_vars, pparams.percentile);
+    & post_filter_beat_vars > pparams.percentile_fraction * prctile(post_filter_beat_vars, pparams.percentile);
 
 % threshold the ratios
 peak_indexes_refined = peak_indexes(I_include);
@@ -1186,16 +1235,20 @@ end
 
 %% matched filter using average beat shape
 function [data_enhanced, data_enhanced_env] = signal_specific_matched_filter(data, peak_indexes)
-event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
-sig_len = size(data, 2);
-data_enhanced = zeros(size(data));
-for ch = 1 : size(data, 1)
-    stacked_beats = event_stacker(data(ch, :), peak_indexes, event_width);
-    robust_mean = robust_weighted_average(stacked_beats);
-    matched_filter_out = conv(robust_mean(end : -1 : 1), data(ch, :));
-    lag = round(length(robust_mean)/2);
-    data_enhanced(ch, :) = matched_filter_out(lag : sig_len + lag - 1);
-    data_enhanced(ch, :) = std(data(ch, :)) * data_enhanced(ch, :) / std(data_enhanced(ch, :));
+if length(peak_indexes) > 1
+    event_width = 2 * round(median(diff(peak_indexes))/2) + 1;
+    sig_len = size(data, 2);
+    data_enhanced = zeros(size(data));
+    for ch = 1 : size(data, 1)
+        stacked_beats = event_stacker(data(ch, :), peak_indexes, event_width);
+        robust_mean = robust_weighted_average(stacked_beats);
+        matched_filter_out = conv(robust_mean(end : -1 : 1), data(ch, :));
+        lag = round(length(robust_mean)/2);
+        data_enhanced(ch, :) = matched_filter_out(lag : sig_len + lag - 1);
+        data_enhanced(ch, :) = std(data(ch, :)) * data_enhanced(ch, :) / std(data_enhanced(ch, :));
+    end
+else
+    data_enhanced = data;
 end
 data_enhanced_env = sqrt(sum(data_enhanced.^2, 1));
 end

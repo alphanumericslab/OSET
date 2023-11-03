@@ -14,9 +14,9 @@ datafilepath = '../../../../../DataFiles/Physionet.org/files/qtdb/1.0.0/';fs = 2
 % datafilepath = '../../../../../DataFiles/physionet.org/files/ptbdb/1.0.0/'; fs = 1000.0;
 % datafilepath = '../../../../../DataFiles/physionet.org/files/mitdb/1.0.0/'; fs = 360.0;
 
-PLOT_FIGURES = true; % plot figures or not
+PLOT_FIGURES = false; % plot figures or not
 SAVE_FIGURES = false; % save r-peak figures or not (figure is not displayed if this flag is active)
-SAVE_RESULTS = false; % save r-peak results or not
+SAVE_RESULTS = true; % save r-peak results or not
 
 
 output_results_folder = './results/';
@@ -32,6 +32,7 @@ peak_detector_params.RETURN_SIGNAL_PEAKS = true; % return signal peaks or energy
 peak_detector_params.PLOT_RESULTS = false; % plot the results using the internal plot function of peak_det_likelihood or not
 peak_detector_params.PLOT_DIAGNOSTIC = false; % diagnostic mode (do not activate unless diving deep into the code! run only on short segments, since many figures are created)
 peak_detector_params.verbose = false; % reports all the default values for the internal parameters of peak_det_likelihood, which can be modified through this data structure if needed.
+%%%% peak_detector_params.REFINE_PEAKS = false;
 
 overlap_time = 1.0; % overlap between segments for continuity (1.0-2.0 seconds is enough)
 seg_len_time = 10.0; % segment length in seconds
@@ -40,7 +41,7 @@ filelist = dir(fullfile([datafilepath, '**/*.mat']));  % get list of all mat fil
 for k = 1 : length(filelist) % Sweep over all or specific records
     % TSTART = tic;
     record_name = filelist(k).name;
-    % if isequal(record_name, "sel37m.mat")
+    % if isequal(record_name, "sel14046m.mat")
     datafilename = fullfile(filelist(k).folder, record_name);
     full_fname = string(record_name(1:end-4));
 
@@ -129,7 +130,7 @@ for k = 1 : length(filelist) % Sweep over all or specific records
 
         % SET A BREAK-POINT HERE TO SEE THE FIGURES
         %keyboard % for debugging and visualization only; remove this line during batch runs
-        close(fig)
+        % close(fig)
         disp(strcat('record #', num2str(k), ' fname: ', full_fname, ' channel #', num2str(ch)))
     end
     % end
