@@ -59,7 +59,7 @@ int Resampler::resample(double* x, double* y, int InputLength, double Conversion
 		{
 			for (i = 0; i < OutputLength; i++)
 			{
-				k = (int)ceil(phase - 0.5);
+				k = (int)floor(phase);
 				y[i] = (k + 1 - phase) * x[k] + (phase - k) * x[k + 1];
 				phase += ConversionRate;
 			}
