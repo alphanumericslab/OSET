@@ -94,13 +94,17 @@ for segment = 1 : num_seg
     else
         peak_detector_params.right_pad = [];
     end
-    
+
     % Call peak_det_likelihood for the current segment
     [peaks_segment, peak_indexes_segment, peak_indexes_consensus_segment, qrs_likelihood_segment] = peak_det_likelihood(data_segment, fs, peak_detector_params);
-    
+
     % Concatenate results for the current segment with previous segments
-    peak_indexes = cat(2, peak_indexes, peak_indexes_segment + length(peaks));
-    peak_indexes_consensus = cat(2, peak_indexes_consensus, peak_indexes_consensus_segment + length(peaks));
+    if ~isempty(peak_indexes_segment)
+        peak_indexes = cat(2, peak_indexes, peak_indexes_segment + length(peaks));
+    end
+    if ~isempty(peak_indexes_consensus_segment)
+        peak_indexes_consensus = cat(2, peak_indexes_consensus, peak_indexes_consensus_segment + length(peaks));
+    end
     qrs_likelihood = cat(2, qrs_likelihood, qrs_likelihood_segment);
     peaks = cat(2, peaks, peaks_segment);
 end

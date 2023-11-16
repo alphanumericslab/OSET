@@ -995,25 +995,25 @@ stacked_beats = event_stacker(data, peak_indexes, event_width);
 switch method
     case 'CORR'
         rho_beats = stacked_beats * stacked_beats';
-        avg_beat_corr_with_others = median(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitmissing");
+        avg_beat_corr_with_others = median(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitnan");
         I_omit = avg_beat_corr_with_others < pparams.percentile_fraction * prctile(avg_beat_corr_with_others, pparams.percentile);
     case 'CORRCOEF'
         rho_beats = corrcoef(stacked_beats');
-        avg_beat_corr_with_others = median(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitmissing");
+        avg_beat_corr_with_others = median(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitnan");
 
         % I_omit = avg_beat_corr_with_others < min(pparams.max_corr_coef, pparams.max_corr_coef_fraction * max(avg_beat_corr_with_others));
         I_omit = avg_beat_corr_with_others < pparams.percentile_fraction * prctile(avg_beat_corr_with_others, pparams.percentile);
     case 'ABS-CORRCOEF'
         rho_beats = corrcoef(stacked_beats');
-        avg_beat_corr_with_others = mean(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitmissing");
+        avg_beat_corr_with_others = mean(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitnan");
         I_omit = avg_beat_corr_with_others < pparams.beat_corrcoef_th; % omit beats with low correlations
     case 'NEG-CORR'
         rho_beats = corrcoef(stacked_beats');
-        avg_beat_corr_with_others = mean(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitmissing");
+        avg_beat_corr_with_others = mean(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitnan");
         I_omit = avg_beat_corr_with_others < 0;
     case 'BEAT-STD'
         rho_beats = corrcoef(stacked_beats');
-        avg_beat_corr_with_others = mean(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitmissing");
+        avg_beat_corr_with_others = mean(rho_beats + diag(nan(1, size(rho_beats, 1))), "omitnan");
         I_omit = abs(avg_beat_corr_with_others - mean(avg_beat_corr_with_others)) > pparams.k_sigma * std(avg_beat_corr_with_others); %%%% & avg_beat_corr_with_others < pparams.beat_corrcoef_th;
     otherwise
         error('undefined mode')
