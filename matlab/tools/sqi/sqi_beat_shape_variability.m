@@ -88,7 +88,7 @@ x = x - mn;
 for i = 1 : L1
     [peaks, peak_indexes] = peak_det_local_search(x(i,:), ff/fs, [], num_peak_det_itr);
     if beat_width_auto
-        beat_width = round(mean(peak_indexes));
+        beat_width = round(mean(diff(peak_indexes)));
         if mod(beat_width, 2) == 0 % beat_width must be odd
             beat_width = beat_width + 1;
         end
