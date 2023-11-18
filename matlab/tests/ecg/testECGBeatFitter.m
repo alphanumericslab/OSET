@@ -37,7 +37,7 @@ data1 = data-bsline;
 
 %//////////////////////////////////////////////////////////////////////////
 % Making the data noisy
-SNR = 0;
+SNR = 60;
 SignalPower = mean(data1.^2);
 NoisePower = SignalPower / 10^(SNR/10);
 x = data1 + sqrt(NoisePower)*randn(size(data1));
