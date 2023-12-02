@@ -361,15 +361,24 @@ data_filtered_mn_all_channels_padded = mean(data_filtered_padded, 1);
 
 %% find the envelope bumps (the top percentile of the signal's power envelope and above the noise level) for R-peak search
 if ~isfield(params, 'power_env_hist_peak_th') || isempty(params.power_env_hist_peak_th)
-    % params.power_env_hist_peak_th = 85.0;
-    p_residual = prctile(data_residual_env_padded, 95.0);
-    p_signal = prctile(data_filtered_env_padded, 85.0);
+
+    if ~isfield(params, 'p_residual_th') || isempty(params.p_residual_th)
+        params.p_residual_th = 95.0;
+    end
+    p_residual = prctile(data_residual_env_padded, params.p_residual_th);
+
+    if ~isfield(params, 'p_signal_th') || isempty(params.p_signal_th)
+        params.p_signal_th = 85.0;
+    end
+    p_signal = prctile(data_filtered_env_padded, params.p_signal_th);
     if p_signal > p_residual
         params.power_env_hist_peak_th = (p_residual + p_signal)/2;
     else
         params.power_env_hist_peak_th  = p_signal;
     end
     if params.verbose, disp(['params.power_env_hist_peak_th = ', num2str(params.power_env_hist_peak_th)]), end
+    if params.verbose, disp(['   params.p_residual_th = ', num2str(params.p_residual_th)]), end
+    if params.verbose, disp(['   params.p_signal_th = ', num2str(params.p_signal_th)]), end
     if params.verbose, disp(['   p_residual = ', num2str(p_residual)]), end
     if params.verbose, disp(['   p_signal = ', num2str(p_signal)]), end
 end
