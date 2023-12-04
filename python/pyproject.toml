@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "oset"
+version = "0.1.0"
+description = "An implementation of OSET in Python."
+authors = ["Reza Sameni <reza.sameni@gmail.com>"]
+license = "BSD-3-Clause"
+
+[tool.poetry.dependencies]
+python = ">=3.6"
+
+[[tool.poetry.packages]]
+include = "src/oset"

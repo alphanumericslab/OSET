@@ -1,0 +1,3 @@
+# External tools
+
+**COPYRIGHT NOTICE**: This directory includes files, programs, and data that are sourced from the public domain or have been provided by their original developers specifically for ACADEMIC PURPOSES. **These files are excluded from the OSET open-source license and fall under their respective ownership and permissions**. Users are advised to contact the original owners of these codes on a case-by-case basis to obtain permission for reproducing or utilizing them. It is also important to appropriately acknowledge the original developers in any usage or publications that rely on the files in this directory.

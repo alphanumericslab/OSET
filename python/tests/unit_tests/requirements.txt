@@ -1,0 +1,5 @@
+jupyterlab
+numpy
+matplotlib
+scipy
+matlabengine
