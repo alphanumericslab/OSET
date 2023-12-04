@@ -34,7 +34,7 @@ Refer to [Code of conduct, diversity, equity, and inclusion statement](./code-of
 * Version 4.0 (December 2023 - *beta version*): OSET codebase revision initiated
 
 ## CITATION
-Please cite OSET as follows: R. Sameni, OSET: The open-source electrophysiological toolbox. Version 3.14, URL: [https://github.com/alphanumericslab/OSET.git](https://github.com/alphanumericslab/OSET.git)
+Please cite OSET as follows: R. Sameni, OSET: The open-source electrophysiological toolbox. Version 3.14, 2006-2023. Available [online]. URL: [https://github.com/alphanumericslab/OSET.git](https://github.com/alphanumericslab/OSET.git)
 
 ## CONTACT
 - Reza Sameni, Emory University Department of Biomedical Informatics. Web: [https://sameni.info](https://sameni.info)
