@@ -11,27 +11,27 @@ The MI estimator is data-efficient, adaptive, and has minimal bias. This estimat
 
 ## Codebase
 
-- **[MILCA (standard ICA)](./milca.C)**: uses only the instantaneous information in the signal, optimal for signals with white spectra (no time structure)
+- **[MILCA (standard ICA)](./milca.c)**: uses only the instantaneous information in the signal, optimal for signals with white spectra (no time structure)
   - **Input**: Original (mixed) components
   - **Output**: Least dependent components, de-mixing matrix
   
-- **[MILCAdelay](./milcadelay.C)**: uses in addition any time structure in the signals. Can separate also two Gaussians with different spectra [1]
+- **[MILCAdelay](./milcadelay.c)**: uses in addition any time structure in the signals. Can separate also two Gaussians with different spectra [1]
   - **Input**: Original (mixed) components
   - **Output**: Least dependent components, de-mixing matrix
   
-- **[ICATests (Reliability Tests)](./ICAtests.C)**: can be used for any ICA-output, not necessarily from MILCA [2],[1]
+- **[ICATests (Reliability Tests)](./ICAtests.c)**: can be used for any ICA-output, not necessarily from MILCA [2],[1]
   - **Input**: Any ICA-output
   - **Output**: Dependency matrix, variability matrix, MI vs rotation angle plots
   
-- **[MIClustering](./MIClustering.C)**: hierarchical clustering algorithm based on the grouping property of MI [4],[1]
+- **[MIClustering](./MIClustering.c)**: hierarchical clustering algorithm based on the grouping property of MI [4],[1]
   - **Input**: Any ICA-output
   - **Output**: Dendrogram of dependencies
 
-- **[MIxnyn](./MIxnyn.C)**: calculates mutual information between two input channels of arbitrary dimensions [3],[1]
+- **[MIxnyn](./MIxnyn.c)**: calculates mutual information between two input channels of arbitrary dimensions [3],[1]
   - **Input**: Multidimensional input signal
   - **Output**: MI value
 
-- **[MIhigherdim](./MIhigherdim.C)**: calculates mutual information (redundancy) between any number of one-dimensional input channels [3],[1]
+- **[MIhigherdim](./MIhigherdim.c)**: calculates mutual information (redundancy) between any number of one-dimensional input channels [3],[1]
   - **Input**: Multidimensional input signal
   - **Output**: MI value
 
