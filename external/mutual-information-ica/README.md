@@ -70,6 +70,23 @@ After successfully running the `make` or `mingw32-make` command, the following e
 - `MIxnyn`
 - `MIClustering`
 
+The above can be called directly from the terminal, or by using the MATLAB wrappers (m-files) provided in this folder. Here's a sample code
+
+```MATLAB
+% make sure to add the milca folder path to your MATLAB session's environmnet variables
+milca_path = '/path/to/oset/mutual-information-ica/directory';
+current_path = getenv('PATH');
+setenv('PATH', [milca_path ':' current_path]);
+
+% define random variables
+a = randn(1, 10000);
+b = cumsum(a);
+kneig = 10; % k nearest neigbor for the MI algorithm
+
+% run MIxnyn to compute the mutual information between a and b
+miout=MIxnyn(a, b, kneig)
+```
+
 
 For more detailed instructions on generating the executables, you can refer to the [original codebase](https://www.ucl.ac.uk/ion/milca-0).
 
