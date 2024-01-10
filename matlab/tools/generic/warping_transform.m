@@ -104,12 +104,15 @@ end
 % Initialize the warping matrix
 M = zeros(out_vector_boundaries(end), in_vector_boundaries(end));
 
+% t_all = [];
+% col_first_all = [];
+% col_last_all = [];
 % Iterate through knot points
 for k = 1 : length(in_vector_boundaries) - 1
     in_len = in_vector_boundaries(k+1) - in_vector_boundaries(k) + 1;
     out_len = out_vector_boundaries(k+1) - out_vector_boundaries(k) + 1;
     fractional_update = (in_len -1) / (out_len - 1);
-
+    % t = in_vector_boundaries(k);
     % Select interpolation method based on 'order'
     if ischar(order) % The string case is provided for test and compatibility purposes. It purforms identical to the integer input case
         switch order
@@ -197,17 +200,18 @@ for k = 1 : length(in_vector_boundaries) - 1
 
                 end
             else % Use linear interpolation for boundaries
-                col1 = floor(t);
-                col2 = col1 + 1;
-                if col1 <= in_vector_boundaries(end)
-                    M(row, col1) = col2 - t ;
+                col_first = floor(t);
+                col_last = col_first + 1;
+                if col_first <= in_vector_boundaries(end)
+                    M(row, col_first) = col_last - t ;
                 end
 
-                if col2 <= in_vector_boundaries(end)
-                    M(row, col2) = t - col1;
+                if col_last <= in_vector_boundaries(end)
+                    M(row, col_last) = t - col_first;
                 end
 
             end
+            % t_all = cat(1, t_all, t);
             t = t + fractional_update;
         end
     end

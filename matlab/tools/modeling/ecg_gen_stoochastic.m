@@ -1,9 +1,9 @@
-function [ecg, phi] = ecg_gen_stoochastic(N, fs, varargin)
-% ecg_gen_stoochastic - Generate synthetic single-channel ECG with beat-wise stochastic deviations.
+function [ecg, phi] = ecg_gen_stochastic(N, fs, varargin)
+% ecg_gen_stochastic - Generate synthetic single-channel ECG with beat-wise stochastic deviations.
 %
 % Syntax:
-%   [ecg, phi] = ecg_gen_stoochastic(N, fs, params)
-%   [ecg, phi] = ecg_gen_stoochastic(N, fs, f, f_deviations, alpha, delta_alpha, b, delta_b, theta, delta_theta, theta0)
+%   [ecg, phi] = ecg_gen_stochastic(N, fs, params)
+%   [ecg, phi] = ecg_gen_stochastic(N, fs, f, f_deviations, alpha, delta_alpha, b, delta_b, theta, delta_theta, theta0)
 %
 % Inputs:
 %   N: Signal length

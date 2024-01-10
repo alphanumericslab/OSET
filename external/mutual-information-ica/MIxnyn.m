@@ -1,4 +1,4 @@
-function miout=MIxnyn(x,y,kneig);
+function miout=MIxnyn(x,y,kneig)
 
 % Calculate MI value between 2 vector of any dimension (rectangular
 % version)

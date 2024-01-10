@@ -66,7 +66,7 @@ noise =  cumsum(randn(1, N),2);
 
 %//////////////////////////////////////////////////////////////////////////
 % ECG calculation
-[ECG, teta] = ecg_gen_stoochastic(N, fs, F, F_deviations, alphai, amp_deviations, bi, width_deviations, tetai,center_deviations, teta0);
+[ECG, teta] = ecg_gen_stochastic(N, fs, F, F_deviations, alphai, amp_deviations, bi, width_deviations, tetai,center_deviations, teta0);
 
 s = ECG + (sqrt(sum(ECG.^2,2))./sqrt(sum(noise.^2,2))/sqrt(10^(snr/10))*ones(1,size(ECG,2))).*noise;
 

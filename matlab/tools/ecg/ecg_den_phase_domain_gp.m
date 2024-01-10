@@ -46,7 +46,7 @@ function [data_posterior_est, data_prior_est, n_var] = ecg_den_phase_domain_gp(d
 [phase, ~] = phase_calculator(peaks); % phase calculation
 
 if ~isfield(params, 'bins') % number of phase bins
-    params.bins = median(diff(find(peaks))); % use median of RR-intervals in samples by default
+    params.bins = round(median(diff(find(peaks)))); % use median of RR-intervals in samples by default
 end
 
 if ~isfield(params, 'NOISE_VAR_EST_METHOD') % noise variance estimation method

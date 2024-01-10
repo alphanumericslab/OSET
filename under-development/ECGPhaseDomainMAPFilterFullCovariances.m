@@ -47,41 +47,51 @@ if 0
     peaks(peaks_mid_points) = 1;
 end
 
-% Left padding the peaks sequence to add an additional peak on the far left
-% (required for first beat correction)
-if I_peaks(1) > 1
-    rr0 = I_peaks(2) - I_peaks(1);
-    r0_index = I_peaks(1) - rr0;
-    if r0_index < 1
-        left_padding = 1 - r0_index;
-        peaks_padded = [1, zeros(1, left_padding - 1), peaks];
+% if 0
+    % Left padding the peaks sequence to add an additional peak on the far left
+    % (required for first beat correction)
+    if I_peaks(1) > 1
+        rr0 = I_peaks(2) - I_peaks(1);
+        r0_index = I_peaks(1) - rr0;
+        if r0_index < 1
+            left_padding = 1 - r0_index;
+            peaks_padded = [1, zeros(1, left_padding - 1), peaks];
+        else
+            left_padding = 1;
+            peaks_padded = [1, peaks];
+        end
     else
-        left_padding = 1;
-        peaks_padded = [1, peaks];
+        left_padding = 0;
+        peaks_padded = peaks;
     end
-else
-    left_padding = 0;
-    peaks_padded = peaks;
-end
-II_peaks = find(peaks_padded);
+    II_peaks = find(peaks_padded);
 
-% Right padding the peaks sequence to add an additional peak on the far
-% right (required for last beat correction)
-if II_peaks(end) < length(peaks_padded)
-    rr_last = II_peaks(end) - II_peaks(end-1);
-    r_last_index = II_peaks(end) + rr_last;
-    if r_last_index > length(peaks_padded)
-        right_padding = r_last_index - length(peaks_padded);
-        peaks_padded = cat(2, peaks_padded, [zeros(1, right_padding - 1), 1]);
+    % Right padding the peaks sequence to add an additional peak on the far
+    % right (required for last beat correction)
+    if II_peaks(end) < length(peaks_padded)
+        rr_last = II_peaks(end) - II_peaks(end-1);
+        r_last_index = II_peaks(end) + rr_last;
+        if r_last_index > length(peaks_padded)
+            right_padding = r_last_index - length(peaks_padded);
+            peaks_padded = cat(2, peaks_padded, [zeros(1, right_padding - 1), 1]);
+        else
+            right_padding = 1;
+            peaks_padded = cat(2, peaks_padded, 1);
+        end
     else
-        right_padding = 1;
-        peaks_padded = cat(2, peaks_padded, 1);
+        right_padding = 0;
+        % peaks_padded = peaks_padded;
     end
-else
-    right_padding = 0;
-    % peaks_padded = peaks_padded;
-end
-II_peaks = find(peaks_padded);
+    II_peaks = find(peaks_padded);
+% end
+
+% left_padding = 0;
+% right_padding = 0;
+% II_peaks = find(peaks);
+
+
+
+
 
 data_prior_est = zeros(size(data));
 data_posterior_est = zeros(size(data));
@@ -95,6 +105,7 @@ for ch = 1 : size(data, 1)
         x_phase_warped = LinearWarp(beat, params.bins + 1);
         x_stacked(k - 1, :) = x_phase_warped(1 : end - 1);
     end
+
 
     if left_padding > 0
         ECG_mean = mean(x_stacked(2 : length(II_peaks) - 1, :), 1);
@@ -216,10 +227,10 @@ if 1
     plot(data)
     hold on
     plot(I_peaks, data(I_peaks), 'ro', 'markersize', 18)
-%     plot(data_posterior_est(ch, :))
+    %     plot(data_posterior_est(ch, :))
     plot(data_prior_est(ch, :))
-%     plot(9*sqrt(abs((diag(K_s)))), 'k')
-%     legend('raw', 'peaks', 'posterior', 'prior', 'K_s');
+    %     plot(9*sqrt(abs((diag(K_s)))), 'k')
+    %     legend('raw', 'peaks', 'posterior', 'prior', 'K_s');
     legend('raw', 'peaks', 'prior');
     % legend('raw', 'peaks', 'posterior', 'prior');
     grid
