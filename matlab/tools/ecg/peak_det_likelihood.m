@@ -122,6 +122,8 @@ if ~isfield(params, 'filter_type') || isempty(params.filter_type)
     if params.verbose, disp(['params.filter_type = ', params.filter_type]), end
 end
 switch params.filter_type
+    case 'BYPASS' % No filter
+        data_filtered_padded = data_padded;
     case 'MDMN' % Median + MA filter
         if ~isfield(params, 'wlen_md') || isempty(params.wlen_md)
             params.wlen_md = 0.075;
