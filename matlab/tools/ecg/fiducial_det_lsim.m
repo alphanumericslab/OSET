@@ -141,7 +141,7 @@ fcm_features = [ecg_blocks_normalized(:,sample_70ms:end),repmat(avg_intervals_ec
 fcm_features = fillmissing(fcm_features,"linear");
 fcm_features = zscore(fcm_features);
 
-fcm_options = fcmOptions( MaxNumIteration=25, Exponent=1.1);
+fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
 [fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
 [~,cluster_fcm] = max(fcm_part_mat);
 
@@ -559,8 +559,8 @@ for p = 2:length(ecg_rpeaks_index)-1
 
 end
 
-% ecg_denoised_nT = lp_filter_zero_phase(ecg_denoised_nT, 15/fs);
-ecg_denoised_nT = sjk_eeg_filter(ecg_denoised_nT, fs_fd,0.5,20);
+ecg_denoised_nT = lp_filter_zero_phase(ecg_denoised_nT, 15/fs);
+% ecg_denoised_nT = sjk_eeg_filter(ecg_denoised_nT, fs_fd,0.5,20);
 
 ecg_T_std = movstd(ecg_denoised_nT,[win_sample_T,win_sample_T]);
 ecg_T_ndiff = [zeros(1,win_sample_T-ceil(win_sample_T/2)), ecg_denoised_nT(win_sample_T+1:end) - ecg_denoised_nT(1:end-win_sample_T),zeros(1,win_sample_T-floor(win_sample_T/2))];

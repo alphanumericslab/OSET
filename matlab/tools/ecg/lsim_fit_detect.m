@@ -26,8 +26,8 @@ init_model.pi_0_lsim{2,1} = temp_pi0/sum(temp_pi0);
 init_model.coupling_tetha_IM = [0.99,0.01;0.01,0.99];
 
 extra.sigma_diag = 1;
-extra.plot=0;
-extra.check_convergence =0;
+extra.plot = 0;
+extra.check_convergence = 0;
 extra.time_series = 0;
 extra.left2right = 1;
 max_itration = 30;
