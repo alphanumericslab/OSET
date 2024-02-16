@@ -775,10 +775,10 @@ if params.RETURN_SIGNAL_PEAKS
     envelope_to_peak_search_wlen = floor(fs * params.envelope_to_peak_search_wlen / 2);
 
     peak_likelihood_boxes = peak_surrounding_likelihood(sig_len, peak_indexes, fs, 'BOX', params.envelope_to_peak_search_wlen, []);
-    peak_indexes = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1)), :), peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
+    peak_indexes = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1), 1), :), peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 
     peak_likelihood_boxes = peak_surrounding_likelihood(sig_len, peak_indexes_consensus, fs, 'BOX', params.envelope_to_peak_search_wlen, []);
-    peak_indexes_consensus = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1)), :), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
+    peak_indexes_consensus = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1), 1), :), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 end
 
 if params.PLOT_DIAGNOSTIC
