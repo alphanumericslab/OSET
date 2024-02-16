@@ -19,11 +19,19 @@ int main() {
     size_t outBlockSize = 10;       // Output block size
     size_t outputOverlap = 2;       // Overlap size for output blocks
 
-    // Create the ring buffer
-    RingBuffer ringBuffer(capacity, inRate, outRate, inBlockSize, outBlockSize, outputOverlap);
-
     // Number of blocks to write
     size_t numBlocks = 5;
+
+    // Parameters for the ring buffer
+    std::cout << "capacity = " << capacity << std::endl;
+    std::cout << "inRate = " << inRate << std::endl;
+    std::cout << "outRate = " << outRate << std::endl;
+    std::cout << "inBlockSize = " << inBlockSize << std::endl;
+    std::cout << "outBlockSize = " << outBlockSize << std::endl;
+    std::cout << "outputOverlap = " << outputOverlap << std::endl;
+ 
+   // Create the ring buffer
+    RingBuffer ringBuffer(capacity, inRate, outRate, inBlockSize, outBlockSize, outputOverlap);
 
     // Write multiple blocks to the ring buffer
     std::cout << "Writing to ring buffer..." << std::endl;
