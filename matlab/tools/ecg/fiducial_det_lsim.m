@@ -43,7 +43,7 @@ function positions = fiducial_det_lsim(data, ecg_rpeaks_index, fs, varargin)
 %
 
 
-if nargin <= 3
+if nargin < 3
     error('The first 3 inputs are necessary for the fiducial detection')
 end
 
@@ -51,6 +51,7 @@ fs_fd = 1000;
 fs_fd = fs;
 
 data = data(:)';
+ecg_rpeaks_index = ecg_rpeaks_index(:);
 
 sample_10ms = round(fs_fd*0.01);
 sample_70ms = round(fs_fd*0.07);
@@ -93,11 +94,12 @@ end
 % G = gcd( fs_fd,fs );
 % data = resample(data,fs_fd/G,fs/G);
 
-rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
 
+rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
 avg_intervals_ecg = movmean(rr_intervals_ecg,[60,60]);
 avg_intervals_ecg = [avg_intervals_ecg;avg_intervals_ecg(end)];
 rr_intervals_ecg = [rr_intervals_ecg;rr_intervals_ecg(end)];
+
 
 pqrs_bloks = zeros(length(ecg_rpeaks_index)-2,sample_250ms+sample_70ms+1);
 t_bloks = zeros(length(ecg_rpeaks_index)-2,round(sample_350ms*min(2,max(max(1,avg_intervals_ecg/(2*sample_350ms)))))-sample_70ms);
@@ -722,7 +724,7 @@ for p = 2:length(ecg_rpeaks_index)-1
     if isnan(after_peak(p))
         after_peak(p) = 1;
     end
-    this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+max(after_peak(p)+3*sample_10ms,min(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms));
+    this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p) + min(ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms,max(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), after_peak(p)+3*sample_10ms ));
 
     if any(this_T_index>length(data))
         continue;
