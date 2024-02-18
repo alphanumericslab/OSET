@@ -39,9 +39,9 @@ end
 y = x;
 J = find(abs(x - x_med) >= FilterHR);
 
-if(strcmp(mode,'normal'))
+if strcmp(mode,'normal')
     y(J) = x_med(J);
-elseif(strcmp(mode,'nan'))
+elseif strcmp(mode,'nan')
     y(J) = nan;
 end
 

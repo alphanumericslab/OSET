@@ -18,7 +18,7 @@ function y = HRSmoother(x, ExcludedHR, wlen, varargin)
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 % Public License for more details.
 
-if(nargin>3 && ~isempty(varargin{1}))
+if nargin > 3 && ~isempty(varargin{1})
     med = varargin{1};
 else
     med = median(x);
