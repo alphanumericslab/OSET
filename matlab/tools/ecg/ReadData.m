@@ -49,7 +49,7 @@ wd = cd;
 cd(pth);
 lst = dir('*.dat');
 for kk = 1 : length(lst)
-    for nn = 1 : length(segstart_list),
+    for nn = 1 : length(segstart_list)
         fname = lst(kk).name;
         fname = fname(1:end-4);
         segstart = segstart_list(nn);
@@ -58,8 +58,7 @@ for kk = 1 : length(lst)
         %         system(['rdsamp -r ' fname ' > sampledata.txt']);
         data_all_channels = load([pth '\sampledata.txt'])';
         data_all_channels = data_all_channels(2:end,:);
-		%%%%%% DO WHAT YOU WANT HERE
-        end
+        %%%%%% DO WHAT YOU WANT HERE
     end
 end
 cd(wd);
