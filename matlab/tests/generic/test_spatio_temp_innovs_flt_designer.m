@@ -59,7 +59,7 @@ params.innovation_filter_type = 'LINEAR_PHASE'; % 'LINEAR_PHASE', 'MIN_PHASE';
 params.plot_results = true; % true/false plot results
 
 % Design the innovations filter
-[h_innovations, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = SpatioTemporalInnovationsFilterDesigner(sample_data, params);
+[h_innovations, A, S_mean, S_median, S_max, S_min, S_max_min_avg] = spatio_temp_innovs_flt_designer(sample_data, params);
 
 
 % Test the innovations filter
