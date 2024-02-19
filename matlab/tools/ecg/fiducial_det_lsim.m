@@ -59,6 +59,8 @@ sample_100ms = round(fs_fd*0.1);
 sample_250ms = round(fs_fd*0.25);
 sample_350ms = round(fs_fd*0.35);
 
+t_second = (0 : length(data)-1)/fs;
+
 % Check optional input arguments
 if nargin > 3 && ~isempty(varargin{1})
     flag_post_processing = varargin{1};
@@ -75,13 +77,13 @@ end
 if nargin > 5 && ~isempty(varargin{3})
     win_sample_qrs = round(fs*varargin{3});
 else
-    win_sample_qrs = sample_10ms;
+    win_sample_qrs = 2*sample_10ms;
 end
 
 if nargin > 6 && ~isempty(varargin{4})
     win_sample_T = round(fs*varargin{4});
 else
-    win_sample_T = 2*sample_10ms;
+    win_sample_T = 3*sample_10ms;
 end
 
 if nargin > 7 && ~isempty(varargin{5})
@@ -252,7 +254,7 @@ for p = 2:length(ecg_rpeaks_index)-1
 
     if ~isempty(ind_extrm)
         temp = ecg_denoised_n(this_qrson_index(dur_this:end-sample_10ms));
-        if strcmp(flag_type , 'max')
+        if contains(flag_type , 'max')
             sample_win_gain = TF - find(temp(1:TF)<temp(TF)-2*P/3,1,'last');
         else
             sample_win_gain = TF - find(temp(1:TF)>temp(TF)+2*P/3,1,'last');
@@ -261,18 +263,21 @@ for p = 2:length(ecg_rpeaks_index)-1
         gain_sig(ind_extrm-sample_win_gain:ind_extrm) = gain_sig(ind_extrm-sample_win_gain:ind_extrm)+temp(sample_win_gain+1:end);
     end
 
-    this_dur = floor(length(this_qrson_index)/3);
-    temp = ecg_denoised_std(this_qrson_index).*gain_sig;
-    thr_pq = mean(temp(2*this_dur:end))/5;
-    ind_drop_pq = min(this_dur,find(temp<thr_pq,1,'first'));
+
+    temp = ecg_denoised_std(this_qrson_index);
+    thr_pq = mean(temp(end-3*sample_10ms:end))/5;
+    [TF,P] = islocalmin(temp(1:end-2*sample_10ms),'MaxNumExtrema',1,'MinProminence',thr_pq/2);
+    ind_drop_pq = find(TF);
 
     if isempty(ind_drop_pq)
-        ind_drop_pq = sample_10ms;
+        ind_drop_pq = 1;
+    else
+        ind_drop_pq = find(temp(1:ind_drop_pq)>thr_pq/2,1,'last');
     end
 
-
     this_qrson_index = this_qrson_index(ind_drop_pq:end);
-    prior_win = gausswin(4*length(this_qrson_index)+1)';
+    prior_win = gausswin(4*max(sample_70ms ,length(this_qrson_index))+1)';
+    prior_win = prior_win(ceil(length(prior_win)/2)-2*length(this_qrson_index):ceil(length(prior_win)/2)+2*length(this_qrson_index));
     gain_sig = gain_sig(ind_drop_pq:end).*prior_win(length(this_qrson_index)+2:2*length(this_qrson_index)+1);
 
     pqrs_bloks_on{1,p-1} = ecg_denoised_ndiff(this_qrson_index).*gain_sig;
@@ -284,12 +289,13 @@ for p = 2:length(ecg_rpeaks_index)-1
     ecg_denoised_ndiff(this_qrson_index) = ecg_denoised_ndiff(this_qrson_index).*gain_sig;
     ecg_denoised_std(this_qrson_index) = ecg_denoised_std(this_qrson_index).*gain_sig;
 
+    dur_this = round(length(this_qrson_index)/2);
     mean_init_on_1{1,p-1} = [ecg_denoised_ndiff(this_qrson_index(1:dur_this));ecg_denoised_std(this_qrson_index(1:dur_this))];
     mean_init_on_2{1,p-1} = [ecg_denoised_ndiff(this_qrson_index(dur_this:end));ecg_denoised_std(this_qrson_index(dur_this:end))];
 
 end
 
-type_det = 'on';
+type_det = 'qrson';
 lock_where = 'last'; % first or last
 obs_seqment_beats = pqrs_bloks_on;
 mean_init_1 = mean_init_on_1;
@@ -303,7 +309,7 @@ for c = num_cls(:)'
     cls_seqment_beats = obs_seqment_beats(:,ind_c); init_state_1 = mean_init_1(ind_c); init_state_2 = mean_init_2(ind_c);
     v_trans_det = lsim_fit_detect(cls_seqment_beats,type_det, init_state_1, init_state_2);
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         v_trans_det = dur_block(ind_c) - v_trans_det;
     end
 
@@ -327,13 +333,13 @@ for c = num_cls(:)'
         cls_onoff_det{c} = v_trans_filtered;
     end
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         cls_onoff_det{c} = dur_block(ind_c) - (cls_onoff_det{c} - max(0,50-Md_temp));
     else
         cls_onoff_det{c} = cls_onoff_det{c} - max(0,50-Md_temp);
     end
 
-    if  strcmp(type_det , 'on')
+    if  contains(type_det , 'on')
         cls_onoff_det{c} = round(cls_onoff_det{c})  - ceil(win_sample_qrs/2); % diff correction
     else
         cls_onoff_det{c} = round(cls_onoff_det{c}) + ceil(win_sample_qrs/2); % diff correction
@@ -374,7 +380,7 @@ mean_init_off_2 = cell(1,length(ecg_rpeaks_index)-2);
 rcounter = 2;
 
 mn_qrson =  mean(ecg_rpeaks_index - ecg_qrson_index, 'omitmissing');
-sample_off_search = round(max(sample_100ms/2, 3*sample_100ms/2 - mn_qrson));
+sample_off_search = round(max(sample_100ms+2*sample_10ms, 2*sample_100ms - mn_qrson));
 
 for p = 2:length(ecg_rpeaks_index)-1
 
@@ -432,7 +438,7 @@ for p = 2:length(ecg_rpeaks_index)-1
 
     if ~isempty(ind_extrm)
         temp = ecg_denoised_n(this_qrsoff_index(sample_10ms:dur_this));
-        if strcmp(flag_type , 'max')
+        if contains(flag_type , 'max')
             sample_win_gain = find(temp(TF:end)<temp(TF)-2*P/3,1,'first');
         else
             sample_win_gain = find(temp(TF:end)>temp(TF)+2*P/3,1,'first');
@@ -456,7 +462,7 @@ for p = 2:length(ecg_rpeaks_index)-1
 end
 
 lock_where = 'first';
-type_det = 'off';
+type_det = 'qrsoff';
 obs_seqment_beats = pqrs_bloks_off;
 mean_init_1 = mean_init_off_1;
 mean_init_2 = mean_init_off_2;
@@ -469,7 +475,7 @@ for c = num_cls(:)'
     cls_seqment_beats = obs_seqment_beats(:,ind_c); init_state_1 = mean_init_1(ind_c); init_state_2 = mean_init_2(ind_c);
     v_trans_det = lsim_fit_detect(cls_seqment_beats,type_det, init_state_1, init_state_2);
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         v_trans_det = dur_block(ind_c) - v_trans_det;
     end
 
@@ -493,13 +499,13 @@ for c = num_cls(:)'
         cls_onoff_det{c} = v_trans_filtered;
     end
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         cls_onoff_det{c} = dur_block(ind_c) - (cls_onoff_det{c} - max(0,50-Md_temp));
     else
         cls_onoff_det{c} = cls_onoff_det{c} - max(0,50-Md_temp);
     end
 
-    if  strcmp(type_det , 'on')
+    if  contains(type_det , 'on')
         cls_onoff_det{c} = round(cls_onoff_det{c})  - ceil(win_sample_qrs/2); % diff correction
     else
         cls_onoff_det{c} = round(cls_onoff_det{c}) + ceil(win_sample_qrs/2); % diff correction
@@ -530,15 +536,17 @@ end
 
 positions.QRSoff = this_fiducials;
 
-% a = figure('Position', [130 130 1500 800]);
-% lg = {};
-% plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
-% hold on
-% plot(t_second,ecg_denoised_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
-% grid on
-% plot(t_second,ecg_denoised_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
+a = figure('Position', [130 130 1500 800]);
+lg = {};
+plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
+hold on
+plot(t_second,ecg_denoised_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
+grid on
+plot(t_second,ecg_denoised_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
 
-%%
+%%  T-wave detection ##################################################################################################################
+%  ================= ##################################################################################################################
+
 T_bloks_on = cell(2,length(ecg_rpeaks_index)-2);
 T_bloks_on_index = cell(1,length(ecg_rpeaks_index)-2);
 
@@ -556,12 +564,13 @@ ecg_denoised_nT = ecg_denoised_n;
 
 for p = 2:length(ecg_rpeaks_index)-1
 
-    this_qrs_index = ecg_qrson_index(p) : ecg_qrsoff_index(p);
+    this_qrs_index = ecg_qrson_index(p)-min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1))) : ecg_qrsoff_index(p);
     ecg_denoised_nT(this_qrs_index) = linspace(ecg_denoised_nT(this_qrs_index(1)),ecg_denoised_nT(this_qrs_index(end)) , length(this_qrs_index) );
 
 end
 
-ecg_denoised_nT = lp_filter_zero_phase(ecg_denoised_nT, 15/fs);
+ecg_denoised_nT = lp_filter_zero_phase(ecg_denoised_nT, 10/fs);
+% ecg_denoised_nT = ecg_denoised_nT - lp_filter_zero_phase(ecg_denoised_nT, 0.5/fs);
 % ecg_denoised_nT = sjk_eeg_filter(ecg_denoised_nT, fs_fd,0.5,20);
 
 ecg_T_std = movstd(ecg_denoised_nT,[win_sample_T,win_sample_T]);
@@ -586,7 +595,10 @@ for p = 2:length(ecg_rpeaks_index)-1
         this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+sample_250ms;
     end
 
-    [TF,P] = islocalmax(ecg_denoised_nT(this_T_index),'MaxNumExtrema',2,'MinSeparation',sample_70ms);
+    temp = ecg_denoised_nT(this_T_index(5*sample_10ms+1:min(length(this_T_index),round(sample_350ms*max(1,avg_intervals_ecg(p)/(3*sample_350ms)) )) ));
+    temp(1)=ecg_denoised_nT(this_T_index(1));
+    temp = temp  - linspace(temp(1),temp(end),length(temp));
+    [TF,P] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms);
     TF_max = find(TF);
     if ~isempty(TF_max)
         if length(TF_max)==1
@@ -608,8 +620,11 @@ for p = 2:length(ecg_rpeaks_index)-1
         P_maxU = 10^-12;
     end
 
-    [TF,P] = islocalmin(ecg_denoised_nT(this_T_index),'MaxNumExtrema',2,'MinSeparation',sample_70ms);
-    TF_min = find(TF);
+    TF_max = 5*sample_10ms+TF_max;
+
+
+    [TF,P] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms);
+    TF_min =find(TF);
     if ~isempty(TF_min)
         if length(TF_min)==1
             P_min=P(TF_min);
@@ -631,12 +646,14 @@ for p = 2:length(ecg_rpeaks_index)-1
         P_minU = 10^-12;
     end
 
-    if P_max/P_min > 4
+    TF_min = 5*sample_10ms+TF_min;
+
+    if P_max/P_min > 3
         T_type{p} = 'max';
         before_peak(p) = TF_max(1);
         after_peak(p) = TF_max(1);
         T_peaks(p) = this_T_index(TF_max(1));
-    elseif P_min/P_max > 4
+    elseif P_min/P_max > 3
         T_type{p} = 'min';
         before_peak(p) = TF_min(1);
         after_peak(p) = TF_min(1);
@@ -657,13 +674,13 @@ for p = 2:length(ecg_rpeaks_index)-1
         before_peak(p) = TF_max(1);
         after_peak(p) = TF_max(1);
         T_peaks(p) = this_T_index(TF_max(1));
-        biphasic_shape(p) = round(max(min(length(this_T_index),sample_250ms),(TF_max(2)+2*TF_min(1))/3));
+        biphasic_shape(p) = round(max(min(length(this_T_index),sample_350ms),(TF_max(2)+2*TF_min(1))/3));
     elseif P_min/P_max > 2  && (TF_min(2)>TF_max(1) && TF_min(2)>TF_min(1)&& TF_max(1)>TF_min(1)) % there is U wave
         T_type{p} = 'Umin';
         before_peak(p) = TF_min(1);
         after_peak(p) = TF_min(1);
         T_peaks(p) = this_T_index(TF_min(1));
-        biphasic_shape(p) = round(max(min(length(this_T_index),sample_250ms),(TF_min(2)+2*TF_max(1))/3));
+        biphasic_shape(p) = round(max(min(length(this_T_index),sample_350ms),(TF_min(2)+2*TF_max(1))/3));
     else
         if P_max/P_min >= 1
             T_type{p} = 'Nmax';
@@ -694,13 +711,13 @@ if flag_post_processing>0
         before_peak_cell{c,1}  = before_peak(ind_c);
         Md_temp = round(median( before_peak_cell{c,1}(:),'omitmissing'));
         before_peak_cell{c,1} = max(0,50-Md_temp) +  before_peak_cell{c,1};
-        before_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1), before_peak_cell{c,1}],0.25,0.15,60);
+        before_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1), before_peak_cell{c,1}],0.15,0.10,60);
         before_peak_cell{c,1} = round( before_peak_cell{c,1})-max(0,50-Md_temp);
 
         after_peak_cell{c,1}  = after_peak(ind_c);
         Md_temp = round(median(after_peak_cell{c,1}(:),'omitmissing'));
         after_peak_cell{c,1} = max(0,50-Md_temp) + after_peak_cell{c,1};
-        after_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1),after_peak_cell{c,1}],0.25,0.15,60);
+        after_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1),after_peak_cell{c,1}],0.15,0.10,60);
         after_peak_cell{c,1} = round(after_peak_cell{c,1})-max(0,50-Md_temp);
 
     end
@@ -735,18 +752,17 @@ for p = 2:length(ecg_rpeaks_index)-1
     end
 
     T_dur = length(this_T_index);
-    if strcmp(T_type{p},'max')
+    if contains(T_type{p},'max')
         T_peaks(p) = this_T_index(before_peak(p));
-    elseif strcmp(T_type{p},'min')
+    elseif contains(T_type{p},'min')
         T_peaks(p) = this_T_index(before_peak(p));
-    elseif strcmp(T_type{p},'bi-phasic')
+    elseif contains(T_type{p},'bi-phasic')
         T_peaks(p) = this_T_index(before_peak(p));
-    elseif strcmp(T_type{p},'Umax') ||  strcmp(T_type{p},'Umin')
+    elseif contains(T_type{p},'Umax') ||  contains(T_type{p},'Umin')
         T_peaks(p) = this_T_index(before_peak(p));
-        this_T_index = this_T_index(1: min(T_dur,max(before_peak(p)+3*sample_10ms,biphasic_shape(p))));
-    elseif strcmp(T_type{p},'Nmax') ||  strcmp(T_type{p},'Nmin')
+        this_T_index = this_T_index(1: min(T_dur,max(after_peak(p)+sample_70ms,biphasic_shape(p))));
+    elseif contains(T_type{p},'Nmax') ||  contains(T_type{p},'Nmin')
         T_peaks(p) = this_T_index(before_peak(p));
-        this_T_index = this_T_index(1: min(T_dur,biphasic_shape(p)));
     end
 
     try
@@ -763,27 +779,79 @@ for p = 2:length(ecg_rpeaks_index)-1
     end
     ratio_std = ecg_T_std(this_bT_index(ind_drop_st))/thr_ST;
     this_bT_index = this_bT_index(ind_drop_st:end);
-    if ratio_std<0.5
-        T_bloks_on{1,p-1} = ecg_T_ndiff(this_bT_index);
-        T_bloks_on{2,p-1} = ecg_T_std(this_bT_index);
-    else
-        T_bloks_on{1,p-1} = ecg_T_ndiff(this_bT_index); T_bloks_on{1,p-1}(:,1:sample_10ms) = T_bloks_on{1,p-1}(:,1:sample_10ms).*rand(1,sample_10ms);
-        T_bloks_on{2,p-1} = ecg_T_std(this_bT_index);  T_bloks_on{2,p-1}(:,1:sample_10ms) = T_bloks_on{2,p-1}(:,1:sample_10ms).*rand(1,sample_10ms);
-    end
+    % if ratio_std<0.5
+    %     T_bloks_on{1,p-1} = ecg_T_ndiff(this_bT_index);
+    %     T_bloks_on{2,p-1} = ecg_T_std(this_bT_index);
+    % else
+    %     T_bloks_on{1,p-1} = ecg_T_ndiff(this_bT_index); T_bloks_on{1,p-1}(:,1:sample_10ms) = T_bloks_on{1,p-1}(:,1:sample_10ms).*rand(1,sample_10ms);
+    %     T_bloks_on{2,p-1} = ecg_T_std(this_bT_index);  T_bloks_on{2,p-1}(:,1:sample_10ms) = T_bloks_on{2,p-1}(:,1:sample_10ms).*rand(1,sample_10ms);
+    % end
+    % T_bloks_on_index{p-1} = this_bT_index;
+
+    % dur_this = ceil(length(this_bT_index)/3);
+
+    % temp = ecg_T_std(this_bT_index);
+    % if length(temp)>5*sample_10ms
+    %     thr_tp = mean(temp(end-3*sample_10ms:end))/5;
+    %     [TF,P] = islocalmin(temp(1:end-3*sample_10ms),'MaxNumExtrema',1,'MinProminence',thr_tp/2);
+    %     ind_drop_pq = find(TF);
+    % 
+    %     if isempty(ind_drop_pq)
+    %         ind_drop_pq =  2* sample_10ms;
+    %     else
+    %         ind_drop_pq = ind_drop_pq - find(temp(1:ind_drop_pq)>thr_tp/2,1,'first');
+    %     end
+    % 
+    %     this_bT_index(1:ind_drop_pq)=[];
+    % end
+    % prior_win = gausswin(4*max(sample_70ms ,length(this_bT_index))+1)';
+    % prior_win = prior_win(ceil(length(prior_win)/2)-2*length(this_bT_index):ceil(length(prior_win)/2)+2*length(this_bT_index));
+    % gain_sig =prior_win(2*length(this_bT_index)+1:3*length(this_bT_index));
+
+    T_bloks_on{1,p-1} = ecg_T_ndiff(this_bT_index);
+    T_bloks_on{2,p-1} = ecg_T_std(this_bT_index);
+
     T_bloks_on_index{p-1} = this_bT_index;
+    % ecg_T_ndiff(this_bT_index) = ecg_T_ndiff(this_bT_index).*gain_sig;
+    % ecg_T_std(this_bT_index) = ecg_T_std(this_bT_index).*gain_sig;
 
     dur_this = ceil(length(this_bT_index)/3);
+
     mean_init_Ton_1{1,p-1} = [ecg_T_ndiff(this_bT_index(1:dur_this));ecg_T_std(this_bT_index(1:dur_this))];
     mean_init_Ton_2{1,p-1} = [ecg_T_ndiff(this_bT_index(dur_this:end));ecg_T_std(this_bT_index(dur_this:end))];
 
-    this_aT_index = this_T_index(after_peak(p)+sample_10ms:end);
+    this_aT_index = this_T_index(after_peak(p)+win_sample_T:end);
 
     if isempty(this_aT_index)
         this_aT_index = this_T_index(ceil(before_peak(p)/2):end);
     end
-    T_bloks_off{1,p-1} = ecg_T_ndiff(this_aT_index);
-    T_bloks_off{2,p-1} = ecg_T_std(this_aT_index);
+
+
+    temp = ecg_T_std(this_aT_index);
+    if length(temp)>5*sample_10ms
+        thr_tp = mean(temp(1:3*sample_10ms))/5;
+        [TF,P] = islocalmin(temp(3*sample_10ms+1:end),'MaxNumExtrema',1,'MinProminence',thr_tp/2);
+        ind_drop_pq = 3*sample_10ms+find(TF);
+
+        if isempty(ind_drop_pq)
+            ind_drop_pq = length(temp);
+        else
+            ind_drop_pq = ind_drop_pq + find(temp(ind_drop_pq+1:end)>thr_tp/2,1,'first');
+        end
+
+        this_aT_index = this_aT_index(1:ind_drop_pq);
+    end
+    prior_win = gausswin(4*max(sample_70ms ,length(this_aT_index))+1)';
+    prior_win = prior_win(ceil(length(prior_win)/2)-2*length(this_aT_index):ceil(length(prior_win)/2)+2*length(this_aT_index));
+    gain_sig =prior_win(2*length(this_aT_index)+1:3*length(this_aT_index));
+
+    T_bloks_off{1,p-1} = ecg_T_ndiff(this_aT_index).*gain_sig;
+    T_bloks_off{2,p-1} = ecg_T_std(this_aT_index).*gain_sig;
+
     T_bloks_off_index{p-1} = this_aT_index;
+
+    ecg_T_ndiff(this_aT_index) = ecg_T_ndiff(this_aT_index).*gain_sig;
+    ecg_T_std(this_aT_index) = ecg_T_std(this_aT_index).*gain_sig;
 
     dur_this = ceil(length(this_aT_index)/2);
     mean_init_Toff_1{1,p-1} = [ecg_T_ndiff(this_aT_index(1:dur_this));ecg_T_std(this_aT_index(1:dur_this))];
@@ -817,7 +885,7 @@ for c = num_cls(:)'
     cls_seqment_beats = obs_seqment_beats(:,ind_c); init_state_1 = mean_init_1(ind_c); init_state_2 = mean_init_2(ind_c);
     v_trans_det = lsim_fit_detect(cls_seqment_beats,type_det, init_state_1, init_state_2);
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         v_trans_det = dur_block(ind_c) - v_trans_det;
     end
 
@@ -841,13 +909,13 @@ for c = num_cls(:)'
         cls_onoff_det{c} = v_trans_filtered;
     end
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         cls_onoff_det{c} = dur_block(ind_c) - (cls_onoff_det{c} - max(0,50-Md_temp));
     else
         cls_onoff_det{c} = cls_onoff_det{c} - max(0,50-Md_temp);
     end
 
-    if  strcmp(type_det , 'on')
+    if  contains(type_det , 'on')
         cls_onoff_det{c} = round(cls_onoff_det{c}) - ceil(win_sample_T/2); % diff correction
     else
         cls_onoff_det{c} = round(cls_onoff_det{c}); % diff correction
@@ -893,7 +961,7 @@ for c = num_cls(:)'
     cls_seqment_beats = obs_seqment_beats(:,ind_c); init_state_1 = mean_init_1(ind_c); init_state_2 = mean_init_2(ind_c);
     v_trans_det = lsim_fit_detect(cls_seqment_beats,type_det, init_state_1, init_state_2);
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         v_trans_det = dur_block(ind_c) - v_trans_det;
     end
 
@@ -917,13 +985,13 @@ for c = num_cls(:)'
         cls_onoff_det{c} = v_trans_filtered;
     end
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         cls_onoff_det{c} = dur_block(ind_c) - (cls_onoff_det{c} - max(0,50-Md_temp));
     else
         cls_onoff_det{c} = cls_onoff_det{c} - max(0,50-Md_temp);
     end
 
-    if  strcmp(type_det , 'on')
+    if  contains(type_det , 'on')
         cls_onoff_det{c} = round(cls_onoff_det{c}) - ceil(win_sample_T/2); % diff correction
     else
         cls_onoff_det{c} = round(cls_onoff_det{c}); % diff correction
@@ -956,15 +1024,15 @@ end
 positions.Toff = this_fiducials;
 
 
-% a = figure('Position', [130 130 1500 800]);
-% lg = {};
-% plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
-% hold on
-% plot(t_second,ecg_denoised_nT,LineWidth=1.5) ;lg = cat(2, lg, {'ECG-T'});
-% plot(t_second,ecg_T_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
+a = figure('Position', [130 130 1500 800]);
+lg = {};
+plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
+hold on
+plot(t_second,ecg_denoised_nT,LineWidth=1.5) ;lg = cat(2, lg, {'ECG-T'});
+plot(t_second,ecg_T_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
 % plot(t_second,ecg_T_ndiff2,LineWidth=1.5) ;lg = cat(2, lg, {'diff2'});
-% grid on
-% plot(t_second,ecg_T_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
+grid on
+plot(t_second,ecg_T_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
 
 %% P-wave Detection
 
@@ -987,10 +1055,10 @@ max_indexes = nan(length(ecg_rpeaks_index)-2,1);
 max_P_vals = nan(length(ecg_rpeaks_index)-2,1);
 min_indexes = nan(length(ecg_rpeaks_index)-2,1);
 min_P_vals = nan(length(ecg_rpeaks_index)-2,1);
-P_wave_blocks = zeros(length(ecg_rpeaks_index)-2,sample_250ms);
+P_wave_blocks = zeros(length(ecg_rpeaks_index)-2, 2*sample_250ms);
 for p = 2:length(ecg_rpeaks_index)-1
 
-    temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1))));
+    temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
     this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p)-sample_10ms;
     if any(this_P_index<1)||any(this_P_index>length(data))
         continue;
@@ -1042,7 +1110,7 @@ end
 
 for p = 2:length(ecg_rpeaks_index)-1
 
-    temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1))));
+    temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
     this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p)-sample_10ms;
     if any(this_P_index<1)||any(this_P_index>length(data))
         continue;
@@ -1057,14 +1125,14 @@ ecg_P_ndiff = [zeros(1,win_sample_P-ceil(win_sample_P/2)), ecg_denoised_nP(win_s
 
 ecg_P_ndiff = abs(ecg_P_ndiff);
 
-% a = figure('Position', [130 130 1500 800]);
-% lg = {};
-% plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
-% hold on
-% plot(t_second,ecg_denoised_nP,LineWidth=1.5) ;lg = cat(2, lg, {'ECG-T'});
-% plot(t_second,ecg_P_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
-% grid on
-% plot(t_second,ecg_P_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
+a = figure('Position', [130 130 1500 800]);
+lg = {};
+plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
+hold on
+plot(t_second,ecg_denoised_nP,LineWidth=1.5) ;lg = cat(2, lg, {'ECG-T'});
+plot(t_second,ecg_P_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
+grid on
+plot(t_second,ecg_P_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
 
 
 P_peaks = nan(length(ecg_rpeaks_index),1);
@@ -1072,12 +1140,14 @@ Pbefore_peak = nan(length(ecg_rpeaks_index),1);
 Pafter_peak = nan(length(ecg_rpeaks_index),1);
 Pbiphasic_shape = nan(length(ecg_rpeaks_index),1);
 P_type = cell(length(ecg_rpeaks_index),1);
+P_type{1} = 'x';
+P_type{end} = 'x';
 
 for p = 2:length(ecg_rpeaks_index)-1
 
     % this_P_index = ecg_qrsoff_index(p)-round(min(0.66*(ecg_Toff_index(p-1)-ecg_qrsoff_index(p))),  (sample_100ms+sample_70ms)*max(1,avg_intervals_ecg(p)/(2*sample_350ms))):ecg_qrsoff_index(p);
 
-    temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1))));
+    temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
     this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p);
 
     if any(this_P_index>length(data))
@@ -1134,7 +1204,7 @@ for p = 2:length(ecg_rpeaks_index)-1
         P_minU = 10^-12;
     end
 
-    if P_max/P_min > 1
+    if P_max/P_min >= 1
         P_type{p} = 'max';
         Pbefore_peak(p) = TF_max(1);
         Pafter_peak(p) = TF_max(1);
@@ -1164,7 +1234,7 @@ for p = 2:length(ecg_rpeaks_index)-1
         Pafter_peak(p) = 1;
     end
 
-    temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1))));
+    temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
     this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p);
 
     if any(this_P_index>length(data))
@@ -1178,16 +1248,16 @@ for p = 2:length(ecg_rpeaks_index)-1
     this_P_index = flip(this_P_index);
 
     T_dur = length(this_P_index);
-    if strcmp(P_type{p},'max')
+    if contains(P_type{p},'max')
         P_peaks(p) = this_P_index(min(T_dur,Pbefore_peak(p)));
-    elseif strcmp(P_type{p},'min')
+    elseif contains(P_type{p},'min')
         P_peaks(p) = this_P_index(min(T_dur,Pbefore_peak(p)));
-    elseif strcmp(P_type{p},'bi-phasic')
+    elseif contains(P_type{p},'bi-phasic')
         P_peaks(p) = this_P_index(Pbefore_peak(p));
-    elseif strcmp(P_type{p},'Umax') ||  strcmp(P_type{p},'Umin')
+    elseif contains(P_type{p},'Umax') ||  contains(P_type{p},'Umin')
         P_peaks(p) = this_P_index(Pbefore_peak(p));
         this_P_index = this_P_index(1: min(T_dur,max(Pbefore_peak(p)+3*sample_10ms,Pbiphasic_shape(p))));
-    elseif strcmp(P_type{p},'Nmax') ||  strcmp(P_type{p},'Nmin')
+    elseif contains(P_type{p},'Nmax') ||  contains(P_type{p},'Nmin')
         P_peaks(p) = this_P_index(Pbefore_peak(p));
         this_P_index = this_P_index(1: min(T_dur,Pbiphasic_shape(p)));
     end
@@ -1268,7 +1338,7 @@ for c = num_cls(:)'
         v_trans_det(:,2) = v_trans_det(:,1);
     end
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         v_trans_det = dur_block(ind_c) - v_trans_det;
     end
 
@@ -1292,13 +1362,13 @@ for c = num_cls(:)'
         cls_onoff_det{c} = v_trans_filtered;
     end
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         cls_onoff_det{c} = dur_block(ind_c) - (cls_onoff_det{c} - max(0,50-Md_temp));
     else
         cls_onoff_det{c} = cls_onoff_det{c} - max(0,50-Md_temp);
     end
 
-    % if  strcmp(type_det , 'on')
+    % if  contains(type_det , 'on')
     cls_onoff_det{c} = round(cls_onoff_det{c}) ; % diff correction
     % else
     %     cls_onoff_det{c} = round(cls_onoff_det{c}) ; % diff correction
@@ -1349,7 +1419,7 @@ for c = num_cls(:)'
         v_trans_det(:,1) = v_trans_det(:,2);
     end
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         v_trans_det = dur_block(ind_c) - v_trans_det;
     end
 
@@ -1373,13 +1443,13 @@ for c = num_cls(:)'
         cls_onoff_det{c} = v_trans_filtered;
     end
 
-    if strcmp(lock_where,'last')
+    if contains(lock_where,'last')
         cls_onoff_det{c} = dur_block(ind_c) - (cls_onoff_det{c} - max(0,50-Md_temp));
     else
         cls_onoff_det{c} = cls_onoff_det{c} - max(0,50-Md_temp);
     end
 
-    % if  strcmp(type_det , 'on')
+    % if  contains(type_det , 'on')
     cls_onoff_det{c} = round(cls_onoff_det{c}) ; % diff correction
     % else
     % cls_onoff_det{c} = round(cls_onoff_det{c}) ; % diff correction

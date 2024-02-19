@@ -69,6 +69,20 @@ parfor b = 1:num_batch
     end
 
     [~ , coupling_tetha_convex_comb , transition_matrices_convex_comb ,  lsim_gmm_para ] =  em_lsim( channels_observations , channel_num_states , num_gmm_component , max_itration , extra, init_model);
+
+    if contains(type_det,'on') && contains(type_det,'qrs')
+        lsim_gmm_para{1, 1}.gmm_para(1).mu.x = min(lsim_gmm_para{1, 1}.gmm_para(2).mu.x/5, lsim_gmm_para{1, 1}.gmm_para(1).mu.x);
+        lsim_gmm_para{2, 1}.gmm_para(1).mu.x = min(lsim_gmm_para{2, 1}.gmm_para(2).mu.x/5, lsim_gmm_para{2, 1}.gmm_para(1).mu.x);
+        lsim_gmm_para{1, 1}.gmm_para(1).sigma.x = min(lsim_gmm_para{1, 1}.gmm_para(2).sigma.x/2, lsim_gmm_para{1, 1}.gmm_para(1).sigma.x);
+        lsim_gmm_para{2, 1}.gmm_para(1).sigma.x = min(lsim_gmm_para{2, 1}.gmm_para(2).sigma.x/2, lsim_gmm_para{2, 1}.gmm_para(1).sigma.x);
+
+    elseif  contains(type_det,'off') && contains(type_det,'qrs')
+        lsim_gmm_para{1, 1}.gmm_para(2).mu.x = min(lsim_gmm_para{1, 1}.gmm_para(1).mu.x/5, lsim_gmm_para{1, 1}.gmm_para(2).mu.x);
+        lsim_gmm_para{2, 1}.gmm_para(2).mu.x = min(lsim_gmm_para{2, 1}.gmm_para(1).mu.x/5, lsim_gmm_para{2, 1}.gmm_para(2).mu.x);
+        lsim_gmm_para{1, 1}.gmm_para(2).sigma.x = min(lsim_gmm_para{1, 1}.gmm_para(1).sigma.x/2, lsim_gmm_para{1, 1}.gmm_para(2).sigma.x);
+        lsim_gmm_para{2, 1}.gmm_para(2).sigma.x = min(lsim_gmm_para{2, 1}.gmm_para(1).sigma.x/2, lsim_gmm_para{2, 1}.gmm_para(2).sigma.x);
+    end
+
     [pi_0_ehmm{b}, coupling_tetha_ehmm{b},  transition_ehmm{b}, ehmm_gmm_para{b}] = im_para_eqhmm(init_model.pi_0_lsim, lsim_gmm_para, coupling_tetha_convex_comb, transition_matrices_convex_comb);
 
 end
@@ -86,10 +100,10 @@ for p = 1:size(obs_seqment_beats,2)
     try
         [~ , X_star]  = viterbi_chmm( pi_0_ehmm{b} , coupling_tetha_ehmm{b} ,  transition_ehmm{b}  , ehmm_gmm_para{b},  Y_in  );
 
-        if strcmp(type_det,'on')
+        if contains(type_det,'on')
             viterbi_trans_detection(p,1) = find(X_star==4,1,"first");
             viterbi_trans_detection(p,2) = find(X_star==1,1,"last")+1;
-        elseif  strcmp(type_det,'off')
+        elseif  contains(type_det,'off')
             viterbi_trans_detection(p,1) =  find(X_star==4,1,"first")-1;
             viterbi_trans_detection(p,2) =  find(X_star==1,1,"last");
         end
@@ -102,10 +116,10 @@ for p = 1:size(obs_seqment_beats,2)
 
             [~ , X_star]  = viterbi_chmm( pi_0_ehmm_temp, coupling_tetha_ehmm_temp,  transition_ehmm_temp, ehmm_gmm_para_temp,  Y_in  );
 
-            if strcmp(type_det,'on')
+            if contains(type_det,'on')
                 viterbi_trans_detection(p,1) = find(X_star==4,1,"first");
                 viterbi_trans_detection(p,2) = find(X_star==1,1,"last")+1;
-            elseif  strcmp(type_det,'off')
+            elseif  contains(type_det,'off')
                 viterbi_trans_detection(p,1) =  find(X_star==4,1,"first")-1;
                 viterbi_trans_detection(p,2) =  find(X_star==1,1,"last");
             end
