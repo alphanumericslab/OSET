@@ -416,7 +416,9 @@ for itr = 1:max_itration
     if(extra.check_convergence>0)
         if(itr>9)
             if(sum((diff(log_likelyhood(itr-5:itr)))<0.001)>=2)
-                disp('EM algorithm converged')
+                if(extra.plot==1)
+                    disp('EM algorithm converged')
+                end
                 break;
             end
         end
