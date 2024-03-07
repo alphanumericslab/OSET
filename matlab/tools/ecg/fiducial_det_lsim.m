@@ -1,5 +1,5 @@
 
-function positions = fiducial_det_lsim(data, ecg_rpeaks_index, fs, varargin)
+function [positions, EXITFLAG] = fiducial_det_lsim(data, ecg_rpeaks_index, fs, varargin)
 
 % ECG fiducial points detector based on LSIM approach
 %   [peaks, peak_indexes] = fiducial_det_lsim(data, ecg_rpeaks_index, fs, varargin)
@@ -14,8 +14,9 @@ function positions = fiducial_det_lsim(data, ecg_rpeaks_index, fs, varargin)
 %        - flag_prune_P: Optional. It is a flag that can be 0 or 1, if it is set
 %                   to 1 then based on a score for p-wave quality assesment the detected p-waves are pruned  (default is 1)
 %        - win_qrs: Optional. It is window duration in second unit for extracting diff and std features from ecg signal for QRS onset and offset (default is 0.01 or 10ms)
-%        - win_T: Optional. It is window duration in second unit for extracting diff and std features from ecg signal for T-wave onset and offset (default is 0.02 or 20ms)
+%        - win_T: Optional. It is window duration in second unit for extracting diff and std features from ecg signal for T-wave onset and offset (default is 0.03 or 30ms)
 %        - win_P: Optional. It is window duration in second unit for extracting diff and std features from ecg signal for P-wave onset and offset (default is 0.02 or 20ms)
+%        - num_cluster: Number of clusters for FCM (default is 4)
 %
 %   Outputs:
 %	position: struct vector with the detected points locations in samples
@@ -33,6 +34,9 @@ function positions = fiducial_det_lsim(data, ecg_rpeaks_index, fs, varargin)
 %           Toff: T wave end
 % beat_quality_score: an score based on Pearson Correlation indicate the qualty of each ECG beat
 %
+%  EXITFLAG: It is a struct and the corresponding exit conditions are
+%            status: succeeded or failed. In the failed condition, errors can occur in the algorithm when detecting certain positions.
+%            message: indicate error message in failed conditions
 %   Reference:
 %      ........
 %
@@ -42,10 +46,59 @@ function positions = fiducial_det_lsim(data, ecg_rpeaks_index, fs, varargin)
 %
 %
 
+EXITFLAG.status = 'succeeded';
+EXITFLAG.message = [];
 
 if nargin < 3
     error('The first 3 inputs are necessary for the fiducial detection')
 end
+
+fs_fd = 1000;
+fs_fd = fs;
+
+sample_10ms = round(fs_fd*0.01);
+sample_70ms = round(fs_fd*0.07);
+sample_100ms = round(fs_fd*0.1);
+sample_250ms = round(fs_fd*0.25);
+sample_350ms = round(fs_fd*0.35);
+
+% Check optional input arguments
+if nargin > 3 && ~isempty(varargin{1})
+    flag_post_processing = varargin{1};
+else
+    flag_post_processing = 0;
+end
+
+if nargin > 4 && ~isempty(varargin{2})
+    flag_prune_P = varargin{2};
+else
+    flag_prune_P = 0;
+end
+
+if nargin > 5 && ~isempty(varargin{3})
+    win_sample_qrs = round(fs*varargin{3});
+else
+    win_sample_qrs = 2*sample_10ms;
+end
+
+if nargin > 6 && ~isempty(varargin{4})
+    win_sample_T = round(fs*varargin{4});
+else
+    win_sample_T = 3*sample_10ms;
+end
+
+if nargin > 7 && ~isempty(varargin{5})
+    win_sample_P = round(fs*varargin{5});
+else
+    win_sample_P = 2*sample_10ms;
+end
+
+if nargin > 7 && ~isempty(varargin{6})
+    num_cluster = varargin{6};
+else
+    num_cluster = 4;
+end
+
 
 if length(ecg_rpeaks_index)<3
     L = length(ecg_rpeaks_index);
@@ -68,55 +121,35 @@ if length(ecg_rpeaks_index)<3
     return
 end
 
-fs_fd = 1000;
-fs_fd = fs;
 
 data = data(:)';
+data = data - lp_filter_zero_phase(data, 0.5/fs);
 ecg_rpeaks_index = ecg_rpeaks_index(:);
 ecg_rpeaks_index_org = ecg_rpeaks_index;
+ind_org = 1:length(ecg_rpeaks_index_org);
+
+[beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs, num_cluster);
+ecg_rpeaks_index_org = ecg_rpeaks_index;
+
+if flag_post_processing>0
+    index_remove1 = find(beat_quality_score<0.6);
+else
+    index_remove1 = find(beat_quality_score<0.4);
+end
+ecg_rpeaks_index(index_remove1) =[];
+ind_org(index_remove1) =[];
+
 rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
-avg_intervals_ecg = movmean(rr_intervals_ecg,[60,60]);
-index_remove = 1+find((diff(ecg_rpeaks_index(:))./avg_intervals_ecg-1)<-0.3 | diff(ecg_rpeaks_index(:))<0.25*fs);
+N = min(60,ceil(length(ecg_rpeaks_index)/20));
+avg_intervals_ecg = movmean(rr_intervals_ecg,[N,N]);
+index_remove = 1+find(((diff(ecg_rpeaks_index(:))./avg_intervals_ecg-1)<-0.4 & ~(diff(ecg_rpeaks_index(:))>0.8*fs)) | diff(ecg_rpeaks_index(:))<0.25*fs);
 ecg_rpeaks_index(index_remove) =[];
 
-sample_10ms = round(fs_fd*0.01);
-sample_70ms = round(fs_fd*0.07);
-sample_100ms = round(fs_fd*0.1);
-sample_250ms = round(fs_fd*0.25);
-sample_350ms = round(fs_fd*0.35);
+index_remove2 = ind_org(index_remove);
+index_remove = unique([index_remove1(:);index_remove2(:)]);
+
 
 t_second = (0 : length(data)-1)/fs;
-
-% Check optional input arguments
-if nargin > 3 && ~isempty(varargin{1})
-    flag_post_processing = varargin{1};
-else
-    flag_post_processing = 1;
-end
-
-if nargin > 4 && ~isempty(varargin{2})
-    flag_prune_P = varargin{2};
-else
-    flag_prune_P = 1;
-end
-
-if nargin > 5 && ~isempty(varargin{3})
-    win_sample_qrs = round(fs*varargin{3});
-else
-    win_sample_qrs = 2*sample_10ms;
-end
-
-if nargin > 6 && ~isempty(varargin{4})
-    win_sample_T = round(fs*varargin{4});
-else
-    win_sample_T = 3*sample_10ms;
-end
-
-if nargin > 7 && ~isempty(varargin{5})
-    win_sample_P = round(fs*varargin{5});
-else
-    win_sample_P = 2*sample_10ms;
-end
 
 
 % G = gcd( fs_fd,fs );
@@ -168,11 +201,11 @@ try
     ecg_blocks_normalized = ecg_blocks./sqrt(sum(ecg_blocks.^2,2)); % normalization to unit power
     ecg_blocks_ndiff = [zeros(size(ecg_blocks_normalized,1),win_sample_qrs-ceil(win_sample_qrs/2)), ecg_blocks_normalized(:,win_sample_qrs+1:end) - ecg_blocks_normalized(:,1:end-win_sample_qrs),zeros(size(ecg_blocks_normalized,1),win_sample_qrs-floor(win_sample_qrs/2))];
 
-    fcm_features = [ecg_blocks_normalized(:,sample_70ms:end),repmat(avg_intervals_ecg(2:end-1),1,3*sample_10ms),repmat(linspace(-1,1,size(ecg_blocks,1))',1,3*sample_10ms)];
+    fcm_features = ecg_blocks_normalized(:,sample_70ms:end);
     fcm_features = fillmissing(fcm_features,"linear");
-    fcm_features = zscore(fcm_features);
+    % fcm_features = zscore(fcm_features);
 
-    fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
+    fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=1.1, Verbose=0);
     [fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
     [~,cluster_fcm] = max(fcm_part_mat);
 
@@ -196,6 +229,15 @@ try
     end
 
     num_cls = unique(index_clustering(:,2));
+
+    % check the beat quality Pwave quality
+    clear cls_mn_ecg
+    for c = 1:length(num_cls)
+
+        ind_c = index_clustering(index_clustering(:,2)==num_cls(c),1);
+        cls_mn_ecg(c,:) = mean(ecg_blocks(ind_c,sample_70ms:end-sample_100ms),1);
+    end
+
 
     ecg_denoised_n = 0*data;
     ecg_denoised_ndiff = 0*data;
@@ -226,10 +268,56 @@ try
 
     end
 
+    rpeak_intervals = cell(length(ecg_rpeaks_index)-2,1);
+    for p = 2:length(ecg_rpeaks_index)-1
+        rpeak_intervals{p-1} = (ecg_rpeaks_index(p)-sample_70ms:ecg_rpeaks_index(p)+sample_70ms)';
+    end
+    rpeak_intervals_mat = cell2mat( rpeak_intervals);
+    L = length(rpeak_intervals_mat);
 
-    ecg_denoised_std = movstd(ecg_denoised_n,[win_sample_qrs,win_sample_qrs]);
+    % data_r = lp_filter_zero_phase(data, 35/fs);
+    % data_rh = data_r;
+    % data_r = data_r - lp_filter_zero_phase(data_r,0.2/fs);
+    % data_hat = [data_r(rpeak_intervals_mat)',ones(L,1)]*(pinv([data_r(rpeak_intervals_mat)',ones(L,1)])*data_rh(rpeak_intervals_mat)');
+    % Cxy_base = 1-(norm(data_rh(rpeak_intervals_mat)' - data_hat)/  norm(data_rh(rpeak_intervals_mat)));
+    %
+    % for f = 1:8
+    %     data_r = lp_filter_zero_phase(data, 35/fs);
+    %     data_rh = data_r;
+    %     data_r = data_r - lp_filter_zero_phase(data_r,f/fs);
+    %     data_hat = [data_r(rpeak_intervals_mat)',ones(L,1)]*(pinv([data_r(rpeak_intervals_mat)',ones(L,1)])*data_rh(rpeak_intervals_mat)');
+    %
+    %     % temp_coef = corrcoef(data_r(:),data(:));
+    %     Cxy(f) = 1-(norm(data_rh(rpeak_intervals_mat)' - data_hat)/  norm(data_rh(rpeak_intervals_mat)));
+    % end
+    % Cxy(f+1) =0;
+    % f = find(Cxy<0.9*Cxy_base,1,'first');
+
+
+    for f = 1:8 % in Hz
+        data_r = lp_filter_zero_phase(data, 35/fs);
+        data_rh = data_r;
+        data_r = data_r - lp_filter_zero_phase(data_r,f/fs);
+        data_hat = [data_r(rpeak_intervals_mat)',ones(L,1)]*(pinv([data_r(rpeak_intervals_mat)',ones(L,1)])*data_rh(rpeak_intervals_mat)');
+
+        temp_coef = corrcoef(data_hat,data_rh(rpeak_intervals_mat)');
+        % Cxy(f) = 1-(norm(data_rh(rpeak_intervals_mat)' - data_hat)/  norm(data_rh(rpeak_intervals_mat)));
+        Cxy(f) = temp_coef(1,2);
+    end
+    Cxy(f+1) =0;
+    f = find(Cxy<0.95,1,'first');
+    Cxy(f+1) =0;
+    f = find(Cxy<0.95,1,'first');
+
+    data_r = lp_filter_zero_phase(data, 35/fs);
+    data_r = data_r - lp_filter_zero_phase(data_r,f/fs);
+
+    ecg_denoised_std = movstd(data_r,[win_sample_qrs,win_sample_qrs]);
+    ecg_denoised_ndiff = [zeros(1,win_sample_qrs-ceil(win_sample_qrs/2)), data_r(:,win_sample_qrs+1:end) - data_r(:,1:end-win_sample_qrs),zeros(1,win_sample_qrs-floor(win_sample_qrs/2))];
     ecg_denoised_ndiff = abs(ecg_denoised_ndiff);
 
+    data_r_env = (envelope(data_r,sample_70ms).*ecg_denoised_std/prctile(ecg_denoised_std,90) + ecg_denoised_ndiff)/2;
+    data_r_envp = abs(data_r);
 
     pqrs_bloks_on = cell(2,length(ecg_rpeaks_index)-2);
     pqrs_bloks_on_index = cell(1,length(ecg_rpeaks_index)-2);
@@ -237,11 +325,50 @@ try
     mean_init_on_1 = cell(1,length(ecg_rpeaks_index)-2);
     mean_init_on_2 = cell(1,length(ecg_rpeaks_index)-2);
 
+    first_qrson = nan * ecg_rpeaks_index;
     for p = 2:length(ecg_rpeaks_index)-1
 
-        max_sample_qrson = round((sample_100ms+2*sample_10ms)*max(0.9,rr_intervals_ecg(p-1)/(2*sample_350ms)));
+        temp_index = ecg_rpeaks_index(p)-min(2*sample_100ms,round(avg_intervals_ecg(p)/5)):ecg_rpeaks_index(p)-sample_10ms;
+        [TF,P] = islocalmax(data_r_envp(temp_index),'MaxNumExtrema',1,'MinProminence',0.5*P_rpeaks_index(p));
+        TF = find(TF);
 
-        this_qrson_index = ecg_rpeaks_index(p)-max_sample_qrson:ecg_rpeaks_index(p);
+        if isempty(TF)
+            gain_qrs = linspace(0.25,1,length(temp_index));
+            [TF,P] = islocalmax(data_r_envp(temp_index).*gain_qrs,'MaxNumExtrema',1,'MinProminence',0.25*P_rpeaks_index(p));
+            TF = find(TF);
+            if ~isempty(TF) && TF<2*length(temp_index)/3
+                TF = [];
+            end
+        end
+
+
+        if ~isempty(TF) && sign(data_r(temp_index(TF))) ~= sign(data_r(ecg_rpeaks_index(p)))
+            starting_peak_p = temp_index(TF);
+        else
+            starting_peak_p = ecg_rpeaks_index(p);
+        end
+
+        this_thr = 0.05*data_r_env(starting_peak_p) + median(data_r_env);
+        max_sample_qrson_thr = 2*sample_100ms+1 - find(data_r_env(starting_peak_p-2*sample_100ms:starting_peak_p) < this_thr, 1 ,"last");
+        max_sample_qrson_thr = min(max_sample_qrson_thr,sample_100ms+sample_70ms);
+        if ~isempty(TF)
+            max_sample_qrson_thr = min(max_sample_qrson_thr,sample_70ms);
+        else
+            max_sample_qrson_thr = min(max_sample_qrson_thr,sample_100ms+sample_70ms);
+        end
+        if isempty(max_sample_qrson_thr)
+            first_qrson(p) = starting_peak_p;
+            max_sample_qrson_thr = sample_70ms;
+        else
+            first_qrson(p) = starting_peak_p-max_sample_qrson_thr;
+        end
+        max_sample_qrson_thr = 2*max_sample_qrson_thr;
+
+        max_sample_qrson = round((sample_100ms+2*sample_10ms)*max(1,rr_intervals_ecg(p-1)/(2*sample_350ms)));
+
+        max_sample_qrson = max(max_sample_qrson,max_sample_qrson_thr);
+
+        this_qrson_index = starting_peak_p-max_sample_qrson:starting_peak_p;
         if any(this_qrson_index<1)
             pqrs_bloks_on{1,p-1} = ecg_denoised_ndiff(this_qrson_index);
             pqrs_bloks_on{1,p-1} = ecg_denoised_std(this_qrson_index) ;
@@ -249,13 +376,29 @@ try
             continue;
         end
 
+        temp = ecg_denoised_std(this_qrson_index(1:end-3*sample_10ms));
+        if length(temp)>5*sample_10ms
+            a = polyfit(1:length(temp),temp,2);
+            if a(1)>0
+                ind_drop_pq = round(-a(2)/(2*a(1)));
+                ind_drop_pq = min(length(temp)-3*sample_10ms, max(1,ind_drop_pq));
+            else
+                ind_drop_pq =[];
+            end
+            if isempty(ind_drop_pq)
+                ind_drop_pq = 1;
+            end
+
+            this_qrson_index = this_qrson_index(ind_drop_pq:end);
+        end
+
         dur_this = round(length(this_qrson_index)/2);
         gain_sig = ones(1,length(this_qrson_index));
         ind_extrm =[];
-        rpeak_val = abs(ecg_denoised_n(ecg_rpeaks_index(p)));
-        if ecg_denoised_n(ecg_rpeaks_index(p))<0
+        rpeak_val = abs(ecg_denoised_n(starting_peak_p));
+        if max_min_r(p)<0
             flag_type = 'max';
-            [TF,P] = islocalmax(ecg_denoised_n(this_qrson_index(dur_this:end-sample_10ms)),'MaxNumExtrema',1,'MinProminence',0.1*rpeak_val);
+            [TF,P] = islocalmax(data_r(this_qrson_index(dur_this:end-sample_10ms)),'MaxNumExtrema',1,'MinProminence',0.1*rpeak_val);
             TF = find(TF);
             p_sort = sort(P,"descend");
             if ~isempty(TF) || (p_sort(2)~=0 && p_sort(1)/p_sort(2)>10 && p_sort(1)>0.03*rpeak_val) || (p_sort(2)==0 && p_sort(1)>0.05*rpeak_val)
@@ -267,7 +410,7 @@ try
             end
         else
             flag_type = 'min';
-            [TF,P] = islocalmin(ecg_denoised_n(this_qrson_index(dur_this:end-sample_10ms)),'MaxNumExtrema',1,'MinProminence',0.1*rpeak_val);
+            [TF,P] = islocalmin(data_r(this_qrson_index(dur_this:end-sample_10ms)),'MaxNumExtrema',1,'MinProminence',0.1*rpeak_val);
             TF = find(TF);
             p_sort = sort(P,"descend");
             if ~isempty(TF) || (p_sort(2)~=0 && p_sort(1)/p_sort(2)>10 && p_sort(1)>0.03*rpeak_val) || (p_sort(2)==0 && p_sort(1)>0.05*rpeak_val)
@@ -279,12 +422,12 @@ try
             end
         end
 
+
         if ~isempty(ind_extrm)
-            temp = ecg_denoised_n(this_qrson_index(dur_this:end-sample_10ms));
-            if contains(flag_type , 'max')
-                sample_win_gain = TF - find(temp(1:TF)<temp(TF)-2*P/3,1,'last');
-            else
-                sample_win_gain = TF - find(temp(1:TF)>temp(TF)+2*P/3,1,'last');
+            temp = data_r_envp(this_qrson_index(dur_this:end-sample_10ms));
+            sample_win_gain = TF - find(temp(1:TF)<temp(TF)/3,1,'last')+1;
+            if isempty(sample_win_gain)
+                sample_win_gain = sample_10ms;
             end
             temp = min(5,max(0,0.5*(rpeak_val/P)-1))*gausswin(2*sample_win_gain+1)';
             gain_sig(ind_extrm-sample_win_gain:ind_extrm) = gain_sig(ind_extrm-sample_win_gain:ind_extrm)+temp(sample_win_gain+1:end);
@@ -293,13 +436,16 @@ try
 
         temp = ecg_denoised_std(this_qrson_index);
         thr_pq = mean(temp(end-3*sample_10ms:end))/5;
-        [TF,P] = islocalmin(temp(1:end-2*sample_10ms),'MaxNumExtrema',1,'MinProminence',thr_pq/2);
+        [TF,P] = islocalmin(temp(1:end-3*sample_10ms),'MaxNumExtrema',1,'MinProminence',thr_pq/2);
         ind_drop_pq = find(TF);
 
         if isempty(ind_drop_pq)
             ind_drop_pq = 1;
         else
-            ind_drop_pq = find(temp(1:ind_drop_pq)>thr_pq/2,1,'last');
+            ind_drop_pq = find(temp(1:ind_drop_pq)>1.2*temp(ind_drop_pq),1,'last');
+            if isempty(ind_drop_pq)
+                ind_drop_pq = find(TF);
+            end
         end
 
         this_qrson_index = this_qrson_index(ind_drop_pq:end);
@@ -307,18 +453,18 @@ try
         prior_win = prior_win(ceil(length(prior_win)/2)-2*length(this_qrson_index):ceil(length(prior_win)/2)+2*length(this_qrson_index));
         gain_sig = gain_sig(ind_drop_pq:end).*prior_win(length(this_qrson_index)+2:2*length(this_qrson_index)+1);
 
-        pqrs_bloks_on{1,p-1} = ecg_denoised_ndiff(this_qrson_index).*gain_sig;
+        pqrs_bloks_on{1,p-1} = data_r_env(this_qrson_index).*gain_sig;
         pqrs_bloks_on{2,p-1} = ecg_denoised_std(this_qrson_index).*gain_sig ;
 
         pqrs_bloks_on_index{p-1} = this_qrson_index;
         dur_block(p-1,1) = length(this_qrson_index);
 
-        ecg_denoised_ndiff(this_qrson_index) = ecg_denoised_ndiff(this_qrson_index).*gain_sig;
+        data_r_env(this_qrson_index) = data_r_env(this_qrson_index).*gain_sig;
         ecg_denoised_std(this_qrson_index) = ecg_denoised_std(this_qrson_index).*gain_sig;
 
         dur_this = round(length(this_qrson_index)/2);
-        mean_init_on_1{1,p-1} = [ecg_denoised_ndiff(this_qrson_index(1:dur_this));ecg_denoised_std(this_qrson_index(1:dur_this))];
-        mean_init_on_2{1,p-1} = [ecg_denoised_ndiff(this_qrson_index(dur_this:end));ecg_denoised_std(this_qrson_index(dur_this:end))];
+        mean_init_on_1{1,p-1} = [data_r_env(this_qrson_index(1:dur_this));ecg_denoised_std(this_qrson_index(1:dur_this))];
+        mean_init_on_2{1,p-1} = [data_r_env(this_qrson_index(dur_this:end));ecg_denoised_std(this_qrson_index(dur_this:end))];
 
     end
 
@@ -367,9 +513,9 @@ try
         end
 
         if  contains(type_det , 'on')
-            cls_onoff_det{c} = round(cls_onoff_det{c})  - ceil(win_sample_qrs/2); % diff correction
+            cls_onoff_det{c} = round(cls_onoff_det{c}) ; - ceil(win_sample_qrs/2); % diff correction
         else
-            cls_onoff_det{c} = round(cls_onoff_det{c}) + ceil(win_sample_qrs/2); % diff correction
+            cls_onoff_det{c} = round(cls_onoff_det{c}) ;+ ceil(win_sample_qrs/2); % diff correction
         end
         cls_onoff_det{c}(cls_onoff_det{c}<1) = 1;
 
@@ -394,6 +540,7 @@ try
         end
     end
 
+    this_fiducials = min(first_qrson(:)',this_fiducials);
     positions.QRSon = this_fiducials;
 
 
@@ -404,87 +551,131 @@ try
     mean_init_off_1 = cell(1,length(ecg_rpeaks_index)-2);
     mean_init_off_2 = cell(1,length(ecg_rpeaks_index)-2);
 
-    rcounter = 2;
 
     mn_qrson =  mean(ecg_rpeaks_index - ecg_qrson_index, 'omitmissing');
-    sample_off_search = round(max(sample_100ms+2*sample_10ms, 2*sample_100ms - mn_qrson));
+    sample_off_search = round(max(sample_100ms+2*sample_10ms, 3*sample_100ms - mn_qrson));
+    first_qrsoff = nan * ecg_rpeaks_index;
 
     for p = 2:length(ecg_rpeaks_index)-1
 
-        this_qrsoff_index = ecg_rpeaks_index(p):ecg_rpeaks_index(p) + sample_off_search*min(2,max(1,avg_intervals_ecg(p)/(2*sample_350ms)));
+
+        temp_index = ecg_rpeaks_index(p)+sample_10ms:ecg_rpeaks_index(p)+min(2*sample_100ms,round(avg_intervals_ecg(p)/5));
+
+        [TF,P] = islocalmax(data_r_envp(temp_index),'MaxNumExtrema',1,'MinProminence',0.5*P_rpeaks_index(p));
+        TF = find(TF);
+
+        if isempty(TF)
+            gain_qrs = linspace(1,0.5,length(temp_index));
+            [TF,P] = islocalmax(data_r_envp(temp_index).*gain_qrs,'MaxNumExtrema',1,'MinProminence',0.25*P_rpeaks_index(p));
+            TF = find(TF);
+            P = sort(P,'descend');
+            if ~isempty(TF) && TF>length(temp_index)/3
+                TF = [];
+            end
+        end
+
+        change_sign = 1;
+        if ~isempty(TF) && sign(data_r(temp_index(TF))) ~= sign(data_r(ecg_rpeaks_index(p)))
+            stoping_peak_p = temp_index(TF);
+            change_sign = -1;
+        else
+            stoping_peak_p = ecg_rpeaks_index(p);
+        end
+
+        this_thr = 0.05*data_r_env(stoping_peak_p) + median(data_r_env);
+        max_sample_qrsoff_thr =  find(data_r_env(stoping_peak_p:stoping_peak_p+2*sample_100ms) < this_thr, 1 ,"first");
+        if ~isempty(TF)
+            max_sample_qrsoff_thr = min(max_sample_qrsoff_thr,sample_70ms);
+        else
+            max_sample_qrsoff_thr = min(max_sample_qrsoff_thr,sample_100ms+sample_70ms);
+        end
+        if isempty(max_sample_qrsoff_thr)
+            first_qrsoff(p) = stoping_peak_p;
+            max_sample_qrsoff_thr = sample_70ms;
+        else
+            first_qrsoff(p) = stoping_peak_p + max_sample_qrsoff_thr;
+        end
+
+        max_sample_qrsoff_thr = 2*max_sample_qrsoff_thr;
+        max_sample_qrsoff = round((sample_100ms+2*sample_10ms)*max(1,rr_intervals_ecg(p-1)/(2*sample_350ms)));
+        max_sample_qrsoff = max([max_sample_qrsoff,min(max_sample_qrsoff_thr, sample_off_search)]);
+
+        this_qrsoff_index = stoping_peak_p+sample_10ms:stoping_peak_p + max_sample_qrsoff;
         if any(this_qrsoff_index>length(data))
             continue;
+        end
+
+        temp = ecg_denoised_std(this_qrsoff_index);
+        if length(temp)>sample_100ms && mean(temp(1:2*sample_10ms)) < 3*mean(temp(end-2*sample_10ms:end))
+            a = polyfit(1:length(temp),temp,2);
+            if a(1)>0
+                ind_drop_st = round(-a(2)/(2*a(1)));
+                ind_drop_st = min(length(temp), max(3*sample_10ms,ind_drop_st));
+            else
+                ind_drop_st =[];
+            end
+            if isempty(ind_drop_st)
+                ind_drop_st = length(temp);
+            end
+
+            this_qrsoff_index = this_qrsoff_index(1:ind_drop_st);
         end
 
         dur_this = round(length(this_qrsoff_index)/2);
         gain_sig = ones(1,length(this_qrsoff_index));
         ind_extrm =[];
-        rpeak_val = abs(ecg_denoised_n(ecg_rpeaks_index(p)));
-        if ecg_denoised_n(ecg_rpeaks_index(p))<0
+        rpeak_val = abs(data(stoping_peak_p));
+        if max_min_r(p) <0 && change_sign==1
             flag_type = 'max';
-            [TF,P] = islocalmax(ecg_denoised_n(ecg_qrson_index(p):ecg_rpeaks_index(p)),'MaxNumExtrema',1,'MinProminence',0.3*rpeak_val);
-            TF = find(TF);
-            if isempty(TF)
-                rcounter = rcounter+1;
-            end
-            if isempty(TF) && rcounter/p>0.5
 
-                [TF,P] = islocalmax(ecg_denoised_n(this_qrsoff_index(sample_10ms:dur_this)),'MaxNumExtrema',1,'MinProminence',0.1*rpeak_val);
-                TF = find(TF);
-                [p_sort,ind_p] = sort(P,"descend");
-                if ~isempty(TF) || (p_sort(2)~=0 && p_sort(1)/p_sort(2)>10 && p_sort(1)>0.03*rpeak_val && ind_p(1)<ind_p(2)) || (p_sort(2)==0 && p_sort(1)>0.05*rpeak_val)
-                    if isempty(TF)
-                        [~,TF]= max(P);
-                    end
-                    ind_extrm = sample_10ms-1 +TF;
-                    P = P(TF);
+            [TF,P] = islocalmax(data(this_qrsoff_index(sample_10ms:dur_this)),'MaxNumExtrema',1,'MinProminence',0.1*rpeak_val);
+            TF = find(TF);
+            [p_sort,ind_p] = sort(P,"descend");
+            if ~isempty(TF) || (p_sort(2)~=0 && p_sort(1)/p_sort(2)>10 && p_sort(1)>0.03*rpeak_val && ind_p(1)<ind_p(2)) || (p_sort(2)==0 && p_sort(1)>0.05*rpeak_val)
+                if isempty(TF)
+                    [~,TF]= max(P);
                 end
+                ind_extrm = sample_10ms-1 +TF;
+                P = P(TF);
             end
-        else
+        elseif change_sign==1
 
             flag_type = 'min';
-            [TF,P] = islocalmin(ecg_denoised_n(ecg_qrson_index(p):ecg_rpeaks_index(p)),'MaxNumExtrema',1,'MinProminence',0.3*rpeak_val);
-            TF = find(TF);
-            if isempty(TF)
-                rcounter = rcounter+1;
-            end
-            if isempty(TF)&& rcounter/p>0.5
 
-                [TF,P] = islocalmin(ecg_denoised_n(this_qrsoff_index(sample_10ms:dur_this)),'MaxNumExtrema',1,'MinProminence',0.1*rpeak_val);
-                TF = find(TF);
-                [p_sort,ind_p] = sort(P,"descend");
-                if ~isempty(TF) || (p_sort(2)~=0 && p_sort(1)/p_sort(2)>10 && p_sort(1)>0.03*rpeak_val&& ind_p(1)<ind_p(2)) || (p_sort(2)==0 && p_sort(1)>0.05*rpeak_val)
-                    if isempty(TF)
-                        [~,TF]= max(P);
-                    end
-                    ind_extrm = sample_10ms-1 +TF;
-                    P = P(TF);
+            [TF,P] = islocalmin(data(this_qrsoff_index(sample_10ms:dur_this)),'MaxNumExtrema',1,'MinProminence',0.1*rpeak_val);
+            TF = find(TF);
+            [p_sort,ind_p] = sort(P,"descend");
+            if ~isempty(TF) || (p_sort(2)~=0 && p_sort(1)/p_sort(2)>10 && p_sort(1)>0.03*rpeak_val&& ind_p(1)<ind_p(2)) || (p_sort(2)==0 && p_sort(1)>0.05*rpeak_val)
+                if isempty(TF)
+                    [~,TF]= max(P);
                 end
+                ind_extrm = sample_10ms-1 +TF;
+                P = P(TF);
             end
+
         end
 
         if ~isempty(ind_extrm)
-            temp = ecg_denoised_n(this_qrsoff_index(sample_10ms:dur_this));
-            if contains(flag_type , 'max')
-                sample_win_gain = find(temp(TF:end)<temp(TF)-2*P/3,1,'first');
-            else
-                sample_win_gain = find(temp(TF:end)>temp(TF)+2*P/3,1,'first');
+            temp = data_r_envp(this_qrsoff_index(sample_10ms:dur_this));
+            sample_win_gain = TF - find(temp(1:TF)<temp(TF)/3,1,'first')+1;
+            if isempty(sample_win_gain)
+                sample_win_gain = sample_10ms;
             end
             temp = min(5,max(0,0.5*(rpeak_val/P)-1))*gausswin(2*sample_win_gain+1)';
             gain_sig(ind_extrm:ind_extrm+sample_win_gain) = gain_sig(ind_extrm:ind_extrm+sample_win_gain)+temp(1:sample_win_gain+1);
         end
 
-
-        pqrs_bloks_off{1,p-1} = ecg_denoised_ndiff(this_qrsoff_index).*gain_sig;
+        pqrs_bloks_off{1,p-1} = data_r_env(this_qrsoff_index).*gain_sig;
         pqrs_bloks_off{2,p-1} = ecg_denoised_std(this_qrsoff_index).*gain_sig ;
         pqrs_bloks_off_index{p-1} = this_qrsoff_index;
         dur_block(p-1,1) = length(this_qrsoff_index);
 
-        ecg_denoised_ndiff(this_qrsoff_index) = ecg_denoised_ndiff(this_qrsoff_index).*gain_sig;
+        data_r_env(this_qrsoff_index) = data_r_env(this_qrsoff_index).*gain_sig;
         ecg_denoised_std(this_qrsoff_index) = ecg_denoised_std(this_qrsoff_index).*gain_sig;
 
-        mean_init_off_1{1,p-1} = [ecg_denoised_ndiff(this_qrsoff_index(1:dur_this));ecg_denoised_std(this_qrsoff_index(1:dur_this))];
-        mean_init_off_2{1,p-1} = [ecg_denoised_ndiff(this_qrsoff_index(dur_this:end));ecg_denoised_std(this_qrsoff_index(dur_this:end))];
+        dur_this = round(length(this_qrsoff_index)/2);
+        mean_init_off_1{1,p-1} = [data_r_env(this_qrsoff_index(1:dur_this));ecg_denoised_std(this_qrsoff_index(1:dur_this))];
+        mean_init_off_2{1,p-1} = [data_r_env(this_qrsoff_index(dur_this:end));ecg_denoised_std(this_qrsoff_index(dur_this:end))];
 
     end
 
@@ -533,9 +724,9 @@ try
         end
 
         if  contains(type_det , 'on')
-            cls_onoff_det{c} = round(cls_onoff_det{c})  - ceil(win_sample_qrs/2); % diff correction
+            cls_onoff_det{c} = round(cls_onoff_det{c}) ; - ceil(win_sample_qrs/2); % diff correction
         else
-            cls_onoff_det{c} = round(cls_onoff_det{c}) + ceil(win_sample_qrs/2); % diff correction
+            cls_onoff_det{c} = round(cls_onoff_det{c}); + ceil(win_sample_qrs/2); % diff correction
         end
         cls_onoff_det{c}(cls_onoff_det{c}<1) = 1;
 
@@ -563,13 +754,85 @@ try
 
     positions.QRSoff = this_fiducials;
 
+    % ecg_rpeaks_index_p = ecg_rpeaks_index;
+    % ecg_rpeaks_index_p(isnan(ecg_rpeaks_index_p)) = [];
+    % ecg_QRSoff_index_p = positions.QRSoff ;
+    % ecg_QRSoff_index_p(isnan(ecg_QRSoff_index_p)) = [];
     % a = figure('Position', [130 130 1500 800]);
     % lg = {};
-    % plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
+    % plot(t_second,data,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
     % hold on
+    % plot(t_second(ecg_rpeaks_index_p),data(ecg_rpeaks_index_p),'*',LineWidth=1.5) ;lg = cat(2, lg, {'Rpeaks'});
+    % plot(t_second(ecg_QRSoff_index_p),data(ecg_QRSoff_index_p),'o',LineWidth=1.5) ;lg = cat(2, lg, {'Rpeaks'});
+    % plot(t_second,data_r,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
     % plot(t_second,ecg_denoised_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
     % grid on
     % plot(t_second,ecg_denoised_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
+    % plot(t_second,data_r_env,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
+
+    ecg_qrsoff_index = positions.QRSoff;
+    ecg_denoised_nT = data;
+
+    for p = 2:length(ecg_rpeaks_index)-1
+
+        this_qrs_index = ecg_qrson_index(p) : ecg_qrsoff_index(p);
+        ecg_denoised_nT(this_qrs_index) = linspace(ecg_denoised_nT(this_qrs_index(1)),ecg_denoised_nT(this_qrs_index(end)) , length(this_qrs_index) );
+
+    end
+
+    ecg_denoised_nT = lp_filter_zero_phase(ecg_denoised_nT, 30/fs);
+
+    ecg_T_ndiff = [zeros(1,win_sample_T-ceil(win_sample_T/2)), ecg_denoised_nT(win_sample_T+1:end) - ecg_denoised_nT(1:end-win_sample_T),zeros(1,win_sample_T-floor(win_sample_T/2))];
+    ecg_T_ndiff = abs(ecg_T_ndiff);
+
+    std_data = std(ecg_denoised_nT);
+    std_diff = mean(ecg_T_ndiff)+2*std(ecg_T_ndiff);
+    std_diff2 = mean(ecg_T_ndiff)+1*std(ecg_T_ndiff);
+    for p = 2:length(ecg_rpeaks_index)-1
+
+        this_qrs_index = ecg_qrson_index(p) : ecg_qrsoff_index(p);
+        % abs(ecg_denoised_nT(this_qrs_index(1)))
+        if abs(ecg_denoised_nT(this_qrs_index(1))) > std_data/2 && abs(ecg_denoised_nT(this_qrs_index(1)) - ecg_denoised_nT(this_qrs_index(end))) > std_data/2
+            [val_max,idx_max] = max(ecg_T_ndiff(ecg_qrson_index(p)-sample_70ms:ecg_qrson_index(p)-1));
+            idx_max = sample_70ms - idx_max+1;
+            if idx_max<4*sample_10ms && (positions.QRSoff(p) - positions.QRSon(p)) < 3*sample_100ms && (val_max>std_diff || (val_max>std_diff2 && abs(ecg_denoised_nT(this_qrs_index(1))) > std_data && abs(ecg_denoised_nT(this_qrs_index(1)) - ecg_denoised_nT(this_qrs_index(end))) > std_data))
+                positions.QRSon(p) = positions.QRSon(p) - 2*idx_max;
+            end
+        end
+
+    end
+
+    ecg_qrson_index = positions.QRSon;
+    ecg_qrsoff_index = positions.QRSoff;
+    ecg_denoised_nT = data;
+
+    for p = 2:length(ecg_rpeaks_index)-1
+
+        this_qrs_index = ecg_qrson_index(p) : ecg_qrsoff_index(p);
+        ecg_denoised_nT(this_qrs_index) = linspace(ecg_denoised_nT(this_qrs_index(1)),ecg_denoised_nT(this_qrs_index(end)) , length(this_qrs_index) );
+
+    end
+
+    ecg_denoised_nT = lp_filter_zero_phase(ecg_denoised_nT, 30/fs);
+
+    ecg_T_ndiff = [zeros(1,win_sample_T-ceil(win_sample_T/2)), ecg_denoised_nT(win_sample_T+1:end) - ecg_denoised_nT(1:end-win_sample_T),zeros(1,win_sample_T-floor(win_sample_T/2))];
+    ecg_T_ndiff = abs(ecg_T_ndiff);
+
+    std_data = std(ecg_denoised_nT);
+    std_diff = mean(ecg_T_ndiff)+2*std(ecg_T_ndiff);
+    std_diff2 = mean(ecg_T_ndiff)+1*std(ecg_T_ndiff);
+    for p = 2:length(ecg_rpeaks_index)-1
+
+        this_qrs_index = ecg_qrson_index(p) : ecg_qrsoff_index(p);
+        if abs(ecg_denoised_nT(this_qrs_index(end))) > std_data/2 && abs(ecg_denoised_nT(this_qrs_index(1)) - ecg_denoised_nT(this_qrs_index(end))) > std_data/2
+            [val_max,idx_max] = max(ecg_T_ndiff(ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+sample_100ms));
+            if idx_max<4*sample_10ms && (positions.QRSoff(p) - positions.QRSon(p)) < 3*sample_100ms && (val_max>std_diff || (val_max>std_diff2 && abs(ecg_denoised_nT(this_qrs_index(end))) > std_data && abs(ecg_denoised_nT(this_qrs_index(1)) - ecg_denoised_nT(this_qrs_index(end))) > std_data))
+                positions.QRSoff(p) = positions.QRSoff(p) + 2*idx_max;
+            end
+        end
+
+    end
+
 
     %%  T-wave detection ##################################################################################################################
     %  ================= ##################################################################################################################
@@ -587,11 +850,11 @@ try
     mean_init_Toff_2 = cell(1,length(ecg_rpeaks_index)-2);
 
     ecg_qrsoff_index = positions.QRSoff;
-    ecg_denoised_nT = ecg_denoised_n;
+    ecg_denoised_nT = data;
 
     for p = 2:length(ecg_rpeaks_index)-1
 
-        this_qrs_index = ecg_qrson_index(p)-min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1))) : ecg_qrsoff_index(p);
+        this_qrs_index = ecg_qrson_index(p) : ecg_qrsoff_index(p);
         ecg_denoised_nT(this_qrs_index) = linspace(ecg_denoised_nT(this_qrs_index(1)),ecg_denoised_nT(this_qrs_index(end)) , length(this_qrs_index) );
 
     end
@@ -601,6 +864,7 @@ try
     % ecg_denoised_nT = sjk_eeg_filter(ecg_denoised_nT, fs_fd,0.5,20);
 
     ecg_T_std = movstd(ecg_denoised_nT,[win_sample_T,win_sample_T]);
+    ecg_T_stds = movstd(ecg_denoised_nT,[2*win_sample_T,2*win_sample_T]);
     ecg_T_ndiff = [zeros(1,win_sample_T-ceil(win_sample_T/2)), ecg_denoised_nT(win_sample_T+1:end) - ecg_denoised_nT(1:end-win_sample_T),zeros(1,win_sample_T-floor(win_sample_T/2))];
     ecg_T_ndiff = abs(ecg_T_ndiff);
 
@@ -623,11 +887,27 @@ try
         end
 
         temp = ecg_denoised_nT(this_T_index(5*sample_10ms+1:min(length(this_T_index),round(sample_350ms*max(1,avg_intervals_ecg(p)/(3*sample_350ms)) )) ));
-        temp(1)=ecg_denoised_nT(this_T_index(1));
-        temp = temp  - linspace(temp(1),temp(end),length(temp));
-        [TF,P] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms);
+        temp2 = ecg_T_stds(this_T_index(5*sample_10ms+1:min(length(this_T_index),round(sample_350ms*max(1,avg_intervals_ecg(p)/(3*sample_350ms)) )) ));
+
+        [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms);
         TF_max = find(TF);
+        % temp2.*(temp-median(temp(1:20)))/max(temp2)
+        [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms);
+        TF_min =find(TF);
+
+        if isempty(TF_max) && isempty(TF_min)
+            temp(1)=ecg_denoised_nT(this_T_index(1));
+            temp = temp  - linspace(temp(1),temp(end),length(temp));
+
+            [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms);
+            TF_max = find(TF);
+            [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms);
+            TF_min =find(TF);
+
+        end
+
         if ~isempty(TF_max)
+            P = Pv_max;
             if length(TF_max)==1
                 P_max=P(TF_max);
                 P(TF_max) = 0;
@@ -649,10 +929,8 @@ try
 
         TF_max = 5*sample_10ms+TF_max;
 
-
-        [TF,P] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms);
-        TF_min =find(TF);
         if ~isempty(TF_min)
+            P = Pv_min;
             if length(TF_min)==1
                 P_min=P(TF_min);
                 P(TF_min) = 0;
@@ -738,13 +1016,13 @@ try
             before_peak_cell{c,1}  = before_peak(ind_c);
             Md_temp = round(median( before_peak_cell{c,1}(:),'omitmissing'));
             before_peak_cell{c,1} = max(0,50-Md_temp) +  before_peak_cell{c,1};
-            before_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1), before_peak_cell{c,1}],0.15,0.10,60);
+            before_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1), before_peak_cell{c,1}],0.25,0.15,60);
             before_peak_cell{c,1} = round( before_peak_cell{c,1})-max(0,50-Md_temp);
 
             after_peak_cell{c,1}  = after_peak(ind_c);
             Md_temp = round(median(after_peak_cell{c,1}(:),'omitmissing'));
             after_peak_cell{c,1} = max(0,50-Md_temp) + after_peak_cell{c,1};
-            after_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1),after_peak_cell{c,1}],0.15,0.10,60);
+            after_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1),after_peak_cell{c,1}],0.25,0.15,60);
             after_peak_cell{c,1} = round(after_peak_cell{c,1})-max(0,50-Md_temp);
 
         end
@@ -758,8 +1036,8 @@ try
         after_peak = [nan;after_peak;nan];
 
     else
-        before_peak = round([nan;before_peak;nan]);
-        after_peak = round([nan;after_peak;nan]);
+        before_peak = round(before_peak);
+        after_peak = round(after_peak);
     end
 
     for p = 2:length(ecg_rpeaks_index)-1
@@ -807,32 +1085,10 @@ try
         this_bT_index = this_bT_index(ind_drop_st:end);
 
 
-        % dur_this = ceil(length(this_bT_index)/3);
-
-        % temp = ecg_T_std(this_bT_index);
-        % if length(temp)>5*sample_10ms
-        %     thr_tp = mean(temp(end-3*sample_10ms:end))/5;
-        %     [TF,P] = islocalmin(temp(1:end-3*sample_10ms),'MaxNumExtrema',1,'MinProminence',thr_tp/2);
-        %     ind_drop_pq = find(TF);
-        %
-        %     if isempty(ind_drop_pq)
-        %         ind_drop_pq =  2* sample_10ms;
-        %     else
-        %         ind_drop_pq = ind_drop_pq - find(temp(1:ind_drop_pq)>thr_tp/2,1,'first');
-        %     end
-        %
-        %     this_bT_index(1:ind_drop_pq)=[];
-        % end
-        % prior_win = gausswin(4*max(sample_70ms ,length(this_bT_index))+1)';
-        % prior_win = prior_win(ceil(length(prior_win)/2)-2*length(this_bT_index):ceil(length(prior_win)/2)+2*length(this_bT_index));
-        % gain_sig =prior_win(2*length(this_bT_index)+1:3*length(this_bT_index));
-
         T_bloks_on{1,p-1} = ecg_T_ndiff(this_bT_index);
         T_bloks_on{2,p-1} = ecg_T_std(this_bT_index);
 
         T_bloks_on_index{p-1} = this_bT_index;
-        % ecg_T_ndiff(this_bT_index) = ecg_T_ndiff(this_bT_index).*gain_sig;
-        % ecg_T_std(this_bT_index) = ecg_T_std(this_bT_index).*gain_sig;
 
         dur_this = ceil(length(this_bT_index)/3);
 
@@ -843,6 +1099,8 @@ try
 
         if isempty(this_aT_index)
             this_aT_index = this_T_index(ceil(before_peak(p)/2):end);
+        elseif length(this_aT_index)<2*sample_10ms
+            this_aT_index = this_T_index(after_peak(p):end);
         end
 
 
@@ -855,11 +1113,15 @@ try
             if isempty(ind_drop_pq)
                 ind_drop_pq = length(temp);
             else
-                ind_drop_pq = ind_drop_pq + find(temp(ind_drop_pq+1:end)>thr_tp/2,1,'first');
+                ind_drop_pq = ind_drop_pq + find(temp(ind_drop_pq+1:end)>1.2*temp(ind_drop_pq),1,'first');
+                if isempty(ind_drop_pq)
+                    ind_drop_pq = 3*sample_10ms+find(TF);
+                end
             end
 
             this_aT_index = this_aT_index(1:ind_drop_pq);
         end
+
         prior_win = gausswin(4*max(sample_70ms ,length(this_aT_index))+1)';
         prior_win = prior_win(ceil(length(prior_win)/2)-2*length(this_aT_index):ceil(length(prior_win)/2)+2*length(this_aT_index));
         gain_sig =prior_win(2*length(this_aT_index)+1:3*length(this_aT_index));
@@ -935,9 +1197,9 @@ try
         end
 
         if  contains(type_det , 'on')
-            cls_onoff_det{c} = round(cls_onoff_det{c}) - ceil(win_sample_T/2); % diff correction
+            cls_onoff_det{c} = round(cls_onoff_det{c}) ;- ceil(win_sample_T/2); % diff correction
         else
-            cls_onoff_det{c} = round(cls_onoff_det{c}); % diff correction
+            cls_onoff_det{c} = round(cls_onoff_det{c}) ;+ ceil(win_sample_T/2); % diff correction
         end
 
         cls_onoff_det{c}(cls_onoff_det{c}<1) = 1;
@@ -1011,9 +1273,9 @@ try
         end
 
         if  contains(type_det , 'on')
-            cls_onoff_det{c} = round(cls_onoff_det{c}) - ceil(win_sample_T/2); % diff correction
+            cls_onoff_det{c} = round(cls_onoff_det{c}) ;- ceil(win_sample_T/2); % diff correction
         else
-            cls_onoff_det{c} = round(cls_onoff_det{c}); % diff correction
+            cls_onoff_det{c} = round(cls_onoff_det{c}) ;  % diff correction
         end
 
         cls_onoff_det{c}(cls_onoff_det{c}<1) = 1;
@@ -1043,17 +1305,60 @@ try
     positions.Toff = this_fiducials;
 
 
+    % ecg_QRSoff_index_p = positions.QRSoff ;
+    % ecg_QRSoff_index_p(isnan(ecg_QRSoff_index_p)) = [];
     % a = figure('Position', [130 130 1500 800]);
     % lg = {};
-    % plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
+    % plot(t_second,data,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
     % hold on
     % plot(t_second,ecg_denoised_nT,LineWidth=1.5) ;lg = cat(2, lg, {'ECG-T'});
+    % plot(t_second(ecg_QRSoff_index_p),ecg_denoised_nT(ecg_QRSoff_index_p),'*',LineWidth=1.5) ;lg = cat(2, lg, {'ECG-T'});
     % plot(t_second,ecg_T_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
-    % % plot(t_second,ecg_T_ndiff2,LineWidth=1.5) ;lg = cat(2, lg, {'diff2'});
     % grid on
     % plot(t_second,ecg_T_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
 
     %% P-wave Detection
+
+    ecg_Toff_index = positions.Toff;
+
+    ecg_denoised_nP = nan*data;
+    for p = 2:length(ecg_rpeaks_index)-1
+
+        temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
+        temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms , temp_back);
+        if temp_back<=sample_70ms
+            temp_back = sample_100ms;
+        end
+
+        this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p)-sample_10ms;
+        if any(this_P_index<1)||any(this_P_index>length(data))
+            continue;
+        end
+
+        ecg_denoised_nP(this_P_index) = data(this_P_index) ;
+    end
+
+    base_value = median(ecg_denoised_nP,'omitmissing');
+
+    ecg_denoised_nP = fillmissing(ecg_denoised_nP,'linear');
+    ecg_denoised_nP = lp_filter_zero_phase(ecg_denoised_nP, 20/fs);
+    % ecg_denoised_nP = ecg_denoised_nP - lp_filter_zero_phase(ecg_denoised_nP, 0.1/fs);
+
+    ecg_P_std = movstd(ecg_denoised_nP,[win_sample_P,win_sample_P]);
+    ecg_P_ndiff = [zeros(1,win_sample_P-ceil(win_sample_P/2)), ecg_denoised_nP(win_sample_P+1:end) - ecg_denoised_nP(1:end-win_sample_P),zeros(1,win_sample_P-floor(win_sample_P/2))];
+    ecg_P_ndiff = abs(ecg_P_ndiff);
+
+    ecg_P_env = (envelope(ecg_denoised_nP,sample_70ms).*ecg_P_std/prctile(ecg_P_std,90) + ecg_P_ndiff)/2;
+
+    % a = figure('Position', [130 130 1500 800]);
+    % lg = {};
+    % % plot(t_second,data/3,LineWidth=1) ;lg = cat(2, lg, {'ECG'});
+    % plot(t_second,ecg_denoised_nP,LineWidth=1.5) ;lg = cat(2, lg, {'ECG-P'});
+    % hold on
+    % plot(t_second,ecg_P_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
+    % grid on
+    % plot(t_second,ecg_P_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
+    % plot(t_second,ecg_P_env,LineWidth=1.5) ;lg = cat(2, lg, {'env+diff'});
 
     P_bloks_off = cell(2,length(ecg_rpeaks_index)-2);
     P_bloks_off_index = cell(1,length(ecg_rpeaks_index)-2);
@@ -1067,25 +1372,37 @@ try
     mean_init_Pon_1 = cell(1,length(ecg_rpeaks_index)-2);
     mean_init_Pon_2 = cell(1,length(ecg_rpeaks_index)-2);
 
-    ecg_Toff_index = positions.Toff;
-    ecg_denoised_nP = 0*data;
+
+    % ecg_denoised_nP = 0*data;
 
     max_indexes = nan(length(ecg_rpeaks_index)-2,1);
     max_P_vals = nan(length(ecg_rpeaks_index)-2,1);
     min_indexes = nan(length(ecg_rpeaks_index)-2,1);
     min_P_vals = nan(length(ecg_rpeaks_index)-2,1);
     P_wave_blocks = zeros(length(ecg_rpeaks_index)-2, 2*sample_250ms);
+    P_wave_blocks_std = zeros(length(ecg_rpeaks_index)-2, 2*sample_250ms);
+
     for p = 2:length(ecg_rpeaks_index)-1
 
         temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
+        temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms , temp_back);
+        if temp_back<=sample_70ms
+            temp_back = sample_100ms;
+        end
+
         this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p)-sample_10ms;
         if any(this_P_index<1)||any(this_P_index>length(data))
             continue;
         end
 
-        ecg_denoised_nP(this_P_index) = data(this_P_index) - linspace(data(this_P_index(1)),data(this_P_index(end)) , length(this_P_index) );
-        P_wave_blocks(p-1,end-length(this_P_index)+1:end) = ecg_denoised_nP(this_P_index);
-        ecg_denoised_nP(this_P_index) = ecg_denoised_nP(this_P_index)/norm(ecg_denoised_nP(this_P_index));
+        % ecg_denoised_nP(this_P_index) = data(this_P_index) - linspace(data(this_P_index(1)),data(this_P_index(end)) , length(this_P_index) );
+        temp_pindex = ecg_qrson_index(p)-2*sample_250ms-sample_10ms+1:ecg_qrson_index(p)-sample_10ms;
+        temp_pindex(temp_pindex<1)=[];
+        % temp_pindex(temp_pindex>length(data))=[];
+
+        P_wave_blocks(p-1,end-length(temp_pindex)+1:end) = ecg_P_env(temp_pindex);
+        P_wave_blocks_std(p-1,end-length(temp_pindex)+1:end) = ecg_P_std(temp_pindex);
+        % ecg_denoised_nP(this_P_index) = ecg_denoised_nP(this_P_index)/norm(ecg_denoised_nP(this_P_index));
 
         this_P_index = flip(this_P_index);
 
@@ -1105,11 +1422,7 @@ try
 
     end
 
-    if abs(mean(max_P_vals,'omitmissing')) > abs(mean(min_P_vals,'omitmissing'))
-        std_index = max_indexes;
-    else
-        std_index = min_indexes;
-    end
+
 
     noisy_pwave = 0;
     clear mn_std_index
@@ -1117,42 +1430,43 @@ try
     for c = 1:length(num_cls)
 
         ind_c = index_clustering(index_clustering(:,2)==num_cls(c),1);
-        mn_std_index(c) = mean(movstd(std_index(ind_c),[60,60]),'omitmissing');
+
+        if abs(mean(max_P_vals(ind_c),'omitmissing')) > abs(mean(min_P_vals(ind_c),'omitmissing'))
+            std_index = max_indexes;
+        else
+            std_index = min_indexes;
+        end
+
+        mn_std_index(c) = mean(movstd(std_index,[60,60]),'omitmissing');
 
         if mean(mn_std_index(c),'omitmissing')>sample_10ms
             noisy_pwave(c) = 1;
             P_wave_blocks(ind_c,:) = movmean(P_wave_blocks(ind_c,:),[30,30]);
+            P_wave_blocks_std(ind_c,:) = movmean(P_wave_blocks_std(ind_c,:),[30,30]);
         else
             noisy_pwave(c) = 0;
         end
 
     end
 
+
     for p = 2:length(ecg_rpeaks_index)-1
 
         temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
+        temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms , temp_back);
+        if temp_back<=sample_70ms
+            temp_back = sample_100ms;
+        end
         this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p)-sample_10ms;
         if any(this_P_index<1)||any(this_P_index>length(data))
             continue;
         end
 
-        ecg_denoised_nP(this_P_index) = P_wave_blocks(p-1,end-length(this_P_index)+1:end) ;
-        ecg_denoised_nP(this_P_index) = ecg_denoised_nP(this_P_index)/norm(ecg_denoised_nP(this_P_index));
+        ecg_P_env(this_P_index) = P_wave_blocks(p-1,end-length(this_P_index)+1:end) ;
+        ecg_P_std(this_P_index) = P_wave_blocks_std(p-1,end-length(this_P_index)+1:end);
     end
 
-    ecg_P_std = movstd(ecg_denoised_nP,[ceil(win_sample_P/2),ceil(win_sample_P/2)]);
-    ecg_P_ndiff = [zeros(1,win_sample_P-ceil(win_sample_P/2)), ecg_denoised_nP(win_sample_P+1:end) - ecg_denoised_nP(1:end-win_sample_P),zeros(1,win_sample_P-floor(win_sample_P/2))];
 
-    ecg_P_ndiff = abs(ecg_P_ndiff);
-
-    % a = figure('Position', [130 130 1500 800]);
-    % lg = {};
-    % plot(t_second,ecg_denoised_n,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
-    % hold on
-    % plot(t_second,ecg_denoised_nP,LineWidth=1.5) ;lg = cat(2, lg, {'ECG-T'});
-    % plot(t_second,ecg_P_ndiff,LineWidth=1.5) ;lg = cat(2, lg, {'diff1'});
-    % grid on
-    % plot(t_second,ecg_P_std,LineWidth=1.5) ;lg = cat(2, lg, {'std'});
 
 
     P_peaks = nan(length(ecg_rpeaks_index),1);
@@ -1167,7 +1481,11 @@ try
 
         % this_P_index = ecg_qrsoff_index(p)-round(min(0.66*(ecg_Toff_index(p-1)-ecg_qrsoff_index(p))),  (sample_100ms+sample_70ms)*max(1,avg_intervals_ecg(p)/(2*sample_350ms))):ecg_qrsoff_index(p);
 
-        temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
+        temp_back = min( 2*sample_250ms, max(min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms,floor(0.4*rr_intervals_ecg(p-1))) ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
+        temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms , temp_back);
+        if temp_back<=sample_70ms
+            temp_back = sample_100ms;
+        end
         this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p);
 
         if any(this_P_index>length(data))
@@ -1178,8 +1496,10 @@ try
             this_P_index = ecg_qrson_index(p)-sample_100ms-sample_70ms: ecg_qrson_index(p);
         end
 
+        gain_P = linspace(1,0.5,length(this_P_index));
         this_P_index = flip(this_P_index);
         [TF,P] = islocalmax(ecg_denoised_nP(this_P_index),'MaxNumExtrema',2,'MinSeparation',sample_10ms);
+        P = P.*gain_P;
         TF_max = find(TF);
         if ~isempty(TF_max)
             if length(TF_max)==1
@@ -1199,9 +1519,11 @@ try
         else
             P_max = 10^-10;
             P_maxU = 10^-12;
+            TF_max = ceil(length(this_P_index)/2);
         end
 
         [TF,P] = islocalmin(ecg_denoised_nP(this_P_index),'MaxNumExtrema',2,'MinSeparation',sample_10ms);
+        P = P.*gain_P;
         TF_min = find(TF);
         if ~isempty(TF_min)
             if length(TF_min)==1
@@ -1222,6 +1544,7 @@ try
         else
             P_min = 10^-10;
             P_minU = 10^-12;
+            TF_min = ceil(length(this_P_index)/2);
         end
 
         if P_max/P_min >= 1
@@ -1238,15 +1561,40 @@ try
 
     end
 
-    Md_temp = round(median(Pbefore_peak(:),'omitmissing'));
-    Pbefore_peak = max(0,50-Md_temp) + Pbefore_peak;
-    Pbefore_peak = em_interval_calc([zeros(length(ecg_rpeaks_index),1),Pbefore_peak],0.15,0.10,60);
-    Pbefore_peak = round(Pbefore_peak)-max(0,50-Md_temp);
+    if flag_post_processing>0
+        before_peak_cell = cell(length(num_cls),1);
+        after_peak_cell = cell(length(num_cls),1);
+        Pbefore_peak = Pbefore_peak(2:end-1);
+        Pafter_peak = Pafter_peak(2:end-1);
 
-    Md_temp = round(median(Pafter_peak(:),'omitmissing'));
-    Pafter_peak = max(0,50-Md_temp) + Pafter_peak;
-    Pafter_peak = em_interval_calc([zeros(length(ecg_rpeaks_index),1),Pafter_peak],0.15,0.10,60);
-    Pafter_peak = round(Pafter_peak)-max(0,50-Md_temp);
+        for c = 1:length(num_cls)
+
+            ind_c = index_clustering(index_clustering(:,2)==num_cls(c),1);
+            before_peak_cell{c,1}  = Pbefore_peak(ind_c);
+            Md_temp = round(median( before_peak_cell{c,1}(:),'omitmissing'));
+            before_peak_cell{c,1} = max(0,50-Md_temp) +  before_peak_cell{c,1};
+            before_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1), before_peak_cell{c,1}],0.15,0.10,60);
+            before_peak_cell{c,1} = round( before_peak_cell{c,1})-max(0,50-Md_temp);
+
+            after_peak_cell{c,1}  = Pafter_peak(ind_c);
+            Md_temp = round(median(after_peak_cell{c,1}(:),'omitmissing'));
+            after_peak_cell{c,1} = max(0,50-Md_temp) + after_peak_cell{c,1};
+            after_peak_cell{c,1} = em_interval_calc([zeros(length(ind_c),1),after_peak_cell{c,1}],0.15,0.10,60);
+            after_peak_cell{c,1} = round(after_peak_cell{c,1})-max(0,50-Md_temp);
+
+        end
+
+        Pbefore_peak = cell2mat(before_peak_cell);
+        Pbefore_peak(index_clustering(:,1)) = Pbefore_peak;
+        Pbefore_peak = [nan;Pbefore_peak;nan];
+
+        Pafter_peak = cell2mat(after_peak_cell);
+        Pafter_peak(index_clustering(:,1)) = Pafter_peak;
+        Pafter_peak = [nan;Pafter_peak;nan];
+
+    end
+
+
 
     for p = 2:length(ecg_rpeaks_index)-1
 
@@ -1255,6 +1603,11 @@ try
         end
 
         temp_back = min( 2*sample_250ms, max(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
+        temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms , temp_back);
+        if temp_back<=sample_70ms
+            temp_back = sample_100ms;
+        end
+
         this_P_index = ecg_qrson_index(p)-temp_back: ecg_qrson_index(p);
 
         if any(this_P_index>length(data))
@@ -1272,15 +1625,8 @@ try
             P_peaks(p) = this_P_index(min(T_dur,Pbefore_peak(p)));
         elseif contains(P_type{p},'min')
             P_peaks(p) = this_P_index(min(T_dur,Pbefore_peak(p)));
-        elseif contains(P_type{p},'bi-phasic')
-            P_peaks(p) = this_P_index(Pbefore_peak(p));
-        elseif contains(P_type{p},'Umax') ||  contains(P_type{p},'Umin')
-            P_peaks(p) = this_P_index(Pbefore_peak(p));
-            this_P_index = this_P_index(1: min(T_dur,max(Pbefore_peak(p)+3*sample_10ms,Pbiphasic_shape(p))));
-        elseif contains(P_type{p},'Nmax') ||  contains(P_type{p},'Nmin')
-            P_peaks(p) = this_P_index(Pbefore_peak(p));
-            this_P_index = this_P_index(1: min(T_dur,Pbiphasic_shape(p)));
         end
+
 
         try
             this_bP_index = this_P_index(1:Pbefore_peak(p));
@@ -1288,42 +1634,64 @@ try
             this_bP_index = this_P_index(1:round(Pbefore_peak(p)/2));
         end
 
-        % dur_this = ceil(length(this_bP_index)/3);
-        % thr_PQ = max(ecg_P_std(this_bP_index(2*dur_this:end)))/2;
-        % ind_drop_st = min(dur_this,find(ecg_P_std(this_bP_index)<thr_PQ,1,"first"));
-        % if isempty(ind_drop_st)
-        %     ind_drop_st = sample_10ms;
-        % end
-        % ratio_std = ecg_P_std(this_bP_index(ind_drop_st))/thr_PQ;
-        % this_bP_index = this_bP_index(ind_drop_st:end);
-        % if ratio_std<0.5
-        %     P_bloks_off{1,p-1} = ecg_P_ndiff(this_bP_index);
-        %     P_bloks_off{2,p-1} = ecg_P_std(this_bP_index);
-        % else
-        %     P_bloks_off{1,p-1} = ecg_P_ndiff(this_bP_index); P_bloks_off{1,p-1}(:,1:sample_10ms) = P_bloks_off{1,p-1}(:,1:sample_10ms).*rand(1,sample_10ms);
-        %     P_bloks_off{2,p-1} = ecg_P_std(this_bP_index);  P_bloks_off{2,p-1}(:,1:sample_10ms) = P_bloks_off{2,p-1}(:,1:sample_10ms).*rand(1,sample_10ms);
-        % end
+        dur_this = ceil(length(this_bP_index)/3);
+        thr_QP = max(ecg_P_std(this_bP_index(2*dur_this:end)))/5;
+        ind_drop_qp = min(dur_this,find(ecg_P_std(this_bP_index)<thr_QP,1,"first"));
+        if isempty(ind_drop_qp)
+            ind_drop_qp = 1;
+        end
 
-        P_bloks_off{1,p-1} = ecg_P_ndiff(this_bP_index); %P_bloks_on{1,p-1}(:,1:2*sample_10ms) = P_bloks_on{1,p-1}(:,1:2*sample_10ms).*linspace(0,1,2*sample_10ms);
+        this_bP_index = this_bP_index(ind_drop_qp:end);
+
+        P_bloks_off{1,p-1} = ecg_P_env(this_bP_index); %P_bloks_on{1,p-1}(:,1:2*sample_10ms) = P_bloks_on{1,p-1}(:,1:2*sample_10ms).*linspace(0,1,2*sample_10ms);
         P_bloks_off{2,p-1} = ecg_P_std(this_bP_index);  %P_bloks_on{2,p-1}(:,1:2*sample_10ms) = P_bloks_on{2,p-1}(:,1:2*sample_10ms).*linspace(0,1,2*sample_10ms);
         P_bloks_off_index{p-1} = this_bP_index;
 
         dur_this = ceil(length(this_bP_index)/3);
-        mean_init_Poff_1{1,p-1} = [ecg_P_ndiff(this_bP_index(1:dur_this));ecg_P_std(this_bP_index(1:dur_this))];
-        mean_init_Poff_2{1,p-1} = [ecg_P_ndiff(this_bP_index(dur_this:end));ecg_P_std(this_bP_index(dur_this:end))];
+        mean_init_Poff_1{1,p-1} = [ecg_P_env(this_bP_index(1:dur_this));ecg_P_std(this_bP_index(1:dur_this))];
+        mean_init_Poff_2{1,p-1} = [ecg_P_env(this_bP_index(dur_this:end));ecg_P_std(this_bP_index(dur_this:end))];
 
         this_aP_index = this_P_index(Pafter_peak(p):end);
 
         if isempty(this_aP_index)
             this_aP_index = this_P_index(ceil(Pbefore_peak(p)/2):end);
+        elseif length(this_aP_index)<2*sample_10ms
+            this_aP_index = this_P_index(Pafter_peak(p)-sample_10ms:end);
         end
-        P_bloks_on{1,p-1} = ecg_P_ndiff(this_aP_index);
-        P_bloks_on{2,p-1} = ecg_P_std(this_aP_index);
+
+        temp = ecg_P_std(this_aP_index);
+        if length(temp)>5*sample_10ms
+            thr_tp = mean(temp(1:2*sample_10ms))/10;
+            [TF,P] = islocalmin(temp(2*sample_10ms+1:end),'MaxNumExtrema',1,'MinProminence',thr_tp);
+            ind_drop_pq = 2*sample_10ms+find(TF);
+
+            if isempty(ind_drop_pq)
+                ind_drop_pq = length(temp);
+            else
+                ind_drop_pq = ind_drop_pq + find(temp(ind_drop_pq+1:end)>1.2*temp(ind_drop_pq),1,'first');
+                if isempty(ind_drop_pq)
+                    ind_drop_pq = 2*sample_10ms+find(TF);
+                end
+            end
+
+            this_aP_index = this_aP_index(1:ind_drop_pq);
+        end
+
+        prior_win = gausswin(4*max(sample_70ms ,length(this_aP_index))+1)';
+        prior_win = prior_win(ceil(length(prior_win)/2)-2*length(this_aP_index):ceil(length(prior_win)/2)+2*length(this_aP_index));
+        gain_sig =prior_win(2*length(this_aP_index)+1:3*length(this_aP_index));
+
+        P_bloks_on{1,p-1} = ecg_P_env(this_aP_index).*gain_sig;
+        P_bloks_on{2,p-1} = ecg_P_std(this_aP_index).*gain_sig;
         P_bloks_on_index{p-1} = this_aP_index;
 
+
+        ecg_P_env(this_aP_index) = ecg_P_env(this_aP_index).*gain_sig;
+        ecg_P_std(this_aP_index) = ecg_P_std(this_aP_index).*gain_sig;
+
         dur_this = ceil(length(this_aP_index)/2);
-        mean_init_Pon_1{1,p-1} = [ecg_P_ndiff(this_aP_index(1:dur_this));ecg_P_std(this_aP_index(1:dur_this))];
-        mean_init_Pon_2{1,p-1} = [ecg_P_ndiff(this_aP_index(dur_this:end));ecg_P_std(this_aP_index(dur_this:end))];
+        mean_init_Pon_1{1,p-1} = [ecg_P_env(this_aP_index(1:dur_this));ecg_P_std(this_aP_index(1:dur_this))];
+        mean_init_Pon_2{1,p-1} = [ecg_P_env(this_aP_index(dur_this:end));ecg_P_std(this_aP_index(dur_this:end))];
 
 
     end
@@ -1539,10 +1907,19 @@ try
     PT_dur_score = (min(1,exp((min(sample_100ms, rr_intervals_ecg/6) -(QRSon_index'-P_indexes(:,1)))./min(sample_100ms, rr_intervals_ecg/6))) + min(1,exp(3*(QRSon_index'-P_indexes(:,3)-sample_10ms)./sample_10ms)) )/2;
 
     P_score = (P_amp_score + P_dur_score + PT_dur_score)/3;
-    P_score = movmean(P_score,[30,30]);
+    % P_score = movmean(P_score,[30,30]);
+    P_score_fcm = P_score(:);
+    P_score_fcm(isnan(P_score_fcm)) = 0.4;
+    fcm_options = fcmOptions(NumClusters=2,MaxNumIteration=25, Exponent=1.1, Verbose=0);
+    [fcm_centers, fcm_part_mat] = fcm(P_score_fcm(:),fcm_options);
+    [~,cluster_fcm] = max(fcm_part_mat);
+    [~,cls_max] = max(fcm_centers);
+    thr_fcm = mean(P_score_fcm(cluster_fcm==cls_max)) - 3*std(P_score_fcm(cluster_fcm==cls_max));
 
+    thr_fcm = max(thr_fcm,0.5);
+    thr_fcm = min(thr_fcm,0.65);
     if flag_prune_P>0
-        ind_dropP = find(movmin(P_score<0.5,[30,30]));
+        ind_dropP = find(P_score<thr_fcm); %find(movmin(P_score<0.5,[30,30]));
         positions.Pon(ind_dropP) = nan;
         positions.P(ind_dropP) = nan;
         positions.Poff(ind_dropP) = nan;
@@ -1572,28 +1949,256 @@ try
 
     positions = positions_out;
 
-catch
+catch err
 
-
+    warning('LSIM failed in computing all fiducial points')
+    EXITFLAG.status = 'failed';
+    EXITFLAG.message = err;
     L = length(ecg_rpeaks_index_org);
+    index_R = 1:L;
+    index_R(index_remove) =[];
 
-    positions.Pon = nan(1,L);
-    positions.P = nan(1,L);
-    positions.Poff = nan(1,L);
 
-    positions.QRSon = nan(1,L);
-    positions.R = nan(1,L);
-    positions.QRSoff = nan(1,L);
+    if ~isfield(positions,'Pon')
+        positions_out.Pon = nan(1,L);
+    else
+        positions_out.Pon = nan(1,L);    positions_out.Pon(index_R) = positions.Pon;
+    end
+    if ~isfield(positions,'P')
+        positions_out.P = nan(1,L);
+    else
+        positions_out.P = nan(1,L);      positions_out.P(index_R) = positions.P;
+    end
+    if ~isfield(positions,'Poff')
+        positions_out.Poff = nan(1,L);
+    else
+        positions_out.Poff = nan(1,L);   positions_out.Poff(index_R) = positions.Poff;
+    end
 
-    positions.Ton = nan(1,L);
-    positions.T = nan(1,L);
-    positions.Toff = nan(1,L);
+    if ~isfield(positions,'QRSon')
+        positions_out.QRSon = nan(1,L);
+    else
+        positions_out.QRSon = nan(1,L); positions_out.QRSon(index_R) = positions.QRSon;
+    end
 
-    positions.P_score = zeros(1,L);
-    positions.beat_quality_score = zeros(1,L);
+    if ~isfield(positions,'R')
+        positions_out.R = nan(1,L);
+    else
+        positions_out.R = nan(1,L);      positions_out.R = ecg_rpeaks_index_org(:)';
+    end
 
+    if ~isfield(positions,'QRSoff')
+        positions_out.QRSoff = nan(1,L);
+    else
+        positions_out.QRSoff = nan(1,L); positions_out.QRSoff(index_R) = positions.QRSoff;
+    end
+
+    if ~isfield(positions,'Ton')
+        positions_out.Ton = nan(1,L);
+    else
+        positions_out.Ton = nan(1,L);    positions_out.Ton(index_R) = positions.Ton;
+    end
+
+    if ~isfield(positions,'T')
+        positions_out.T = nan(1,L);
+    else
+        positions_out.T = nan(1,L);      positions_out.T(index_R) = positions.T;
+    end
+
+    if ~isfield(positions,'Toff')
+        positions_out.Toff = nan(1,L);
+    else
+        positions_out.Toff = nan(1,L);   positions_out.Toff(index_R) = positions.Toff;
+    end
+
+
+    if ~isfield(positions,'P_score')
+        positions_out.P_score = zeros(1,L);
+    else
+        positions_out.P_score = zeros(1,L);  positions_out.P_score(index_R) = positions.P_score;
+    end
+
+    if ~isfield(positions,'beat_quality_score')
+        positions_out.beat_quality_score = zeros(1,L);
+    else
+        positions_out.beat_quality_score = zeros(1,L); positions_out.beat_quality_score(index_R) = positions.beat_quality_score;
+    end
+
+    positions = positions_out;
 end
 
 
 end
 
+
+function [beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs, num_cluster)
+
+fs_fd = fs;
+sample_10ms = round(fs_fd*0.01);
+sample_70ms = round(fs_fd*0.07);
+sample_100ms = round(fs_fd*0.1);
+sample_250ms = round(fs_fd*0.25);
+sample_350ms = round(fs_fd*0.35);
+
+rpeak_intervals = cell(length(ecg_rpeaks_index)-2,1);
+for p = 2:length(ecg_rpeaks_index)-1
+    rpeak_intervals{p-1} = (ecg_rpeaks_index(p)-sample_70ms:ecg_rpeaks_index(p)+sample_70ms)';
+end
+rpeak_intervals_mat = cell2mat( rpeak_intervals);
+L = length(rpeak_intervals_mat);
+
+for f = 1:8
+    data_r = lp_filter_zero_phase(data, 35/fs);
+    data_rh = data_r;
+    data_r = data_r - lp_filter_zero_phase(data_r,f/fs);
+    data_hat = [data_r(rpeak_intervals_mat)',ones(L,1)]*(pinv([data_r(rpeak_intervals_mat)',ones(L,1)])*data_rh(rpeak_intervals_mat)');
+
+    temp_coef = corrcoef(data_hat,data_rh(rpeak_intervals_mat)');
+    % Cxy(f) = 1-(norm(data_rh(rpeak_intervals_mat)' - data_hat)/  norm(data_rh(rpeak_intervals_mat)));
+    Cxy(f) = temp_coef(1,2);
+end
+Cxy(f+1) =0;
+f = find(Cxy<0.95,1,'first');
+data_r = lp_filter_zero_phase(data, 35/fs);
+data_r = data_r - lp_filter_zero_phase(data_r,f/fs);
+
+P_rpeaks_index = ecg_rpeaks_index;
+max_min_r = 0*ecg_rpeaks_index;
+
+for p = 1:length(ecg_rpeaks_index)
+
+    this_qrs_index = ecg_rpeaks_index(p)-sample_70ms:ecg_rpeaks_index(p)+sample_100ms;
+    this_qrs_index(this_qrs_index<1) = [];
+    this_qrs_index(this_qrs_index>length(data)) =[];
+
+    [TF,P] = islocalmin(data_r(this_qrs_index),'MaxNumExtrema',1);
+    TF_min = find(TF);
+    if ~isempty(TF_min)
+        P_min = P(TF_min);
+    else
+        P_min =0;
+    end
+
+    [TF,P] = islocalmax(data_r(this_qrs_index),'MaxNumExtrema',1);
+    TF_max = find(TF);
+    if ~isempty(TF_max)
+        P_max = P(TF_max);
+    else
+        P_max =0;
+    end
+
+
+    if P_max>= P_min && P_max>0
+        ecg_rpeaks_index(p) = this_qrs_index(TF_max);
+        P_rpeaks_index(p) = P_max;
+        max_min_r(p) = 1;
+    elseif P_min>0
+        ecg_rpeaks_index(p) = this_qrs_index(TF_min);
+        P_rpeaks_index(p) = P_min;
+        max_min_r(p) = -1;
+    else
+
+        [P_min,TF_min] = min(data_r(this_qrs_index));
+        P_min = abs(P_min);
+
+        [P_max,TF_max] = max(data_r(this_qrs_index));
+        P_max = abs(P_max);
+
+
+
+        if P_max>= P_min && P_max>0
+            ecg_rpeaks_index(p) = this_qrs_index(TF_max);
+            P_rpeaks_index(p) = P_max;
+            max_min_r(p) = 1;
+        elseif P_min>0
+            ecg_rpeaks_index(p) = this_qrs_index(TF_min);
+            P_rpeaks_index(p) = P_min;
+            max_min_r(p) = -1;
+        end
+
+
+    end
+
+end
+
+
+avg_intervals_ecg = min(fs*1.5,1.25*median(diff(ecg_rpeaks_index),'omitmissing'));
+
+pqrs_bloks = zeros(length(ecg_rpeaks_index)-2,sample_250ms+sample_70ms+1);
+t_bloks = zeros(length(ecg_rpeaks_index)-2,round(sample_350ms*min(2,max(max(1,avg_intervals_ecg/(2*sample_350ms)))))-sample_70ms);
+for p = 2:length(ecg_rpeaks_index)-1
+    this_qrs_index = ecg_rpeaks_index(p)-min(sample_250ms,max(sample_70ms,floor(0.3*avg_intervals_ecg))):ecg_rpeaks_index(p)+sample_70ms;
+    if any(this_qrs_index<1)||any(this_qrs_index>length(data))
+        continue;
+    end
+    pqrs_bloks(p-1,end-length(this_qrs_index)+1:end) = data(this_qrs_index) ;
+
+
+    this_t_index = ecg_rpeaks_index(p)+sample_70ms+1:ecg_rpeaks_index(p)+min(sample_350ms,max(sample_250ms,floor(0.7*avg_intervals_ecg)));
+    if any(this_t_index>length(data))
+        continue;
+    end
+
+    t_bloks(p-1,1:length(this_t_index)) =  data(this_t_index);
+
+end
+
+ecg_blocks = [pqrs_bloks,t_bloks];
+
+max_val = max(prctile(pqrs_bloks(:),99.9),prctile(t_bloks(:),99.9));
+min_val = min(prctile(pqrs_bloks(:),0.1),prctile(t_bloks(:),0.1));
+
+ecg_blocks(ecg_blocks>max_val) = max_val;
+ecg_blocks(ecg_blocks<min_val) = min_val;
+% ecg_blocks = (ecg_blocks - min_val) / (max_val-min_val);
+for p = 1:size(ecg_blocks,1)
+    ecg_blocks(p,:) = ecg_blocks(p,:) - linspace(mean(ecg_blocks(p,1:sample_10ms),2),mean(ecg_blocks(p,end-sample_10ms+1:end),2),size(ecg_blocks,2));
+end
+
+ecg_blocks(:,1:sample_10ms) = ecg_blocks(:,1:sample_10ms) .* linspace(0.01,1,sample_10ms);
+ecg_blocks(:,end-sample_10ms+1:end) = ecg_blocks(:,end-sample_10ms+1:end) .* linspace(1,0.01,sample_10ms);
+
+ecg_blocks_normalized = ecg_blocks./sqrt(sum(ecg_blocks.^2,2)); % normalization to unit power
+
+fcm_features = ecg_blocks_normalized(:,sample_70ms:end);
+fcm_features = fillmissing(fcm_features,"linear");
+% fcm_features = zscore(fcm_features);
+
+fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=1.1, Verbose=0);
+[fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
+[~,cluster_fcm] = max(fcm_part_mat);
+
+num_cls = size(fcm_centers,1);
+index_clustering = [];
+count_cls = zeros(num_cls,1);
+for c = 1:num_cls
+    index_temp = find(cluster_fcm==c);
+    count_cls(c) = length(index_temp);
+    index_clustering = [index_clustering;[index_temp(:),c*ones(length(index_temp),1)]];
+end
+
+if length(cluster_fcm)<30
+    index_clustering(:,2)=1;
+else
+    index_clustering_org = index_clustering;
+    for c = find(count_cls(:)'<20)
+        [~,cls_max] = max(count_cls);
+        index_clustering(index_clustering_org(:,2)==c,2) = cls_max;
+    end
+end
+
+num_cls = unique(index_clustering(:,2));
+
+% check the beat quality Pwave quality
+clear cls_mn_ecg
+for c = 1:length(num_cls)
+
+    ind_c = index_clustering(index_clustering(:,2)==num_cls(c),1);
+    cls_mn_ecg(c,:) = mean(ecg_blocks(ind_c,sample_70ms:end-sample_100ms),1);
+end
+
+beat_quality_score = (1/size(cls_mn_ecg,2)) *(ecg_blocks(:,sample_70ms:end-sample_100ms)-mean(ecg_blocks(:,sample_70ms:end-sample_100ms),2)) * (cls_mn_ecg-mean(cls_mn_ecg,2))' ./ (std(ecg_blocks(:,sample_70ms:end-sample_100ms),[],2)*std(cls_mn_ecg,[],2)');
+beat_quality_score = round(max(beat_quality_score,[],2),2);
+beat_quality_score = [1;beat_quality_score;1];
+
+end
