@@ -31,8 +31,21 @@ function stm = amp_seq_to_stm(amplitude_sequence)
 %   stm = amp_seq_to_stm(cumsum(randn(1, 10000))); % STM converges to [0.5, 0.5 ; 0.5, 0.5] for long
 % sequences
 % 
-% Example 3: Periodic process
+% Example 3: High-frequency periodic process; amplitudes always alternating
+%   from high-to-low and low-to-high (resembling perfect ABAB TWA
+%   patterns):
 %   stm = amp_seq_to_stm(mod(1:10000, 2)); % STM is [0, 1 ; 1, 0]
+% 
+% Example 4: Low-frequency periodic process; amplitudes oscillating slowly
+%   (similar to respiratory patterns)
+%   fs = 250; % sampling frequency
+%   T = 100.0; % signal length in seconds
+%   f = 0.2; % slow wave frequency  
+%   stm = amp_seq_to_stm(sin(2*pi*f/fs*(1:round(T*fs)))); % STM is [1 - epsilon, epsilon ; epsilon, 1- epsilon]
+% 
+%   Note: In Example 4, with a perfect sinusoidal oscillation, the
+%   off-diagonal entries of stm give the number of slow-wave oscillations
+%   in the signal
 % 
 % Reference use case for T-wave alternans (TWA):
 %   - Clifford, G. D., Nemati, S., & Sameni, R. (2010). An artificial vector

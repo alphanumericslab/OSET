@@ -1,7 +1,7 @@
-function [A, f0, bw, fskew, skew, kurt, f1] = instantaneous_signal_params(signal, fs, wlen, window, th, varargin)
+function [A, f0, bw, fskew, skew, kurt, f_hilbert, A_hilbert] = instantaneous_signal_params(signal, fs, wlen, window, th, varargin)
 % instantaneous_signal_params - Calculates instantaneous time/frequency domain features of an input signal in causal and non-causal modes
 %
-% Syntax: [A, f0, bw, fskew, skew, kurt, f1] = instantaneous_signal_params(signal, fs, wlen, window, th, flag)
+% Syntax: [A, f0, bw, fskew, skew, kurt, f_hilbert, A_hilbert] = instantaneous_signal_params(signal, fs, wlen, window, th, flag)
 %
 % Inputs:
 %   signal: input signal as row vector
@@ -19,14 +19,16 @@ function [A, f0, bw, fskew, skew, kurt, f1] = instantaneous_signal_params(signal
 %   fskew: instantaneous frequency skewness using energy density weighting
 %   skew: instantaneous time-domain skewness using energy density weighting
 %   kurt: instantaneous time-domain kurtosis using energy density weighting
-%   f1: instantaneous frequency using Hilbert transform
+%   f_hilbert: instantaneous frequency using Hilbert transform
+%   A_hilbert: instantaneous amplitude using Hilbert transform
 %
 %   Revision History:
 %       2015: First release
 %       2020: Added help
 %       2023: Renamed from deprecated version InstParams()
+%       2024: Added A_hilbert output
 % 
-%   Reza Sameni, 2015-2023
+%   Reza Sameni, 2015-2024
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 
@@ -44,8 +46,9 @@ A = zeros(size(signal));
 f0 = zeros(size(signal));
 
 h = hilbert(signal);
-f1 = fs * diff(unwrap(angle(h))) / (2 * pi);
-f1 = [f1(1) f1];
+A_hilbert = abs(h);
+f_hilbert = fs * diff(unwrap(angle(h))) / (2 * pi);
+f_hilbert = [f_hilbert(1) f_hilbert];
 
 bw = zeros(size(signal));
 fskew = zeros(size(signal));

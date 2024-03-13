@@ -1,4 +1,4 @@
-function [peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sat_bp_env] = peak_det_acoustic(samples, fs, varargin)
+function [peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sat_bp_env, amp_inst, f_inst, f_inst_smoothed, f_hilbert, amp_hilbert, bw_inst] = peak_det_acoustic(samples, fs, varargin)
 % PEAK_DET_ACOUSTIC Detects peaks in acoustic cardiac signals for heart rate analysis.
 %
 %   This function is designed for the analysis of acoustic cardiac signals, such as
@@ -9,7 +9,7 @@ function [peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sa
 %   adjustments for specific applications.
 %
 %   Syntax:
-%   [peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sat_bp_env] = peak_det_acoustic(samples, fs)
+%   [peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sat_bp_env, amp_inst, f_inst, f_inst_smoothed, f_hilbert, amp_hilbert, bw_inst] = peak_det_acoustic(samples, fs)
 %   Uses internal default parameters for processing the acoustic signal samples with sampling frequency fs.
 %
 %   [peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sat_bp_env] = peak_det_acoustic(samples, fs, params)
@@ -51,6 +51,12 @@ function [peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sa
 %   samples_sat - signal after amplitude saturation.
 %   samples_sat_bp - signal after bandpass or specified filtering.
 %   samples_sat_bp_env - power envelope of the filtered signal.
+%   amp_inst - instantaneous signal amplitude obtained from signal power over sliding windows.
+%   f_inst - instantaneous frequency obtained from Fourier domain center frequency over sliding windows
+%   f_inst_smoothed - smoothed version of f_inst using a piece-wise Tikhonov regularization filter
+%   f_hilbert - instantaneous frequency obtained from the Hilbert transform
+%   amp_hilbert - instantaneous amplitude obtained from the Hilbert transform
+%   bw_inst - instantaneous bandwidth obtained from Fourier domain center frequency deviation over sliding windows
 %
 %   Example Usage:
 %   % default parameters for PCG analysis:
@@ -112,16 +118,16 @@ if ~isfield(params, 'plot_inst_freq') || isempty(params.plot_inst_freq)
 end
 
 if ~isfield(params, 'inst_params_wlen') || isempty(params.inst_params_wlen)
-    params.inst_params_wlen = 0.5;
+    params.inst_params_wlen = 0.03;
     if params.verbose, disp(['params.inst_params_wlen = ', num2str(params.inst_params_wlen)]), end
-    params.inst_params_wlen = round(params.inst_params_wlen*fs); % convert into samples
 end
+params.inst_params_wlen = max(1, round(params.inst_params_wlen*fs)); % convert into samples
 
 if ~isfield(params, 'inst_params_smoothing_wlen') || isempty(params.inst_params_smoothing_wlen)
     params.inst_params_smoothing_wlen = 3.0;
     if params.verbose, disp(['params.inst_params_smoothing_wlen = ', num2str(params.inst_params_smoothing_wlen)]), end
-    params.inst_params_smoothing_wlen = round(params.inst_params_smoothing_wlen*fs); % convert into samples
 end
+params.inst_params_smoothing_wlen = round(params.inst_params_smoothing_wlen*fs); % convert into samples
 
 if ~isfield(params, 'inst_params_smoothing_lambda') || isempty(params.inst_params_smoothing_lambda)
     params.inst_params_smoothing_lambda = 10.0;
@@ -141,8 +147,8 @@ end
 if ~isfield(params, 'spectrogram_wlen') || isempty(params.spectrogram_wlen)
     params.spectrogram_wlen = 0.15;
     if params.verbose, disp(['params.spectrogram_wlen = ', num2str(params.spectrogram_wlen)]), end
-    params.spectrogram_wlen = round(params.spectrogram_wlen*fs); % convert into samples
 end
+params.spectrogram_wlen = round(params.spectrogram_wlen*fs); % convert into samples
 
 if ~isfield(params, 'spectrogram_win_overlap') || isempty(params.spectrogram_win_overlap)
     params.spectrogram_win_overlap = 0.14;
@@ -178,26 +184,26 @@ end
 if ~isfield(params, 'env_avg_wlen1') || isempty(params.env_avg_wlen1)
     params.env_avg_wlen1 = 0.13;
     if params.verbose, disp(['params.env_avg_wlen1 = ', num2str(params.env_avg_wlen1)]), end
-    params.env_avg_wlen1 = round(fs * params.env_avg_wlen1); % convert into samples
 end
+params.env_avg_wlen1 = round(fs * params.env_avg_wlen1); % convert into samples
 
 if ~isfield(params, 'env_avg_wlen2') || isempty(params.env_avg_wlen2)
     params.env_avg_wlen2 = 0.23;
     if params.verbose, disp(['params.env_avg_wlen2 = ', num2str(params.env_avg_wlen2)]), end
-    params.env_avg_wlen2 = round(fs * params.env_avg_wlen2); % convert into samples
 end
+params.env_avg_wlen2 = round(fs * params.env_avg_wlen2); % convert into samples
 
 if ~isfield(params, 'env_avg_wlen3') || isempty(params.env_avg_wlen3)
     params.env_avg_wlen3 = 0.37;
     if params.verbose, disp(['params.env_avg_wlen3 = ', num2str(params.env_avg_wlen3)]), end
-    params.env_avg_wlen3 = round(fs * params.env_avg_wlen3); % convert into samples
 end
+params.env_avg_wlen3 = round(fs * params.env_avg_wlen3); % convert into samples
 
 if ~isfield(params, 'peaks_min_dist') || isempty(params.peaks_min_dist)
     params.peaks_min_dist = 0.6;
     if params.verbose, disp(['params.peaks_min_dist = ', num2str(params.peaks_min_dist)]), end
-    params.peaks_min_dist = round(params.peaks_min_dist * fs);
 end
+params.peaks_min_dist = round(params.peaks_min_dist * fs);
 
 if ~isfield(params, 'peaks_prom_fraction') || isempty(params.peaks_prom_fraction)
     params.peaks_prom_fraction = 0.05;
@@ -253,24 +259,21 @@ samples = samples(:)' - mean(samples);
 
 % plot signal's instantaneous frequency and amplitude (useful for designing custom filters)
 if params.plot_inst_freq
-
     noncausal = 1;
-    [~, f_inst, ~, ~, ~, ~, f_hilbert] = instantaneous_signal_params(samples, fs, params.inst_params_wlen, ones(1, params.inst_params_wlen), 0, noncausal);
+    [amp_inst, f_inst, bw_inst, ~, ~, ~, f_hilbert, amp_hilbert] = instantaneous_signal_params(samples, fs, params.inst_params_wlen, ones(1, params.inst_params_wlen), 0, noncausal);
 
     % smooth the instantaneous frequency
     f_inst_smoothed = ecg_den_seg_wise_smoother(f_inst, 2, params.inst_params_smoothing_wlen, params.inst_params_smoothing_lambda);
-
-    % the Hilbert amplitude of the signal
-    samples_hilbert = hilbert(samples);
 
     figure
     subplot(211)
     plot(time, samples);
     hold on
-    plot(time, abs(samples_hilbert))
+    plot(time, amp_hilbert)
+    plot(time, amp_inst)
     xlabel(time_label);
     ylabel('Amplitude');
-    legend('Signal', 'Hilbert envelope');
+    legend('Signal', 'Hilbert envelope', 'Power envelope');
     grid
     set(gca, 'fontsize', 16)
     subplot(212)
@@ -278,12 +281,19 @@ if params.plot_inst_freq
     hold on
     plot(time, f_inst);
     plot(time, f_inst_smoothed)
+    plot(time, bw_inst)
     xlabel(time_label);
     ylabel('Frequency(Hz)');
-    legend('Inst freq Hilbert', 'Inst freq', 'Inst freq smoothed');
+    legend('Inst freq Hilbert', 'Inst freq', 'Inst freq smoothed', 'Inst bandwidth');
     grid
     set(gca, 'fontsize', 16)
     sgtitle('Signal vs Hilbert amplitude and instantaneous frequencies using density-based and Hilbert method');
+else
+    amp_inst = [];
+    f_inst = [];
+    f_hilbert = [];
+    bw_inst = [];
+    f_inst_smoothed = [];
 end
 
 if params.plot_spectrogram
