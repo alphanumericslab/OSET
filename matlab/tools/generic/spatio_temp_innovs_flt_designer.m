@@ -165,6 +165,7 @@ S_max_min_avg = (S_max + S_min) / 2;
 
 % Remove channel-wise mean if keep_mean is false
 if ~params.keep_mean
+    S_global_min = min(S_min(:));
     S_mean(:, 1) = S_global_min;
     S_median(:, 1) = S_global_min;
     S_max(:, 1) = S_global_min;
