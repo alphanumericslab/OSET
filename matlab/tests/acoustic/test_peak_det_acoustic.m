@@ -17,12 +17,28 @@
 clear; close all; clc;
 
 % Load a sample SCG signal and its sampling frequency from OSET sample data
-load scg_sample.mat samples fs
+% load scg_sample.mat samples fs
+
+[y, fs] = audioread('./OneDrive_1_2-19-2024/46(Good).wav');
+samples = y';
+samples = samples(1:round(10.0*fs));
+% samples = resample(y, 4410, fs)';
+% fs = 4410;
+% load bp_filter_coefs_4410hz.mat h_bp
+% samples = filtfilt(h_bp, 1, samples);
+% params.inst_params_wlen = 0.03;
+
+
+
+
+
 
 % Select demo
-demo = 'design-filter'; % 'predesigned-filter' or 'design-filter'
+demo = 'bypass'; % 'predesigned-filter' or 'design-filter'
 
 switch demo
+    case 'bypass'
+        h_bp = 1;
     case 'predesigned-filter'
         % Option 1: Load pre-designed bandpass filters (uncomment to use)
         load h_bp_filter_4_8hz.mat h_bp
@@ -55,7 +71,8 @@ params.h_bp_a = 1;                     % Bandpass filter denominator coefficient
 params.filter_type = 'CUSTOM';         % Indicate custom filtering
 
 % Run the peak detection on the SCG sample using the specified parameters
-[peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sat_bp_env] = peak_det_acoustic(samples, fs, params);
+[peak_indexes, hr, hr_smoothed, samples_sat, samples_sat_bp, samples_sat_bp_env, amp_inst, f_inst, f_inst_smoothed, f_hilbert, amp_hilbert, bw_inst] = ...
+    peak_det_acoustic(samples, fs, params);
 
 % The outputs include:
 % peak_indexes - the indices of detected peaks in the signal,
@@ -64,3 +81,10 @@ params.filter_type = 'CUSTOM';         % Indicate custom filtering
 % samples_sat - the signal after amplitude saturation,
 % samples_sat_bp - the signal after bandpass filtering,
 % samples_sat_bp_env - the power envelope of the bandpass filtered signal.
+% amp_inst - instantaneous signal amplitude obtained from signal power over sliding windows.
+% f_inst - instantaneous frequency obtained from Fourier domain center frequency over sliding windows
+% f_inst_smoothed - smoothed version of f_inst using a piece-wise Tikhonov regularization filter
+% f_hilbert - instantaneous frequency obtained from the Hilbert transform
+% amp_hilbert - instantaneous amplitude obtained from the Hilbert transform
+% bw_inst - instantaneous bandwidth obtained from Fourier domain center frequency deviation over sliding windows
+

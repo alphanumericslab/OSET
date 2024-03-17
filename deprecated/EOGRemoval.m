@@ -1,16 +1,19 @@
-function x = EOGRemoval(EEG, EOG, wlen, th, M, L, adapt_reference, flagplot)
+function x = EOGRemoval(eeg, eog, power_env_wlen, th, num_ch_den_per_itr, num_itr, adapt_reference, flagplot)
+% EOGRemoval has been deprecated. Use eog_canceller_nsca instead.
+warning('EOGRemoval has been deprecated. Use eog_canceller_nsca instead. Compare input arguments for compatibility.');
+
 %
-% x = EOGRemoval(EEG,EOG,wlen,th,M,L,adapt_reference,flagplot),
+% x = eog_canceller_nsca(eeg,eog,power_env_wlen,th,num_ch_den_per_itr,num_itr,adapt_reference,flagplot),
 % EOG removal from EEG by deflation
 %
 % inputs:
-% EEG: matrix of noisy data (channels x samples)
-% EOG: vector of ocular signal (1 x samples). By default EEG(1,:) is used
+% eeg: matrix of noisy data (channels x samples)
+% eog: vector of ocular signal (1 x samples). By default eeg(1,:) is used
 % if EOG is an empty vector; but don't do that please! :)
-% wlen: the half length of the power_envelope window (in samples)
-% th: the power_envelope threshold for finding active EOG times
-% M: number of channels to denoise in each iteration
-% L: number of iterations (the algorithm may stop before reaching L)
+% power_env_wlen: the half length of the power-envelope window (in samples)
+% th: the power-envelope threshold for finding active EOG times
+% num_ch_den_per_itr: number of channels to denoise in each iteration
+% num_itr: number of iterations (the algorithm may stop before reaching num_itr)
 % adapt_reference: to adapt_reference(1) or leave unchanged(0) the reference EOG
 % flagplot: to plot(1) or not to plot(0) the results
 %
@@ -31,24 +34,24 @@ function x = EOGRemoval(EEG, EOG, wlen, th, M, L, adapt_reference, flagplot)
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 
-if isempty(EOG)
-    EOG = EEG(1,:);
+if isempty(eog)
+    eog = eeg(1,:);
 end
 
 % define the parameters
 
 
-N = size(EEG,2);
-reference_channel = EOG;
-x = EEG;
+N = size(eeg,2);
+reference_channel = eog;
+x = eeg;
 % power_envelope = zeros(1,N);
 
 typical = x(1,:);
 Delta = [];
 delta = [];
-for i = 1:L
+for i = 1:num_itr
     % calculate the time-varying power envelope
-    power_envelope = sqrt(filtfilt(ones(1,wlen),wlen,reference_channel.^2))./std(EOG); % notice the normalization by SD of EOG, and not the SD of reference_channel!
+    power_envelope = sqrt(filtfilt(ones(1,power_env_wlen),power_env_wlen,reference_channel.^2))./std(eog); % notice the normalization by SD of EOG, and not the SD of reference_channel!
 
     % threshold the power envelope
     I_high_power = power_envelope > th*mean(power_envelope);
@@ -96,7 +99,7 @@ for i = 1:L
     end
 
     % nonstationary component analysis (GEVD over given windows)
-    [y, W, A, B, C] = nsca_source_separation(x, I_high_power, 1:N);
+    [y, W, A, B, C] = nonstationary_component_analysis(x, I_high_power, 1:N);
 
     % estimate the EOG dimensions embedded in background EEG noise
     xx = (x - mean(x,2)*ones(1,size(x,2)))./(std(x(:,I_low_power),[],2)*ones(1,size(x,2))); % normalize data
@@ -108,7 +111,7 @@ for i = 1:L
         case 0
             % keep the reference
         case 1
-            reference_channel = sqrt(mean(y(1:M,:).^2,1));
+            reference_channel = sqrt(mean(y(1:num_ch_den_per_itr,:).^2,1));
         case 2
             reference_channel = y(1,:);
         otherwise
@@ -116,7 +119,7 @@ for i = 1:L
     end
 
     % wavelet denoising
-    % % %     for k = 1:M,
+    % % %     for k = 1:num_ch_den_per_itr,
     for k = 1:ENS
         if flagplot
             figure;

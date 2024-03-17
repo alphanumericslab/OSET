@@ -40,8 +40,8 @@ X_nontargets = zeros(N, erp_wlen, length(nontarget_indexes));
 
 % x_den = LPFilter(x_den - LPFilter(x_den, 1.0/fs), 20.0/fs);
 
-bl = BaseLine1(x, baseline_wlen1, 'md');
-baseline = BaseLine1(bl, baseline_wlen2, 'mn');
+bl = baseline_sliding_window(x, baseline_wlen1, 'md');
+baseline = baseline_sliding_window(bl, baseline_wlen2, 'mn');
 xx = x - baseline;
 
 % twlen = 0.3; % in seconds
@@ -72,7 +72,7 @@ plot(ppulse_target, 'r');
 grid
 
 % [y_target, W, A, B, C] = NSCA(xx, I_targets, 1:T);
-[y_target, W, A, B, C] = NSCA(xx, I_targets, I_nontargets);
+[y_target, W, A, B, C] = nonstationary_component_analysis(xx, I_targets, I_nontargets);
 
 xx = y_target;
 
@@ -99,8 +99,8 @@ X_nontargets_mn = zeros(N, erp_wlen);
 X_targets_vr = zeros(N, erp_wlen);
 X_nontargets_vr = zeros(N, erp_wlen);
 for i = 1 : N
-    [X_targets_mn(i, :), X_targets_vr(i, :)] = RWAverage(squeeze(X_targets(i, :, :))');
-    [X_nontargets_mn(i, :), X_nontargets_vr(i, :)] = RWAverage(squeeze(X_nontargets(i, :, :))');
+    [X_targets_mn(i, :), X_targets_vr(i, :)] = robust_weighted_average(squeeze(X_targets(i, :, :))');
+    [X_nontargets_mn(i, :), X_nontargets_vr(i, :)] = robust_weighted_average(squeeze(X_nontargets(i, :, :))');
     %     X_targets_mn(i, :) = mean(X_targets(i, :, :), 3);
     %     X_nontargets_mn(i, :) = mean(X_nontargets(i, :, :), 3);
 end
@@ -153,4 +153,4 @@ for i = 1:N
     %     legend('TA', 'NT', 'TA (by Marco)');
 end
 
-PlotECG(y_target, 4, 'b', fs, 'NSCA');
+plot_multichannel_data(y_target, 4, 'b', fs, 'NSCA');
