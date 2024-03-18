@@ -1,9 +1,45 @@
-function [erps_rwa, erps_mean, erps_rwmd, erps_var, stacked_targets] = erp_extractor_rwa(data, fs, target_indexes, erp_wlen, varargin)
-% Event related potential extraction using Robust Weighted Averaging
+function [erps_rwa, erps_mean, erps_rwmd, erps_median, erps_var, stacked_targets] = erp_extractor_rwa(data, fs, target_indexes, erp_wlen, varargin)
+% Event Related Potential extraction using Robust Weighted Synchronous Averaging
 %
-% Reza Sameni (reza.sameni@gmail.com)
-% Copyright June, 2019
+% Usage:
+%   [erps_rwa, erps_mean, erps_rwmd, erps_median, erps_var, stacked_targets] = erp_extractor_rwa(data, fs, target_indexes, erp_wlen, params)
+% 
+% Inputs:
+%   data: Matrix of EEG signal data with channels as rows and time points as columns.
+%   fs: Sampling frequency of the data in Hz.
+%   target_indexes: Indices of time points corresponding to event triggers.
+%   erp_wlen: Length of the ERP window in samples.
+%   params: Optional parameters provided as a structure with fields:
+%       verbose: Enables detailed execution messages if set to true. Default is true.
+%       plot_results: Enables plotting of results if set to true. Default is false.
+%       plots_per_figure: Number of plots per figure, useful for organizing output plots. Default is 4.
+%       baseline_filter: Method for baseline correction. Options are 'NONE', 'DC', 'MDMN', 'SINGLE-ORDER-IIR'. Default is 'DC'.
+%       baseline_wlen1: Window length for the first stage of MDMN baseline correction, in seconds, if applicable. Default depends on fs.
+%       baseline_wlen2: Window length for the second stage of MDMN baseline correction, in seconds, if applicable. Default depends on fs.
+%       hp_cuttoff: Cutoff frequency for high-pass filtering when using 'SINGLE-ORDER-IIR'. Default is 0.5 Hz.
+%       enhancer_filter: Enables signal enhancement filtering if set to true. Default is false.
+%       enhancer_filt_b: Numerator coefficients for the FIR/IIR filter used for signal enhancement. Required if enhancer_filter is true.
+%       enhancer_filt_a: Denominator coefficients for the FIR/IIR filter used for signal enhancement. Required if enhancer_filter is true.
+%       enhancer_nsca: Enables Nonstationary Component Analysis (NSCA) for signal enhancement if set to true. Default is false.
+%       nsca_max_components: Maximum number of NSCA components used for signal reconstruction. Relevant if enhancer_nsca is true. Default is 1.
+%       erp_vertical_offset_alignment: Method for adjusting ERP vertical offset. Options are 'NONE', 'ZERO-MEAN', 'ZERO-MEAN-FRACTION'. Default is 'NONE'.
+%       erp_vertical_offset_fraction: Fraction of the ERP window used for calculating the mean when using 'ZERO-MEAN-FRACTION'. Default is 0.1 (first 10% of the time aligned events).
 %
+% Outputs:
+%   erps_rwa: Event Related Potentials extracted using Robust Weighted Averaging. Size: (channel x erp_wlen).
+%   erps_mean: Mean of the ERPs across trials. Size: (channel x erp_wlen)
+%   erps_rwmd: Robust Weighted Median of the ERPs. Size: (channel x erp_wlen)
+%   erps_median: Median of the ERPs across trials. Size: (channel x erp_wlen)
+%   erps_var: Variance of the ERPs across trials. Size: (channel x erp_wlen)
+%   stacked_targets: Tensor of aligned ERP segments for each channel and trial. Size: (channel x length(target_indexes) x erp_wlen)
+%
+% Revision History:
+%   2019: First release.
+%   2024: Added help and documentation.
+%
+% Reza Sameni, 2019-2024
+% The Open-Source Electrophysiological Toolbox (OSET)
+% https://github.com/alphanumericslab/OSET
 
 % check if custom params have been provided
 if nargin > 4 && ~isempty(varargin{1})
@@ -90,27 +126,28 @@ end
 num_ch = size(data, 1); % number of channels
 sig_len = size(data, 2); % time length
 
+% remove DC or baseline
 switch params.baseline_filter
     case 'NONE'
         baseline = zeros(size(data));
-    case 'DC' % remove mean
+    case 'DC' % mean only
         baseline = repmat(mean(data, 2), 1, size(data, 2));
-    case 'MDMN' % remove baseline using two-step moving median and moving average filters
+    case 'MDMN' % two-step moving median and moving average filters
         bl = baseline_sliding_window(data, baseline_wlen1, 'md');
         baseline = baseline_sliding_window(bl, baseline_wlen2, 'mn');
-    case 'SINGLE-ORDER-IIR' % single pole forward-backward IIR filter
+    case 'SINGLE-ORDER-IIR' % single-pole forward-backward IIR filter
         baseline = lp_filter_zero_phase(data, params.hp_cuttoff/fs);
 end
 data_detrended = data - baseline;
 
-% denoise the signal if demanded
+% denoise the signal if required using provided filter
 if params.enhancer_filter
     data_den = filtfilt(params.enhancer_filt_b, params.enhancer_filt_a, data_detrended')';
 else
     data_den = data_detrended;
 end
 
-% apply nonstationary component analysis if demanded
+% apply nonstationary component analysis if selected (keeps only up to nsca_max_components generalized eigenvalues)
 if params.enhancer_nsca
     spikes = zeros(1, sig_len);
     spikes(target_indexes) = 1;
@@ -138,7 +175,9 @@ for tgt_indx = 1 : length(target_indexes)
     stacked_targets(:, tgt_indx, 1 : size(segment, 2)) = segment - mn;
 end
 
+% calculate the average, median, robust weighted average, and robust weighted median
 erps_mean = zeros(num_ch, erp_wlen);
+erps_median = zeros(num_ch, erp_wlen);
 erps_var = zeros(num_ch, erp_wlen);
 erps_rwa = zeros(num_ch, erp_wlen);
 erps_rwmd = zeros(num_ch, erp_wlen);
@@ -146,9 +185,11 @@ for ch = 1 : num_ch
     block = squeeze(stacked_targets(ch, :, :));
     [erps_rwa(ch, :), ~, erps_rwmd(ch, :)] = robust_weighted_average(block);
     erps_mean(ch, :) = mean(block, 1);
+    erps_median(ch, :) = median(block, 1);
     erps_var(ch, :) = var(block, [], 1);
 end
 
+% plot the results
 if params.plot_results
     t = (0:sig_len-1)/fs;
     for i = 1:num_ch
@@ -177,10 +218,11 @@ if params.plot_results
         hold on
         plot(tt, squeeze(stacked_targets(i, :, :))', 'color', [1, 0.6, 0.6]);
         h1 = plot(tt, erps_mean(i, :), 'k:', 'linewidth', 2);
-        h2 = plot(tt, erps_rwa(i, :), 'k--', 'linewidth', 2);
-        h3 = plot(tt, erps_rwmd(i, :), 'k', 'linewidth', 2);
+        h2 = plot(tt, erps_median(i, :), 'k.-', 'linewidth', 2);
+        h3 = plot(tt, erps_rwa(i, :), 'k--', 'linewidth', 2);
+        h4 = plot(tt, erps_rwmd(i, :), 'k', 'linewidth', 2);
         grid
-        legend([h1, h2, h3], 'Mean', 'RWA', 'RWMD');
+        legend([h1, h2, h3, h4], 'Mean', 'Median', 'RWA', 'RWMD');
         set(gca, 'fontsize', 16)
         title(['Channel ', num2str(i)]);
     end

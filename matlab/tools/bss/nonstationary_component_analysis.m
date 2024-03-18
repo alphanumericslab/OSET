@@ -37,19 +37,19 @@ function [y, W, A, B, C, lambda] = nonstationary_component_analysis(x, I, J, var
 %
 % References:
 %   1- Sameni, R., Jutten, C., and Shamsollahi, M. B. (2010). A Deflation
-%   Procedure for Subspace Decomposition. In IEEE Transactions on Signal
-%   Processing, (Vol. 58, Issue 4, pp. 2363–2374). doi:
-%   10.1109/tsp.2009.2037353
+%      Procedure for Subspace Decomposition. In IEEE Transactions on Signal
+%      Processing, (Vol. 58, Issue 4, pp. 2363–2374). doi:
+%      10.1109/tsp.2009.2037353
 % 
 %   2- Sameni, R., and Gouy-Pailler, C. (2014). An iterative subspace
-%   denoising algorithm for removing electroencephalogram ocular artifacts.
-%   In Journal of Neuroscience Methods (Vol. 225, pp. 97–105). doi:
-%   10.1016/j.jneumeth.2014.01.024
+%      denoising algorithm for removing electroencephalogram ocular artifacts.
+%      In Journal of Neuroscience Methods (Vol. 225, pp. 97–105). doi:
+%      10.1016/j.jneumeth.2014.01.024
 % 
 %   3- Sameni R, Jutten C, Shamsollahi MB. What ICA provides for ECG
-%   processing: Application to noninvasive fetal ECG extraction. In2006
-%   IEEE International Symposium on Signal Processing and Information
-%   Technology 2006 Aug 27 (pp. 656-661). IEEE.
+%      processing: Application to noninvasive fetal ECG extraction. In2006
+%      IEEE International Symposium on Signal Processing and Information
+%      Technology 2006 Aug 27 (pp. 656-661). IEEE.
 %
 % Revision History:
 %   2014: First release

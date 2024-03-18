@@ -37,7 +37,7 @@ function [eeg_refined, Delta, delta] = eog_canceller_nsca(eeg, eog, fs, power_en
 %   algorithm for removing electroencephalogram ocular artifacts.
 %   In Journal of Neuroscience Methods (Vol. 225, pp. 97–105).
 %   https://doi.org/10.1016/j.jneumeth.2014.01.024
-% 
+%
 %   Sameni, R., Jutten, C., & Shamsollahi, M. B. (2010). A Deflation
 %   Procedure for Subspace Decomposition. In IEEE Transactions on Signal
 %   Processing (Vol. 58, Issue 4, pp. 2363–2374). Institute of Electrical
@@ -51,7 +51,7 @@ function [eeg_refined, Delta, delta] = eog_canceller_nsca(eeg, eog, fs, power_en
 %
 % Developed by Reza Sameni, 2008-2024
 % The Open-Source Electrophysiological Toolbox (OSET)
-
+% https://github.com/alphanumericslab/OSET
 %
 
 if isequal(shrinkage_method, 'remove') && num_itr > 1
@@ -94,7 +94,20 @@ for i = 1 : num_itr
             error('undefined power thresholding method');
     end
     % plot the detected EOG segments
-    if flagplot == 1
+    if flagplot == 1 || flagplot == 3
+        t = (0:num_samp-1)/fs;
+        figure;
+        plot(t, reference_channel,'b','linewidth',0.5);
+        hold on
+        plot(t, power_envelope,'r','linewidth',2);
+        plot(t(I_high_power),power_envelope(I_high_power),'k.','linewidth',2);
+        grid;
+        set(gca,'Box','On','FontSize',16);
+        legend('Reference channel', 'Power envelope', 'Detected segments');
+        ylabel('Amplitude(mv)');
+        xlabel('time(s)');
+        axis tight;
+    elseif flagplot == 2
         p = zeros(1,num_samp);
         p(I_high_power) = 1;
         t = (0:num_samp-1)/fs;
@@ -120,19 +133,6 @@ for i = 1 : num_itr
         set(gca,'Box','On','FontSize',16);
         ylabel('Activation Pulse');
         xlabel('time(s)');
-    elseif flagplot == 2
-        t = (0:num_samp-1)/fs;
-        figure;
-        plot(t, reference_channel,'b','linewidth',0.5);
-        hold on
-        plot(t, power_envelope,'r','linewidth',2);
-        plot(t(I_high_power),power_envelope(I_high_power),'k.','linewidth',2);
-        grid;
-        set(gca,'Box','On','FontSize',16);
-        legend('Reference channel', 'Power envelope', 'Detected segments');
-        ylabel('Amplitude(mv)');
-        xlabel('time(s)');
-        axis tight;
     end
 
     if isempty(find(I_high_power,1)) || isempty(find(I_low_power,1))
