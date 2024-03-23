@@ -2,7 +2,6 @@ import argparse
 import numpy as np
 from scipy.signal import filtfilt
 
-
 def lp_filter_zero_phase(x, fc):
     """
     lp_filter_zero_phase - Second-order zero-phase Lowpass filter.

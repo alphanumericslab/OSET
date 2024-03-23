@@ -9,7 +9,7 @@ load patient165_s0322lre;data = val(13:15, 1:15500)';
 
 N = 70;
 %N = 200;
-delta = 5;
+delta = 10;
 %//////////////////////////////////////////////////////////////////////////
 % filter data
 fs = 1000;
@@ -56,14 +56,14 @@ cntr = cntr-1;
 %ZR = squeeze(AllECG(:,:,2))';
 ZR = squeeze(mean(AllECG(:,:,3:end-3),3))';
 er = zeros(2*delta,1);
-for i = 1:cntr,
+for i = 1:cntr
     Z = AllECG(delta:end-delta-1,:,i)';
-    for tau = -delta+1:delta-1,
+    for tau = -delta+1:delta-1
         J = [zeros(delta+tau-1,N) ; eye(N) ; zeros(delta-tau+1,N)];
         C = Z*J'*ZR';
-        [U,S,V] = svd(C);
+        [U,~,V] = svd(C);
         Q = U*V';
-        alpha = trace(Z'*Q*ZR*J)/trace(J'*ZR'*ZR*J);
+        alpha = trace(Z'*Q*ZR*J)/trace(J'*(ZR'*ZR)*J);
         X = Z - alpha*Q*ZR*J;
         er(tau+delta) = sqrt(sum(diag(X'*X)));
     end
@@ -76,7 +76,7 @@ for i = 1:cntr,
     Alphahat(i) = trace(Z'*Qhat(:,:,i)*ZR*J)/trace(J'*ZR'*ZR*J);
 end
 %//////////////////////////////////////////////////////////////////////////
-for i = 1:cntr,
+for i = 1:cntr
     Z(:,:,i) = Alphahat(i)*Qhat(:,:,i)*ZR*[zeros(delta+tauhat(i)-1,N) ; eye(N) ; zeros(delta-tauhat(i)+1,N)];
 end
 
@@ -88,7 +88,7 @@ plot3(squeeze(Z(1,:,:)),squeeze(Z(2,:,:)),squeeze(Z(3,:,:)));grid;title('after a
 %plot(squeeze(Z(3,:,3:end-3)));grid
 
 figure
-for i = 1:3,
+for i = 1:3
     subplot(1,3,i)
     plot(std(Z(i,:,3:end-3),[],3))
     hold on;

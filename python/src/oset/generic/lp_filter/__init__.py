@@ -1,1 +1,2 @@
 from .lp_filter_zero_phase import lp_filter_zero_phase
+from .tikhonov_regularization import tikhonov_regularization
