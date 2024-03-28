@@ -384,7 +384,7 @@ for itr = 1:max_itration
 
             end
 
-            P_all_new(zee , i , 1:num_gmm_component(zee) ) = sum(temp_gamma_obs,2)/sum(temp_gamma_obs(:));
+            P_all_new(zee , i , 1:num_gmm_component(zee) ) = sum(temp_gamma_obs+eps,2)/sum(temp_gamma_obs(:)+eps);
 
         end
 
