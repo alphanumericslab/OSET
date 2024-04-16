@@ -88,9 +88,9 @@ for p = 1:size(obs_seqment_beats,2)
 
         if contains(type_det,'on')
             viterbi_trans_detection(p,1) = find(X_star==4,1,"first");
-            viterbi_trans_detection(p,2) = find(X_star==1,1,"last")+1;
+            viterbi_trans_detection(p,2) = find(X_star==4,1,"first");find(X_star==1,1,"last")+1;
         elseif  contains(type_det,'off')
-            viterbi_trans_detection(p,1) =  find(X_star==4,1,"first")-1;
+            viterbi_trans_detection(p,1) =  find(X_star==1,1,"last");find(X_star==4,1,"first")-1;
             viterbi_trans_detection(p,2) =  find(X_star==1,1,"last");
         end
 
