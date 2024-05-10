@@ -31,14 +31,23 @@ function [mn, vr_mn, varargout] = robust_weighted_average(x)
 num_beats = size(x, 1);
 if num_beats > 1
     % Average beat (mean)
-    mn0 = mean(x, 1);
-    noise0 = x - mn0;
-    vr = var(noise0, [], 2);
+    mn0 = mean(x, 1,"omitmissing");
+    noise0 = x - mn0(ones(size(x, 1), 1), :);
+    vr = var(noise0, [], 2,"omitmissing");
     sm = sum(1 ./ vr);
     weight = 1 ./ (vr * sm);
-    mn = weight' * x;
+    if any(isnan(x(:)))
+        weight = repmat(weight(:),1,size(x, 2));
+        weight(isnan(x)) = 0;
+        ind_nan = sum(weight,1)==0;
+        weight = weight./sum(weight,1);
+        mn = sum(weight.* x, 1,"omitmissing");
+        mn(ind_nan) = nan;
+    else
+        mn = weight'* x;
+    end
     noise = x - mn;
-    vr_mn = var(noise, [], 1);
+    vr_mn = var(noise, [], 1,"omitmissing");
 
     if nargout > 2
         % Average beat (median)
