@@ -5,7 +5,7 @@ function [index, rank] = sqi_beat_shape_variability(x, ff, fs, varargin)
 %
 % Inputs:
 %   x: Input data array (channels x samples).
-%   ff: Frequency vector.
+%   ff: A rough estimate of the heart rate in Hz. For example, for 72 beats per minute ff = 72/60=1.2 
 %   fs: Sampling frequency.
 %   method (optional): Method for calculating the SQI. The supported methods include:
 %     - 'STACKED_BEAT_EIG' (default): Calculates the SQI based on the leading eigenvalue of the stacked beat.
