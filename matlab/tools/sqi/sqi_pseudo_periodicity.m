@@ -8,7 +8,7 @@ function [index, rank] = sqi_pseudo_periodicity(x, ff, fs, varargin)
 %
 % Inputs:
 %   x: Matrix of input data (channels x samples)
-%   ff: Fundamental frequency of the signal in Hz
+%   ff: A rough estimate of the heart rate in Hz. For example, for 72 beats per minute ff = 72/60=1.2 
 %   fs: Sampling rate of the signal in Hz
 %   method (optional): Method for SQI calculation ('STACKED_BEATS', 'EVD', 'GEVD', 'TRACE'). Default is 'STACKED_BEATS'
 %   num_peak_det_itr (optional): Number of iterations for peak detection (optional, default is 1)

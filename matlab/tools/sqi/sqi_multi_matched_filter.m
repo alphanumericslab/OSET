@@ -8,7 +8,7 @@ function [score1, score2, peaks1, peaks2, rank1, rank2] = sqi_multi_matched_filt
 %
 % Inputs:
 %   x: Input data array (channels x samples).
-%   f: Frequency vector.
+%   f: A rough estimate of the heart rate in Hz. For example, for 72 beats per minute f = 72/60=1.2 
 %   fs: Sampling frequency.
 %   num_peak_det_itr (optional): Number of iterations for peak
 %       detection (default: 1). 
