@@ -21,7 +21,7 @@ ind_nan_rr = find(abs(diff_outliers)>thr_max);
 rr_intervals_ecg(ind_nan_rr) = md_rr_intervals_ecg(ind_nan_rr);
 
 if ~isempty(ind_nan_rr)
-    md_rr_intervals_ecg = movmedian(rr_intervals_ecg,[5,5],'omitnan');
+    md_rr_intervals_ecg = movmedian(rr_intervals_ecg,[ceil(max_lag/3),ceil(max_lag/3)],'omitnan');
     diff_outliers = rr_intervals_ecg./md_rr_intervals_ecg-1;
     ind_nan_rr = find(abs(diff_outliers)>thr_fast_max);
     rr_intervals_ecg(ind_nan_rr) = md_rr_intervals_ecg(ind_nan_rr);
