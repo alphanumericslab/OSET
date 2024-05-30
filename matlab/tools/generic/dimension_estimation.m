@@ -32,7 +32,7 @@ function [lambda, AIC, MDL, NEW, ENSTh, ENS, fhand] = dimension_estimation(x, no
 %       2013: First release
 %       2023: Renamed from deprecated version EstimateDimension()
 % 
-%   Reza Sameni, 2010-2023
+%   Reza Sameni, 2013-2023
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 

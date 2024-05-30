@@ -20,7 +20,7 @@ function [index, rank] = sqi_negentropy(x, varargin)
 %   2008: First release
 %   2023: Corrected negentropy definition according to the reference and renamed from deprecated version ChannelIndex4 and added sorting mode
 %
-% Reza Sameni, 2008-2023
+% Reza Sameni, Giulia Baldazzi, 2008-2023
 % The Open-Source Electrophysiological Toolbox
 % https://github.com/alphanumericslab/OSET
 
@@ -32,6 +32,16 @@ if nargin > 1 && ~isempty(varargin{1})
     end
 else
     ranking_mode = 'ascend';
+end
+
+% Check for method argument
+if nargin > 2 && ~isempty(varargin{2})
+    method = varargin{2};
+    if ~isequal(method, 'J') && ~isequal(method, 'Ja') && ~isequal(method, 'Jb')
+        error('Undefined method. Please use ''J'', ''Ja'' or ''Jb''.');
+    end
+else
+    method = 'Jb';
 end
 
 L1 = size(x, 1);

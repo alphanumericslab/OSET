@@ -1,33 +1,32 @@
-function [ECGmean, ECGsd, meanPhase, ECGmedian, SamplesPerBin] = MeanECGExtraction(x,phase,bins,flag)
+function [ECGmean, ECGsd, meanPhase, ECGmedian, SamplesPerBin] = avg_beat_calculator_phase_domain(x,phase,bins,flag)
 %
-% [ECGmean,ECGsd,meanPhase] = MeanECGExtraction(x,phase,bins,flag)
+% [ECGmean,ECGsd,meanPhase] = avg_beat_calculator_phase_domain(x,phase,bins,flag)
 % Calculation of the mean and SD of ECG waveforms in different beats
 %
 % inputs:
-% x: input ECG signal
-% phase: ECG phase
-% bins: number of desired phase bins
-% flag
+%   x: input ECG signal
+%   phase: ECG phase
+%   bins: number of desired phase bins
+%   flag
 %     1: aligns the baseline on zero, by using the mean of the first 10%
 %     segment of the calculated mean ECG beat
 %     0: no baseline alignment
 %
 % outputs:
-% ECGmean: mean ECG beat (in phase domain)
-% ECGsd: standard deviation of ECG beats (unbiased estimate)
-% meanPhase: the corresponding phase for one ECG beat
-% ECGmedian: median ECG beat (in phase domain)
-% SamplesPerBin: number of samples averaged in each phase bin (used for statistical analysis)
+%   ECGmean: mean ECG beat (in phase domain)
+%   ECGsd: standard deviation of ECG beats (unbiased estimate)
+%   meanPhase: the corresponding phase for one ECG beat
+%   ECGmedian: median ECG beat (in phase domain)
+%   SamplesPerBin: number of samples averaged in each phase bin (used for statistical analysis)
 %
-%
-% The Open Source Electrophysiological Toolbox (OSET)
-% Released under the GNU General Public License
-% Copyright (C) 2008  Reza Sameni
-% Sharif University of Technology, Tehran, Iran -- LIS-INPG, Grenoble, France
-% reza.sameni@gmail.com
-%
-% V1 (March 2008): Original version
-% V2 (October 2021): Median beat calculation and SamplesPerBin added
+%   Revision History:
+%       2008: First release
+%       2021: Median beat calculation and SamplesPerBin added
+%       2023: Renamed from deprecated version MeanECGExtraction
+% 
+%   Reza Sameni, 2006-2023
+%   The Open-Source Electrophysiological Toolbox
+%   https://github.com/alphanumericslab/OSET
 
 meanPhase = zeros(1, bins);
 ECGmean = zeros(1, bins);
@@ -87,7 +86,7 @@ for i = 1 : length(K)
     end
 end
 
-if(flag==1)
+if flag==1
     ECGmean = ECGmean - mean(ECGmean(1:ceil(length(ECGmean)/10)));
     ECGmedian = ECGmedian - median(ECGmedian(1:ceil(length(ECGmedian)/10)));
 end

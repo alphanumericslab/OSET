@@ -67,7 +67,7 @@ switch noisetype
             rng(varargin{3});
         end
         NoisePower = SignalPower / 10^(snr/10);
-        noise = ColoredNoise(sqrt(NoisePower), N, fs, beta);
+        noise = colored_noise_gen(sqrt(NoisePower), N, fs, beta);
 
     case 2     % Real Muscle Artifacts
         fs = varargin{1};
@@ -77,10 +77,14 @@ switch noisetype
         if fs ~= 360.0
             artifact = resample(artifact, fs, 360);
         end
+        M = length(artifact);
         if nargin == 6
-            n0 = max(1, min(varargin{2}, length(artifact)-N+1));
+            n0 = max(1,varargin{2}); %min(varargin{2}, length(artifact)-N+1));
         else
             n0 = 1;
+        end
+        if M-n0 < N
+            artifact = wextend('1','sym',artifact,N-(M-n0),'r');
         end
         artifact = artifact(n0:N+n0-1)';
         noise = sqrt(NoisePower) * (artifact - mean(artifact)) / std(artifact, 1);
@@ -93,10 +97,14 @@ switch noisetype
         if fs ~= 360.0
             artifact = resample(artifact, fs, 360);
         end
+        M = length(artifact);
         if nargin == 6
-            n0 = max(1, min(varargin{2}, length(artifact)-N+1));
+            n0 = max(1,varargin{2}); % min(varargin{2}, length(artifact)-N+1));
         else
             n0 = 1;
+        end
+        if M-n0 < N
+            artifact = wextend('1','sym',artifact,N-(M-n0),'r');
         end
         artifact = artifact(n0:N+n0-1)';
         noise = sqrt(NoisePower) * (artifact - mean(artifact)) / std(artifact, 1);
@@ -109,10 +117,14 @@ switch noisetype
         if fs ~= 360.0
             artifact = resample(artifact, fs, 360);
         end
+        M = length(artifact); 
         if nargin == 6
-            n0 = max(1, min(varargin{2}, length(artifact)-N+1));
+            n0 = max(1,varargin{2}); %min(varargin{2}, length(artifact)-N+1));
         else
             n0 = 1;
+        end
+        if M-n0 < N
+            artifact = wextend('1','sym',artifact,N-(M-n0),'r');
         end
         artifact = artifact(n0:N+n0-1)';
         noise = sqrt(NoisePower) * (artifact - mean(artifact)) / std(artifact, 1);
@@ -129,10 +141,14 @@ switch noisetype
         load('MA.mat', 'MA'); ma = MA(:, 3);    ma = (ma - mean(ma)) / std(ma);
         artifact = (w_bw * bw + w_em * em + w_ma * ma) / (w_bw + w_em + w_ma);
         artifact = resample(artifact, fs, 360);
+        M = length(artifact);
         if nargin == 7
-            n0 = max(1, min(varargin{3}, length(artifact)-N+1));
+            n0 = max(1, varargin{3}); %min(varargin{3}, length(artifact)-N+1));
         else
             n0 = 1;
+        end
+        if M-n0 < N
+            artifact = wextend('1','sym',artifact,N-(M-n0),'r');
         end
         artifact = artifact(n0:N+n0-1)';
         noise = sqrt(NoisePower) * (artifact - mean(artifact)) / std(artifact, 1);

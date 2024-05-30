@@ -1,5 +1,5 @@
 function [index, rank] = sqi_beat_shape_variability(x, ff, fs, varargin)
-% SQI_BEAT_SHAPE_VARIABILITY - Signal quality index (SQI) based on pseudo-periodicity measures
+% sqi_beat_shape_variability - Signal quality index (SQI) based on pseudo-periodicity measures
 %
 %   [index, rank] = sqi_beat_shape_variability(x, ff, fs, method, num_peak_det_itr, beat_width, ranking_mode, plot_results)
 %
@@ -88,32 +88,32 @@ x = x - mn;
 for i = 1 : L1
     [peaks, peak_indexes] = peak_det_local_search(x(i,:), ff/fs, [], num_peak_det_itr);
     if beat_width_auto
-        beat_width = round(mean(peak_indexes));
+        beat_width = round(mean(diff(peak_indexes)));
         if mod(beat_width, 2) == 0 % beat_width must be odd
             beat_width = beat_width + 1;
         end
     end
     switch method
-        case 'BEAT_EIG'
+        case 'STACKED_BEAT_EIG'
             stacked_beats = EventStacker(x(i, :), peak_indexes, beat_width);
             [~, D] = eig(stacked_beats*stacked_beats');
             eigs_sorted = sort(diag(D), 'descend');
             index(i) = eigs_sorted(1)/sum(eigs_sorted);
         case 'AVG_BEAT_MAX' % ChannelIndex9
             x_normalized = x(i,:) - mean(x(i,:));
-            [beat_avg, beat_std] = average_beat_calculator(x_normalized, peaks, beat_width, 'none');
+            [beat_avg, beat_std] = avg_beat_calculator(x_normalized, peaks, beat_width, 'none');
             index(i) = max(abs(beat_avg)) / mean(beat_std);
         case 'AVG_BEAT_MAX_PEAK_ALIGNED' % ChannelIndex14
             x_normalized = (x(i,:) - mean(x(i,:))) / std(x(i,:));
-            [beat_avg, beat_std] = average_beat_calculator(x_normalized, peaks, beat_width, 'peak');
+            [beat_avg, beat_std] = avg_beat_calculator(x_normalized, peaks, beat_width, 'peak');
             index(i) = max(abs(beat_avg)) / mean(beat_std);
         case 'AVG_BEAT_VAR'
             x_normalized = x(i,:) - mean(x(i,:));
-            [beat_avg, beat_std] = average_beat_calculator(x_normalized, peaks, beat_width, 'none');
+            [beat_avg, beat_std] = avg_beat_calculator(x_normalized, peaks, beat_width, 'none');
             index(i) = std(beat_avg) / mean(beat_std);
         case 'AVG_BEAT_VAR_PEAK_ALIGNED'
             x_normalized = (x(i,:) - mean(x(i,:))) / std(x(i,:));
-            [beat_avg, beat_std] = average_beat_calculator(x_normalized, peaks, beat_width, 'peak');
+            [beat_avg, beat_std] = avg_beat_calculator(x_normalized, peaks, beat_width, 'peak');
             index(i) = std(beat_avg) / mean(beat_std);
         otherwise
             error('Undefined method');

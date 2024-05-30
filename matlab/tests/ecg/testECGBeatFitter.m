@@ -30,30 +30,30 @@ t = (0:length(data)-1)/fs;
 
 f = 1;                                          % approximate R-peak frequency
 
-bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may be replaced by other approaches)
-%bsline = BaseLineKF(data,.5/fs);                % baseline wander removal (may be replaced by other approaches)
+% bsline = lp_filter_zero_phase(data,.7/fs);                  % baseline wander removal (may be replaced by other approaches)
+bsline = BaseLineKF(data,.5/fs);                % baseline wander removal (may be replaced by other approaches)
 
 data1 = data-bsline;
 
 %//////////////////////////////////////////////////////////////////////////
 % Making the data noisy
-SNR = 0;
+SNR = 60;
 SignalPower = mean(data1.^2);
 NoisePower = SignalPower / 10^(SNR/10);
 x = data1 + sqrt(NoisePower)*randn(size(data1));
 %//////////////////////////////////////////////////////////////////////////
 
-peaks = PeakDetection(x,f/fs);                  % peak detection
+peaks = peak_det_local_search(x,f/fs);                  % peak detection
 
-[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = phase_calculator(peaks);     % phase calculation
 
 teta = 0;                                       % desired phase shift
-pphase = PhaseShifting(phase,teta);             % phase shifting
+pphase = phase_shifter(phase,teta);             % phase shifting
 
 bins = round(fs/3);                                     % number of phase bins
-[ECGmean,ECGsd,meanphase] = MeanECGExtraction(x,pphase,bins,1); % mean ECG extraction 
+[ECGmean,ECGsd,meanphase] = avg_beat_calculator_phase_domain(x,pphase,bins,1); % mean ECG extraction 
 
-OptimalParams = ECGBeatFitter(ECGmean,ECGsd,meanphase);               % ECG beat fitter GUI
+OptimalParams = ecg_beat_fitter_gmm_gui(ECGmean,ECGsd,meanphase);               % ECG beat fitter GUI
 
 % display the optimal parameters
 L = length(OptimalParams)/3;
@@ -71,6 +71,7 @@ plot(t,pphase,'g','linewidth',1);
 grid;
 xlabel('time(s)');
 legend('Scaled ECG','ECG Peaks','phase','shifted phase');
+set(gca, 'fontsize', 16)
 
 figure;
 errorbar(meanphase,ECGmean,ECGsd/2);
@@ -79,4 +80,5 @@ plot(meanphase,ECGmean,'r');
 legend('SD Bar','Mean ECG');
 xlabel('phase(rad)');
 grid
+set(gca, 'fontsize', 16)
 

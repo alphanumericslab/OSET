@@ -8,13 +8,14 @@ function [peaks, peak_indexes] = peak_det_local_search(x, ff, varargin)
 %       x: Vector of input data
 %       f: Approximate ECG beat-rate in Hertz, normalized by the sampling frequency
 %       flag: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
-%             By default, the maximum absolute value of the signal determines the peak sign.
-%       num_rounds: Optional. Number of iterations to find the R-peaks, up to 3.
-%                   Default is 1 (run peak detection only once).
-%       hr_update_fraction: Optional. median HR is multiplied by this
-%                   fraction in each iteration, if num_rounds > 1. Default
-%                   is 1.05
-%       omit_close_peaks: omit 'too-close' peaks after main peak detection (true/1) or not(false/0) (Default is false)
+%           By default, the maximum absolute value of the signal determines the peak sign.
+%       num_rounds (optional): Number of iterations to find the R-peaks, up to 3.
+%           Default is 1 (run peak detection only once).
+%       hr_update_fraction (optional): median HR is multiplied by this
+%           fraction in each iteration, if num_rounds > 1. Default
+%           is 1.05
+%       omit_close_peaks (optional): omit peaks that are too close after main peak 
+%           detection (true/1) or not(false/0). Default is false
 %
 %   Outputs:
 %       peaks: Vector of R-peak impulse train

@@ -4,7 +4,7 @@ function baseline = baseline_filter(x_raw, baseline_removal_method, params)
 % Syntax: baseline = baseline_filter(x_raw, baseline_removal_method, params)
 %
 % Inputs:
-%   x_raw: Raw input signal.
+%   x_raw: Raw input signal (channels x time).
 %   baseline_removal_method: Method for baseline removal.
 %   params: Parameters required for the selected method.
 %

@@ -110,12 +110,13 @@ fig_width = 2000;
 fig_height = 900;
 
 % R-peak detection
-peak_detector_params.saturate = 1;
-peak_detector_params.k_sigma = 4;
-peak_detector_params.hist_search_th = 0.9;
-peak_detector_params.rpeak_search_wlen = 0.4; % MAX detectable HR (in BPM) = 60/rpeak_search_wlen
-peak_detector_params.filter_type = 'MDMN';%'MULT_MATCHED_FILTER';%'BANDPASS_FILTER', 'MATCHED_FILTER', 'MULT_MATCHED_FILTER', 'MDMN', 'WAVELET'
-[~, peak_indexes, ~] = peak_det_probabilistic(data(ref_ch, :), fs, peak_detector_params);
+% peak_detector_params.saturate = 1;
+% peak_detector_params.k_sigma = 4;
+% peak_detector_params.hist_search_th = 0.9;
+% peak_detector_params.rpeak_search_wlen = 0.4; % MAX detectable HR (in BPM) = 60/rpeak_search_wlen
+% peak_detector_params.filter_type = 'MDMN';%'MULT_MATCHED_FILTER';%'BANDPASS_FILTER', 'MATCHED_FILTER', 'MULT_MATCHED_FILTER', 'MDMN', 'WAVELET'
+% [~, peak_indexes, ~] = peak_det_likelihood(data(ref_ch, :), fs, peak_detector_params);
+[~, peak_indexes, ~] = peak_det_likelihood(data(ref_ch, :), fs);
 
 
 event_width = round(1.05 * median(diff([1, peak_indexes, size(data, 2)]))); % Add the first and last indexes

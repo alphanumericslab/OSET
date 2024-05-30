@@ -169,7 +169,7 @@ for k = 1 : length(knots0) - 1
         % regularization factor update
         
         % ATTENTION: UNDER EVALUATION
-        [lambda cc ee L_curveC L_curveE] = OptimalSmoothnessFactor(xx_tilde, b_tilde, s_tilde, mode, SmoothnessFactor, lambda, norm(x)/sqrt(N), ACCURACY, MAX_ITERATION, FORGETTING_FACTOR, LCurveSweepLength, LCurveSweepFator);
+        [lambda cc ee L_curveC L_curveE] = optimal_smoothness_factor(xx_tilde, b_tilde, s_tilde, mode, SmoothnessFactor, lambda, norm(x)/sqrt(N), ACCURACY, MAX_ITERATION, FORGETTING_FACTOR, LCurveSweepLength, LCurveSweepFator);
         %         [lambda cc ee L_curveC L_curveE] = OptimalSmoothnessFactor(xx_tilde, b_tilde, s_tilde, 1, SmoothnessFactor, lambda, norm(x)/sqrt(N), ACCURACY, MAX_ITERATION, FORGETTING_FACTOR, LCurveSweepLength, LCurveSweepFator);
         
         %%% disp(['SmoothnessFactor = ' num2str(SmoothnessFactor) ', ee = ' num2str(ee) ', cc = ' num2str(cc)]); % check to see if the optimal point is correct

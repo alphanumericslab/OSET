@@ -23,13 +23,11 @@ class Resampler
 {
 	int *previous_samples;
 public:
-	
-	int volume_coef;
-	
+		
 	double phase;
 				// phase is the fraction t(sec)/Ts(in)
-	int resample(double* x,double* y,int InputLength,double ConversionRate,int Order=2);
-	int resample(int* x,short* y,int InputLength,double ConversionRate,int Order=2);
+	int resample(double* x, double* y, int InputLength, double ConversionRate, int Order=2);
+	int resample(int* x, int* y, int InputLength, double ConversionRate, int Order=2);
 				// ConversionRate is the fraction Ts(out)/Ts(in) or Fs(in)/Fs(out)
 	Resampler();
 	virtual ~Resampler();

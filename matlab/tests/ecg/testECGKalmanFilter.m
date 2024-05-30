@@ -30,7 +30,7 @@ t = (0:length(data)-1)/fs;
 
 f = 1;                                          % approximate R-peak frequency
 
-bsline = LPFilter(data,.7/fs);                  % baseline wander removal (may be replaced by other approaches)
+bsline = lp_filter_zero_phase(data,.7/fs);                  % baseline wander removal (may be replaced by other approaches)
 %bsline = BaseLineKF(data,.5/fs);                % baseline wander removal (may be replaced by other approaches)
 
 data1 = data - bsline;
@@ -48,7 +48,7 @@ x = data1 + sqrt(NoisePower)*randn(size(data1));
 % x = x - bslinex;
 %//////////////////////////////////////////////////////////////////////////
 
-peaks = PeakDetection(x,f/fs);                  % peak detection
+peaks = peak_det_local_search(x,f/fs);                  % peak detection
 I = find(peaks);
 
 figure;
@@ -59,15 +59,15 @@ plot(t,data1,'r');
 grid
 
 
-[phase, phasepos] = PhaseCalculation(peaks);     % phase calculation
+[phase, phasepos] = phase_calculator(peaks);     % phase calculation
 
 teta = 0;                                       % desired phase shift
-pphase = PhaseShifting(phase,teta);             % phase shifting
+pphase = phase_shifter(phase,teta);             % phase shifting
 
 bins = 250;                                     % number of phase bins
-[ECGmean,ECGsd,meanphase] = MeanECGExtraction(x,pphase,bins,1); % mean ECG extraction
+[ECGmean,ECGsd,meanphase] = avg_beat_calculator_phase_domain(x,pphase,bins,1); % mean ECG extraction
 
-OptimumParams = ECGBeatFitter(ECGmean,ECGsd,meanphase,'OptimumParams');           % ECG beat fitter GUI
+OptimumParams = ecg_beat_fitter_gmm_gui(ECGmean,ECGsd,meanphase,'OptimumParams');           % ECG beat fitter GUI
 
 %//////////////////////////////////////////////////////////////////////////
 N = length(OptimumParams)/3;% number of Gaussian kernels
