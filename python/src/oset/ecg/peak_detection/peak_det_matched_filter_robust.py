@@ -26,18 +26,24 @@ def peak_det_matched_filter_robust(ref, fs, h, fmax, itr=1):
 
       Revision History:
       July 2023: Translated to Python from Matlab (peak_det_matched_filter_robust.m)
+      June 2024: Reworked the code to match the updated Matlab version
 
         Amulya, 2023
         The Open-Source Electrophysiological Toolbox
         https://github.com/alphanumericslab/OSET
     """
-    n = len(ref)
-    length = len(h)
+    N = len(ref)
+    L = len(h)
 
-    h = np.flip(h)  # Reverse the template waveform
-    w = int(np.floor(length / 2))
+    h = h[::-1]  # Reverse the template waveform
+
+    w = L // 2
+
+    # Matched filtering
     r = lfilter(h, 1, np.concatenate((ref, np.zeros(w - 1))))
-    r = r[w - 1 : w + n]
+
+    # Trim the filtered output to match the length of ref
+    r = r[w - 1 : N + w - 1]
     peaks = peak_det_local_search(r, fmax / fs, 1, itr)[0]
     return peaks, r
 
