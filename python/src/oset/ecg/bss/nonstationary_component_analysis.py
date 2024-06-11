@@ -59,7 +59,6 @@ def nonstationary_component_analysis(x, I, J, mode='COV'):
     Muhammad Ubadah Tanveer, 2024
     The Open-Source Electrophysiological Toolbox
     https://github.com/alphanumericslab/OSET
-
     """
     if mode not in ['COV', 'SYMM-COV', 'CORR']:
         raise ValueError('Undefined mode')
@@ -105,7 +104,6 @@ if __name__ == "__main__":
 
     Syntax: y, W, A, B, C, lambda_ = nonstationary_component_analysis(x, I, J, nsca_mode)
 
-    
     Parameters:
         x (ndarray): Mixture of signals, where each row represents a different signal (N x T)
         I (array-like): Desired time window indices (in 1:T)
@@ -123,7 +121,6 @@ if __name__ == "__main__":
         
     Revision History:
         June 2024: Translated to Python from Matlab (nonstationary_component_analysis.m)
-
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )
