@@ -19,6 +19,7 @@ from peak_det_modified_pan_tompkins_unit_test import (
 from peak_det_pan_tompkins_unit_test import peak_det_pan_tompkins_unit_test
 from peak_det_simple_unit_test import peak_det_simple_unit_test
 from baseline_sliding_window_unit_test import baseline_sliding_window_unit_test
+from peak_detection_adaptive_hr_unit_test import peak_detection_adaptive_hr_unit_test
 
 
 class TestMyFunctions(unittest.TestCase):
@@ -48,6 +49,9 @@ class TestMyFunctions(unittest.TestCase):
 
     def test_baseline_sliding_window_unit_test(self):
         self.assertTrue(baseline_sliding_window_unit_test())
+
+    def test_peak_detection_adaptive_hr_unit_test(self):
+        self.assertTrue(peak_detection_adaptive_hr_unit_test())
 
 
 if __name__ == "__main__":
