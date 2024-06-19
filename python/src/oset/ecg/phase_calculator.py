@@ -36,7 +36,7 @@ def phase_calculator(peaks):
 
     for i in range(len(I) - 1):
         m = I[i + 1] - I[i]
-        phasepos[I[i] + 1:I[i + 1] + 1] = np.linspace(2 * np.pi / m, 2 * np.pi, m)
+        phasepos[I[i] + 1:I[i + 1] + 1] = np.linspace(2 * np.pi / m, 2 * np.pi, m, endpoint=False)
 
     m = I[1] - I[0]
     L = len(phasepos[:I[0] + 1])
@@ -44,7 +44,7 @@ def phase_calculator(peaks):
 
     m = I[-1] - I[-2]
     L = len(phasepos[I[-1] + 1:])
-    phasepos[I[-1] + 1:] = np.linspace(2 * np.pi / m, L * 2 * np.pi / m, L)
+    phasepos[I[-1] + 1:] = np.linspace(2 * np.pi / m, L * 2 * np.pi / m, L, endpoint=False)
 
     phasepos = np.mod(phasepos, 2 * np.pi)
 
