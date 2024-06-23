@@ -34,11 +34,11 @@ def calculate_time_lags(peaks, phase):
 
     T1 = np.zeros(len(peaks) - prd - wlen)
     NN = len(T1)
-    
-    for t in range(NN):
-        df = np.abs(phase[t] - phase[t + prd - wlen: t + prd + wlen + 1])
+
+    for t in range(1, NN + 1):
+        df = np.abs(phase[t-1] - phase[t + prd - wlen - 1 : t + prd + wlen])
         I = np.argmin(df)
-        T1[t] = t + prd + I - wlen - 1
+        T1[t-1] = t + prd + I - wlen
 
     T0 = np.arange(1, NN + 1)
     
@@ -65,4 +65,3 @@ if __name__ == "__main__":
         formatter_class=argparse.RawTextHelpFormatter,
     )
     args = parser.parse_args()
-
