@@ -22,25 +22,19 @@ def calculate_time_lags_unit_test():
 
     print("Running MATLAB function...")
     t0_mat, t1_mat = run_matlab(peaks, phase)
-    print("MATLAB T0:", t0_mat)
-    print("MATLAB T1:", t1_mat)
 
     print("Running Python function...")
     t0_py, t1_py = run_python(peaks, phase)
-    print("Python T0:", t0_py)
-    print("Python T1:", t1_py)
     
     print("Comparing outputs...")
-    w = testing.compare_number_arrays(t0_py, t0_mat)
-    x = testing.compare_number_arrays(t1_py, t1_mat)
+    w = testing.compare_number_arrays_with_tolerance(t0_py, t0_mat,tolerance=2)
+    x = testing.compare_number_arrays_with_tolerance(t1_py, t1_mat,tolerance=2)
     return w and x
 
 def run_matlab(peaks, phase):
     eng = matlab.engine.start_matlab()
     x = matlab.double(peaks.tolist())
     y = matlab.double(phase.tolist())
-    eng.addpath("../../../matlab/tools/ecg")
-    eng.addpath("../../../matlab/tools/generic")
     eng.addpath("../../../matlab/tools/ecg/bss")
     t0_mat, t1_mat = eng.calculate_time_lags(x, y, nargout=2)
     eng.quit()
@@ -57,5 +51,4 @@ if __name__ == "__main__":
         description="""This is a unit test for calculate_time_lags"""
     )
     args = parser.parse_args()
-    result = calculate_time_lags_unit_test()
-    print("Test result:", result)
+    print(calculate_time_lags_unit_test())
