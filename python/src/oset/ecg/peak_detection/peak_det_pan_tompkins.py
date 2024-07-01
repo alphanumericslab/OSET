@@ -37,7 +37,9 @@ def peak_det_pan_tompkins(
     The Open-Source Electrophysiological Toolbox
     https://github.com/alphanumericslab/OSET
     """
-
+    raise NotImplementedError(
+        "This function has not been implemented yet. It is a work in progress."
+    )
     # Default parameters
     if ecg_polarity is None:
         ecg_polarity = np.array([])
