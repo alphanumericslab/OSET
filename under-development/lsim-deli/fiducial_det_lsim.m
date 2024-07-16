@@ -76,9 +76,9 @@ else
 end
 
 if nargin > 7 && ~isempty(varargin{6})
-    num_cluster = varargin{6};
+    max_clusters = varargin{6};
 else
-    num_cluster = 3;
+    max_clusters = 5;
 end
 
 if length(ecg_rpeaks_index)<3
@@ -109,14 +109,8 @@ ecg_rpeaks_index = ecg_rpeaks_index(:);
 ecg_rpeaks_index_org = ecg_rpeaks_index;
 ind_org = 1:length(ecg_rpeaks_index_org);
 
-if length(ecg_rpeaks_index)<5000 || length(data)/fs<3000
-    num_cluster_preprocess = 4;
-else
-    num_cluster_preprocess = 6;
-end
 
-
-[beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs);
+[beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs, max_clusters);
 % ecg_rpeaks_index_org = ecg_rpeaks_index;
 
 if flag_post_processing>0
@@ -215,10 +209,12 @@ try
 
     fcm_features = ecg_blocks_normalized(:,sample_70ms:end);
     fcm_features = fillmissing(fcm_features,"linear");
-    % fcm_features = zscore(fcm_features);
 
-    % fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=1.1, Verbose=0);
-    fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
+    fcm_exponent = 1.1;
+    % max_clusters = 5;
+    num_cluster = find_optimal_clusters(fcm_features, max_clusters, fcm_exponent);
+    fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=fcm_exponent, Verbose=0);
+    % fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
     [fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
 
     num_cluster = size(fcm_centers,1);
@@ -331,9 +327,6 @@ try
     first_qrson = nan * ecg_rpeaks_index;
     for p = 2:length(ecg_rpeaks_index)-1
 
-        if p==2
-            yu=0;
-        end
         temp_index = ecg_rpeaks_index(p)-min(2*sample_100ms,round(avg_intervals_ecg(p)/5)):ecg_rpeaks_index(p)-sample_10ms;
 
         val_rpeak = max(data_env(ecg_rpeaks_index(p)-sample_70ms:ecg_rpeaks_index(p)+sample_70ms));
@@ -667,9 +660,6 @@ try
 
     for p = 2:length(ecg_rpeaks_index)-1
 
-        if p==3
-            yu=0;
-        end
         temp_index = ecg_rpeaks_index(p)+sample_10ms:ecg_rpeaks_index(p)+min(2*sample_100ms,round(avg_intervals_ecg(p)/5));
 
         val_rpeak = max(data_env(ecg_rpeaks_index(p)-sample_70ms:ecg_rpeaks_index(p)+sample_70ms));
@@ -2379,7 +2369,7 @@ end
 end
 
 
-function [beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs)
+function [beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs, max_clusters)
 
 fs_fd = fs;
 sample_10ms = round(fs_fd*0.01);
@@ -2511,9 +2501,11 @@ ecg_blocks_normalized = ecg_blocks./sqrt(sum(ecg_blocks.^2,2)); % normalization 
 
 fcm_features = ecg_blocks_normalized(:,sample_70ms:end);
 fcm_features = fillmissing(fcm_features,"linear");
-% fcm_features = zscore(fcm_features);
 
-fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
+fcm_exponent = 1.1;
+num_cluster = find_optimal_clusters(fcm_features, max_clusters, fcm_exponent);
+fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=fcm_exponent, Verbose=0);
+% fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
 [fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
 
 num_cluster = size(fcm_centers,1);
@@ -2558,3 +2550,53 @@ beat_quality_score = round(max(beat_quality_score,[],2),2);
 beat_quality_score = [1;beat_quality_score;1];
 
 end
+
+
+function optimalClusters = find_optimal_clusters(data, maxClusters, fcm_exponent)
+% Function to find the optimal number of clusters using the Xie-Beni index
+
+% Initialize the Xie-Beni index array
+xbIndices = zeros(maxClusters-1, 1);
+
+for c = 2:maxClusters
+    % Perform Fuzzy C-Means clustering
+    [centers, U] = fcm(data, c, [fcm_exponent, 100, 1e-5, 0]);
+
+    % Calculate the Xie-Beni index
+    try
+        xbIndices(c-1) = calculateXieBeniIndex(data, centers, U, fcm_exponent);
+    catch
+        xbIndices(c-1) = inf;
+    end
+end
+
+% Find the optimal number of clusters (minimum Xie-Beni index)
+[~, optimalClusters] = min(xbIndices);
+optimalClusters = optimalClusters + 1; % Adjusting index to match cluster count
+
+% Plot the Xie-Beni index
+% figure;
+% plot(2:maxClusters, xbIndices, 'o-');
+% xlabel('Number of clusters');
+% ylabel('Xie-Beni index');
+% title('Optimal number of clusters using Xie-Beni index');
+end
+
+function xbIndex = calculateXieBeniIndex(data, centers, U, fcm_exponent)
+% Function to calculate the Xie-Beni index
+U = U';
+[numData, numClusters] = size(U);
+m = fcm_exponent; % Fuzziness parameter
+
+% Calculate the numerator of Xie-Beni index
+numerator = sum(sum((U .^ m) .* (pdist2(data, centers) .^ 2)));
+
+% Calculate the minimum distance between cluster centers
+centerDistances = pdist2(centers, centers);
+minDistance = min(centerDistances(centerDistances > 0)) ^ 2;
+
+% Calculate Xie-Beni index
+xbIndex = numerator / (numData * minDistance);
+end
+
+
