@@ -16,14 +16,14 @@ def peak_det_pan_tompkins(
     with a simplified post-detection R-peak selection logic
 
     Args:
-        ecg_data (numpy.ndarray): Vector of input ECG data
-        fs (int): Sampling rate in Hz
-        ecg_polarity (numpy.ndarray): Search for positive (flag=1) or negative (flag=0) peaks.
+        ecg_data (numpy.ndarray): Vector of input ECG data.
+        fs (int): Sampling rate in Hz.
+        ecg_polarity (numpy.ndarray, optional): Search for positive (flag=1) or negative (flag=0) peaks.
             By default, the skewness value of the bandpass-filtered signal determines the peak sign.
-        qrs_width (float): expected maximal length of QRS complexes [ms].
-            Default 150ms.
-        refracT(float): refractory time for T-wave [ms].
-            Default 360ms.
+        qrs_width (float, optional): Expected maximal length of QRS complexes in seconds.
+            Default is 0.150 seconds (150 ms).
+        refracT (float, optional): Refractory time for T-wave in seconds.
+            Default is 0.360 seconds (360 ms).
 
     Reference:
         Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans
@@ -181,14 +181,14 @@ if __name__ == "__main__":
     with a simplified post-detection R-peak selection logic
 
     Args:
-        data (numpy.ndarray): Vector of input ECG data
-        fs (float): Sampling rate in Hz
-        ecg_polarity (float, optional): Search for positive (flag=1) or negative (flag=0) peaks.
+        ecg_data (numpy.ndarray): Vector of input ECG data.
+        fs (int): Sampling rate in Hz.
+        ecg_polarity (numpy.ndarray, optional): Search for positive (flag=1) or negative (flag=0) peaks.
             By default, the skewness value of the bandpass-filtered signal determines the peak sign.
-        qrs_width (float, optional): expected maximal length of QRS complexes [ms].
-            Default 150ms.
-        refracT(float, optional): refractory time for T-wave [ms].
-            Default 360ms.
+        qrs_width (float, optional): Expected maximal length of QRS complexes in seconds.
+            Default is 0.150 seconds (150 ms).
+        refracT (float, optional): Refractory time for T-wave in seconds.
+            Default is 0.360 seconds (360 ms).
 
     Reference:
         Pan J, Tompkins WJ. A real-time QRS detection algorithm. IEEE Trans

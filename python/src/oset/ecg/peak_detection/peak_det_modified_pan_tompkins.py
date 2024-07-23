@@ -6,26 +6,30 @@ from oset.generic.tanh_saturation import tanh_saturation
 from scipy.signal import lfilter
 
 
-def peak_det_modified_pan_tompkins(data, fs, *args):
+def peak_det_modified_pan_tompkins(
+    data, fs, wlen=0.150, fp1=10, fp2=33.3, th=0.2, flag=None, ksigma=12
+):
     """
     peak_det_modified_pan_tompkins - R-peak detector based on modified
       Pan-Tompkins method. The filters and post-detection R-peak selection
       logic differ from the original algorithm
 
+    Syntax:
       peaks, peak_indexes, width = peak_det_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
 
-      Inputs:
-          data: Vector of input data
-          fs: Sampling rate
-          wlen: Optional. Moving average window length (default = 150ms)
-          fp1: Optional. Lower cut-off frequency (default = 10Hz)
-          fp2: Optional. Upper cut-off frequency (default = 33.3Hz)
-          th: Optional. Detection threshold (default = 0.2)
-          ksigma: Optional. Saturates peaks at ksigma x STD of the signal after energy envelope calculation (default = 12)
-          flag: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
-                By default, the maximum absolute value of the signal determines the peak sign.
+    Args:
+      data (numpy.ndarray): vector of input data.
+      fs (int): sampling rate.
+      wlen (float, optional): moving average window length (default = 150ms).
+      fp1 (float, optional): lower cut-off frequency (default = 10Hz).
+      fp2 (float, optional): upper cut-off frequency (default = 33.3Hz).
+      th (float, optional): detection threshold (default = 0.2).
+      flag (int, optional): search for positive (flag=1) or negative (flag=0) peaks.
+            By default, the maximum absolute value of the signal determines the peak sign.
+      ksigma (float, optional): saturates peaks at ksigma x STD of the signal after energy envelope calculation (default = 12).
 
-      Outputs:
+
+      Returns:
           peaks: Vector of R-peak impulse train
           peak_indexes: Vector of R-peak indexes
           width: Rise to fall width of the signal's peak bump (in samples)
@@ -36,42 +40,15 @@ def peak_det_modified_pan_tompkins(data, fs, *args):
 
     Revision History:
         July 2023: Translated to Python from Matlab (peak_det_modified_pan_tompkins.m)
+        July 2024: Update arguments to be more pythonic.
 
     Amulya Jain, 2023
     The Open-Source Electrophysiological Toolbox
     https://github.com/alphanumericslab/OSET
     """
 
-    nargin = len(args) + 2
-
-    if nargin > 2 and args[0] is not None:
-        wlen = args[0]
-    else:
-        wlen = 0.150  # moving average window length 150ms
-
-    if nargin > 3 and args[1] is not None:
-        fp1 = args[1]
-    else:
-        fp1 = 10  # First zero of the HP filter is placed at f = 10Hz
-
-    if nargin > 4 and args[2] is not None:
-        fp2 = args[2]
-    else:
-        fp2 = 33.3  # First zero of the LP filter is placed at f = 33.3Hz
-
-    if nargin > 5 and args[3] is not None:
-        th = args[3]
-    else:
-        th = 0.2
-
-    if nargin > 6 and args[4] is not None:
-        flag = args[4]
-    else:
+    if flag is None:
         flag = np.abs(np.max(data)) > np.abs(np.min(data))
-    if nargin > 7 and args[5] is not None:
-        ksigma = args[5]
-    else:
-        ksigma = 12
 
     N = len(data)
     data = np.array(data).flatten()
@@ -137,24 +114,26 @@ def peak_det_modified_pan_tompkins(data, fs, *args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
-      peak_det_modified_pan_tompkins - R-peak detector based on modified
+    peak_det_modified_pan_tompkins - R-peak detector based on modified
       Pan-Tompkins method. The filters and post-detection R-peak selection
       logic differ from the original algorithm
 
+    Syntax:
       peaks, peak_indexes, width = peak_det_modified_pan_tompkins(data, fs, wlen, fp1, fp2, th, ksigma, flag)
 
-      Inputs:
-          data: Vector of input data
-          fs: Sampling rate
-          wlen: Optional. Moving average window length (default = 150ms)
-          fp1: Optional. Lower cut-off frequency (default = 10Hz)
-          fp2: Optional. Upper cut-off frequency (default = 33.3Hz)
-          th: Optional. Detection threshold (default = 0.2)
-          ksigma: Optional. Saturates peaks at ksigma x STD of the signal after energy envelope calculation (default = 12)
-          flag: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
-                By default, the maximum absolute value of the signal determines the peak sign.
+    Args:
+      data (numpy.ndarray): vector of input data.
+      fs (int): sampling rate.
+      wlen (float, optional): moving average window length (default = 150ms).
+      fp1 (float, optional): lower cut-off frequency (default = 10Hz).
+      fp2 (float, optional): upper cut-off frequency (default = 33.3Hz).
+      th (float, optional): detection threshold (default = 0.2).
+      flag (int, optional): search for positive (flag=1) or negative (flag=0) peaks.
+            By default, the maximum absolute value of the signal determines the peak sign.
+      ksigma (float, optional): saturates peaks at ksigma x STD of the signal after energy envelope calculation (default = 12).
 
-      Outputs:
+
+      Returns:
           peaks: Vector of R-peak impulse train
           peak_indexes: Vector of R-peak indexes
           width: Rise to fall width of the signal's peak bump (in samples)
@@ -166,6 +145,9 @@ if __name__ == "__main__":
     Revision History:
         July 2023: Translated to Python from Matlab (peak_det_modified_pan_tompkins.m)
 
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )

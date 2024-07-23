@@ -16,18 +16,19 @@ def peak_det_adaptive_hr(
       peaks, peak_indexes = peak_detection_adaptive_hr(x, ff, fs, flag, [th, th2], rejection_threshold)
 
     Method:
-      detects R-peaks in the ECG signal x using a max search algorithm over a sliding window
+      Detects R-peaks in the ECG signal x using a max search algorithm over a sliding window
       with adaptive width. The function returns the binary impulse train of detected peaks
       (PEAKS) and their corresponding indexes (PEAK_INDEXES) in the input signal x.
 
     Inputs:
-      x: Vector of the input ECG signal.
-      ff: Approximate ECG beat-rate in Hz.
-      fs: Sampling frequency in Hz.
-      flag (optional): Search for positive (flag=1) or negative (flag=0) peaks.
+      x (numpy.ndarray): vector of the input ECG signal.
+      ff (float): approximate ECG beat-rate in Hz.
+      fs (float): sampling frequency in Hz.
+      flag (int, optional): search for positive (flag=1) or negative (flag=0) peaks.
           By default, the maximum absolute value of the signal determines the peak sign.
-      th, th2 (optional): Thresholds used for the first and second round of peak detection (default: 0.5, 0.8).
-      rejection_threshold (optional): Threshold for rejecting fake peaks (default: 0.3).
+      th (float, optional): threshold used for the first round of peak detection (default: 0.5).
+      th2 (float, optional): threshold used for the second round of peak detection (default: 0.8).
+      rejection_threshold (float, optional): threshold for rejecting fake peaks (default: 0.3).
 
     Outputs:
       peaks: Binary impulse train indicating the detected R-peaks.
@@ -147,18 +148,19 @@ if __name__ == "__main__":
       peaks, peak_indexes = peak_detection_adaptive_hr(x, ff, fs, flag, [th, th2], rejection_threshold)
 
     Method:
-      detects R-peaks in the ECG signal x using a max search algorithm over a sliding window
+      Detects R-peaks in the ECG signal x using a max search algorithm over a sliding window
       with adaptive width. The function returns the binary impulse train of detected peaks
       (PEAKS) and their corresponding indexes (PEAK_INDEXES) in the input signal x.
 
     Inputs:
-      x: Vector of the input ECG signal.
-      ff: Approximate ECG beat-rate in Hz.
-      fs: Sampling frequency in Hz.
-      flag (optional): Search for positive (flag=1) or negative (flag=0) peaks.
+      x (numpy.ndarray): vector of the input ECG signal.
+      ff (float): approximate ECG beat-rate in Hz.
+      fs (float): sampling frequency in Hz.
+      flag (int, optional): search for positive (flag=1) or negative (flag=0) peaks.
           By default, the maximum absolute value of the signal determines the peak sign.
-      [th, th2] (optional): Thresholds used for the first and second round of peak detection (default: [0.5, 0.8]).
-      rejection_threshold (optional): Threshold for rejecting fake peaks (default: 0.3).
+      th (float, optional): threshold used for the first round of peak detection (default: 0.5).
+      th2 (float, optional): threshold used for the second round of peak detection (default: 0.8).
+      rejection_threshold (float, optional): threshold for rejecting fake peaks (default: 0.3).
 
     Outputs:
       peaks: Binary impulse train indicating the detected R-peaks.
@@ -168,7 +170,11 @@ if __name__ == "__main__":
       - The signal baseline wander should be removed before R-peak detection.
 
     Revision History:
-      Aug 2023: Translated to Python from Matlab(peak_detection_adaptive_hr.m)
+      June 2024: Translated to Python from Matlab(peak_detection_adaptive_hr.m)
+
+    Amulya Jain, 2024
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )

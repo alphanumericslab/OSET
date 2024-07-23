@@ -8,14 +8,14 @@ def peak_det_simple(x, ff, flag, omit_close_peaks=0):
     peak_det_simple - Internal R-peak detector function
     Syntax: peaks, peak_indexes = peak_det_simple(x, ff, flag, omit_close_peaks)
 
-      Inputs:
-          x: Vector of input data
-          ff: Approximate ECG beat-rate in Hertz
-          flag: Search for positive (flag=1) or negative (flag=0) peaks
-          omit_close_peaks: omit close peaks after main peak detection
-          (true/1) or not(false/0). Default is 0
+    Args:
+        x (numpy.ndarray): vector of input data (ECG signal).
+        ff (float): approximate ECG beat-rate in Hertz (normalized by the sampling frequency).
+        flag (int): Search for positive (flag=1) or negative (flag=0) peaks.
+        omit_close_peaks (int, optional): If non-zero (True), omit close peaks after main peak detection.
+            Default is 0 (False).
 
-      Outputs:
+      Returns:
           peaks: Vector of R-peak impulse train
           peak_indexes: Vector of R-peak indexes
 
@@ -80,20 +80,24 @@ if __name__ == "__main__":
     peak_det_simple - Internal R-peak detector function
     Syntax: peaks, peak_indexes = peak_det_simple(x, ff, flag, omit_close_peaks)
 
-      Inputs:
-          x: Vector of input data
-          ff: Approximate ECG beat-rate in Hertz
-          flag: Search for positive (flag=1) or negative (flag=0) peaks
-          omit_close_peaks: omit close peaks after main peak detection
-          (true/1) or not(false/0). Default is 0
+    Args:
+        x (numpy.ndarray): vector of input data (ECG signal).
+        ff (float): approximate ECG beat-rate in Hertz (normalized by the sampling frequency).
+        flag (int): Search for positive (flag=1) or negative (flag=0) peaks.
+        omit_close_peaks (int, optional): If non-zero (True), omit close peaks after main peak detection.
+            Default is 0 (False).
 
-      Outputs:
+      Returns:
           peaks: Vector of R-peak impulse train
           peak_indexes: Vector of R-peak indexes
 
     Revision History:
         July 2023: Translated to Python from Matlab (peak_det_simple.m)
+        June 2024: Reworked the code to match the updated Matlab version
 
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )

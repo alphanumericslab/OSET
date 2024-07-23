@@ -10,11 +10,11 @@ def peak_det_amp_threshold(x, ff, th, *args):
 
     Syntax: peaks, peak_indexes = peak_det_amp_threshold(x, ff, th, *args)
 
-    Inputs:
-      x: Vector of input data.
-      ff: Approximate ECG beat-rate in Hertz, normalized by the sampling frequency.
-      th: Peaks smaller than this fraction of the max peak amplitude are neglected.
-      flag (optional): Search for positive (flag=1) or negative (flag=0) peaks. By default,
+    Args:
+      x (numpy.ndarray): vector of input data.
+      ff (float): approximate ECG beat-rate in Hertz, normalized by the sampling frequency.
+      th (float): peaks smaller than this fraction of the max peak amplitude are neglected.
+      flag (int, optional): search for positive (flag=1) or negative (flag=0) peaks. By default,
                   the maximum absolute value of the signal determines the peak sign.
 
     Outputs:
@@ -58,11 +58,11 @@ if __name__ == "__main__":
 
     Syntax: peaks, peak_indexes = peak_det_amp_threshold(x, ff, th, *args)
 
-    Inputs:
-      x: Vector of input data.
-      ff: Approximate ECG beat-rate in Hertz, normalized by the sampling frequency.
-      th: Peaks smaller than this fraction of the max peak amplitude are neglected.
-      flag (optional): Search for positive (flag=1) or negative (flag=0) peaks. By default,
+    Args:
+      x (numpy.ndarray): vector of input data.
+      ff (float): approximate ECG beat-rate in Hertz, normalized by the sampling frequency.
+      th (float): peaks smaller than this fraction of the max peak amplitude are neglected.
+      flag (int, optional): search for positive (flag=1) or negative (flag=0) peaks. By default,
                   the maximum absolute value of the signal determines the peak sign.
 
     Outputs:
@@ -75,9 +75,13 @@ if __name__ == "__main__":
       with periods smaller than N/2 or greater than N are not detected.
     - The signal baseline wander is recommended to be removed before the
       R-peak detection.
-    
+
     Revision History:
         July 2023: Translated to Python from Matlab (peak_det_amp_threshold.m)
+
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )
