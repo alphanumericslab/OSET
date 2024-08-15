@@ -61,7 +61,7 @@ analysis
 
 ## Implementations
 Implementations of the AI-ML-ready data structure are available in [MATLAB](./matlab) and [Python](./python). 
-After running the feature extraction codes in MATLAB and Python on the same database, you can merge the outputs to create a single JSON file that includes all the extracted features. Please run this [script](https://github.com/alphanumericslab/ecg-blood-pressure/blob/main/ml-ready-data-structure/python/merge_json_files.ipynb).
+After running the feature extraction codes in MATLAB and Python on the same database, you can merge the outputs to create a single JSON file that includes all the extracted features. Please run this [script](./python/merge_json_files.ipynb).
 
 ## Contributors
 - [Somayyeh Mousavi](seyedeh.somayyeh.mousavi@emory.edu)

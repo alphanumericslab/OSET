@@ -223,8 +223,8 @@ catch ME
 end
 end
 ```  
-12. `load` function is essential. Open [functioncaller_0](https://github.com/alphanumericslab/ecg-blood-pressure/blob/main/ml-ready-data-structure/matlab/functioncaller_0.m) and modify the code to correctly read the data. Each dataset has a specific format, so ensure the loading process is adapted to handle your dataset's format.
-13. After modifying the code and creating the relevant `functioncaller_n` files, you can easily run [main_matlab](https://github.com/alphanumericslab/ecg-blood-pressure/blob/main/ml-ready-data-structure/matlab/main_matlab.m) in the cluster, AWS, or any other environments. You will see the JSON file in the output folder. 
+12. `load` function is essential. Open [functioncaller_0](./matlab/functioncaller_0.m) and modify the code to correctly read the data. Each dataset has a specific format, so ensure the loading process is adapted to handle your dataset's format.
+13. After modifying the code and creating the relevant `functioncaller_n` files, you can easily run [main_matlab](./matlab/main_matlab.m) in the cluster, AWS, or any other environments. You will see the JSON file in the output folder. 
 
 ## Contributors
 - [Somayyeh Mousavi](seyedeh.somayyeh.mousavi@emory.edu)
