@@ -1,0 +1,33 @@
+Warning: Path is not a directory, .
+Params_function_dict has been saved as a CSV file to ../results/MD5_Checksum_records_matlab/Params_function_dict.csv
+Generating MD5 for A0003.mat
+Generating MD5 for A0004.mat
+Generating MD5 for A0005.mat
+Generating MD5 for A0006.mat
+Generating MD5 for A0007.mat
+Generating MD5 for A0008.mat
+Generating MD5 for A0009.mat
+Generating MD5 for A0010.mat
+Generating MD5 for A0001.mat
+Generating MD5 for A0002.mat
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2022 The MathWorks, Inc.
+             R2022b Update 7 (9.13.0.2399474) 64-bit (glnxa64)
+                             September 30, 2023
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+A0003.mat
+A0004.mat
+A0005.mat
+A0006.mat
+A0007.mat
+A0008.mat
+A0009.mat
+A0010.mat
+A0001.mat
+A0002.mat
+Job finished!
