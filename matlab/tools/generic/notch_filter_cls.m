@@ -48,7 +48,11 @@ function y = notch_filter_cls(x, ff, gamma)
 %   https://github.com/alphanumericslab/OSET
 
 N = size(x, 2); % the signal length in time
+
 H = toeplitz([1 ; zeros(N-3, 1)], [1, -2*cos(2*pi*ff), 1, zeros(1, N-3)]);
+% alpha = 1e-3;
+% H = toeplitz([1 ; zeros(N-4, 1)], [1, -(alpha + 2*cos(2*pi*ff)), 1 + 2*alpha*cos(2*pi*ff), -alpha, zeros(1, N-4)]);
+
 y = x - ((eye(N) + gamma*(H'*H)) \ x')';
 
 if 1

@@ -19,7 +19,7 @@ clear; close all; clc;
 % Load a sample SCG signal and its sampling frequency from OSET sample data
 % load scg_sample.mat samples fs
 
-[y, fs] = audioread('./OneDrive_1_2-19-2024/46(Good).wav');
+[y, fs] = audioread('../../../../../DataFiles/Acoustic_1D_Doppler_OneDrive_1_2-19-2024/46(Good).wav');
 samples = y';
 samples = samples(1:round(10.0*fs));
 % samples = resample(y, 4410, fs)';
@@ -29,6 +29,41 @@ samples = samples(1:round(10.0*fs));
 % params.inst_params_wlen = 0.03;
 
 
+s = samples/max(abs(samples));
+h = hilbert(s);
+phi = unwrap(atan2(imag(h), real(h)));
+t = (0:length(s)-1)/fs;
+
+figure
+yyaxis left
+plot(t, s)
+yyaxis right
+plot(t, 1540*(phi - phi(1))./t/ (2e6), 'linewidth', 3)
+grid
+
+% theta = phi - phi(1);
+% phi2 = theta * 3.3/2.0;
+% s2 = cos(phi2);
+% plot(s1)
+% hold on
+% plot(s2)
+% grid
+% plot(phi2)
+% plot(1540*(phi - phi(1))./t/ (2e6))
+% theta = 1540*(phi - phi(1))./t/ (2e6);
+% plot(theta)
+% plot(theta - mean(theta))
+% plot(theta - nanmean(theta))
+% close all
+% plot(theta - nanmean(theta))
+% plot(s1)
+% hold on
+% plot(theta - nanmean(theta))
+% grid
+% theta1 = 1540*diff(phi - phi(1))/ (2e6)/fs;
+% plot(theta1 - nanmean(theta1))
+% theta1 = 1540*diff(phi - phi(1))/ (2e6);
+% plot(theta1 - nanmean(theta1))
 
 
 
