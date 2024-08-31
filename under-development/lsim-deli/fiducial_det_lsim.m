@@ -309,6 +309,8 @@ try
     data_r_env = time_prior.*(envelope(data_bias,sample_70ms) + ecg_denoised_ndiff)/2;
     ecg_denoised_std = movstd(data,[win_sample_qrs,win_sample_qrs]).*time_prior ;
 
+    md_data_r_env = median(data_r_env);
+
     % data_temp = lp_filter_zero_phase(data, 35/fs);
     % data_temp = data_temp - lp_filter_zero_phase(data_temp,0.5/fs);
     % data_env = abs(data_r);
@@ -372,8 +374,8 @@ try
         else
             starting_peak_p = ecg_rpeaks_index(p);
         end
-
-        this_thr = 0.1*max(data_r_env(starting_peak_p-3*sample_10ms:starting_peak_p)) + median(data_r_env);
+        
+        this_thr = 0.1*max(data_r_env(starting_peak_p-3*sample_10ms:starting_peak_p)) + md_data_r_env;
         max_sample_qrson_thr = 2*sample_100ms+1 - find(data_r_env(starting_peak_p-2*sample_100ms:starting_peak_p) < this_thr, 1 ,"last");
         max_sample_qrson_thr = min(max_sample_qrson_thr,sample_100ms+sample_70ms);
         if ~isempty(TF)
@@ -706,7 +708,7 @@ try
             stoping_peak_p = ecg_rpeaks_index(p);
         end
 
-        this_thr = 0.1*data_r_env(stoping_peak_p) + median(data_r_env);
+        this_thr = 0.1*data_r_env(stoping_peak_p) + md_data_r_env;
         max_sample_qrsoff_thr =  find(data_r_env(stoping_peak_p:stoping_peak_p+2*sample_100ms) < this_thr, 1 ,"first");
         if ~isempty(TF)
             max_sample_qrsoff_thr = min(max_sample_qrsoff_thr,sample_70ms);
