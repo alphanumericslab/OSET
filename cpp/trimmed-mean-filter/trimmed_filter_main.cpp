@@ -107,6 +107,8 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
         std::cout << "Examples:" << std::endl;
         std::cout << "  " << argv[0] << " -mode mean -wlen 5 -i input.csv -o output.csv" << std::endl;
+        std::cout << "  " << argv[0] << " -mode max -wlen 5 -i input.csv -o output.csv" << std::endl;
+        std::cout << "  " << argv[0] << " -mode min -wlen 5 -i input.csv -o output.csv" << std::endl;
         std::cout << "  " << argv[0] << " -mode median -wlen 3 -i input.csv -o output.csv" << std::endl;
         std::cout << "  " << argv[0] << " -mode trmean -wlen 5 -alpha 2 -i input.csv -o output.csv" << std::endl;
         std::cout << "  " << argv[0] << " -mode wmedian -wlen 5 -weights weights.csv -i input.csv -o output.csv" << std::endl;

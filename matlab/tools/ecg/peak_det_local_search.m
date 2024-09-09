@@ -6,7 +6,7 @@ function [peaks, peak_indexes] = peak_det_local_search(x, ff, varargin)
 %
 %   Inputs:
 %       x: Vector of input data
-%       f: Approximate ECG beat-rate in Hertz, normalized by the sampling frequency
+%       f: Approximate ECG beat-rate in Hertz normalized by the sampling frequency
 %       flag: Optional. Search for positive (flag=1) or negative (flag=0) peaks.
 %           By default, the maximum absolute value of the signal determines the peak sign.
 %       num_rounds (optional): Number of iterations to find the R-peaks, up to 3.

@@ -81,17 +81,35 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // Check if the filter mode is valid
     std::string modeStr(type);
-    if (modeStr != "mean" && modeStr != "median" && modeStr != "trmean" && modeStr != "wmedian")
+    if (modeStr != "mean" && modeStr != "median" && modeStr != "trmean" && modeStr != "wmedian" && modeStr != "max" && modeStr != "min" && modeStr != "max_index" && modeStr != "min_index")
     {
-        mexErrMsgTxt("Invalid mode. Available modes: 'mean', 'median', 'trmean', 'wmedian'");
+        mexErrMsgTxt("Invalid mode. Available modes: 'mean', 'median', 'trmean', 'wmedian', 'max', 'min', 'max_index', 'min_index'");
     }
 
-    // Allocate memory for output array
-    plhs[0] = mxCreateDoubleMatrix(n, 1, mxREAL);
-    double *y = mxGetPr(plhs[0]);
+    int status = 1;
+    if(modeStr == "max_index" || modeStr == "min_index")
+    {
+        plhs[0] = mxCreateNumericMatrix(n, 1, mxINT32_CLASS, mxREAL);
+        int *y = (int *)mxGetData(plhs[0]);
 
-    // Call trimmed_filter function
-    int status = trimmed_filter(x, y, n, type, w, a, h);
+        // Call trimmed_filter function
+        status = trimmed_filter_max_min_indexes(x, y, n, type, w);
+        // Convert C-indexing (from 0) to MATLAB indexing (from 1)
+        for (int i = 0 ; i < n ; i++)
+        {
+            y[i] += 1;
+        }
+    }
+    else
+    {
+        // Allocate memory for output array
+        plhs[0] = mxCreateDoubleMatrix(n, 1, mxREAL);
+        double *y = mxGetPr(plhs[0]);
+
+        // Call trimmed_filter function
+        status = trimmed_filter(x, y, n, type, w, a, h);
+    }
+
 
     // Check for unknown filter type
     if (status)

@@ -25,6 +25,6 @@ if fc >= 1
     error('fc should be smaller than 1');
 end
 
-k = 0.7071; % Cut-off value of 1/sqrt(2) or -6dB amplitude attenuation
+k = 1/sqrt(2.0); % Cut-off value of 1/sqrt(2)=0.7071 or -6dB amplitude attenuation
 alpha = (1 - k*cos(2*pi*fc) - sqrt(2*k*(1 - cos(2*pi*fc)) - k^2*sin(2*pi*fc)^2)) / (1 - k); % analytically derived. See ref. Mitra (2010)
 y = filtfilt(1 - alpha, [1, -alpha], x')';

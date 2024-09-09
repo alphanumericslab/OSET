@@ -66,12 +66,16 @@ int trimmed_filter(const double *arr, double *output, int n, const char* type, i
 		lst.initialize(arr[0]);
 		if(w%2==0)
 		{
-			for(i=0;i<n-(w-1)/2;i++)
+			for(i = 0 ; i < (w-1)/2 ; i++)
+			{
+				lst.insert(arr[i]);
+			}
+			for(i = 0 ; i < n-(w-1)/2 ; i++)
 			{
 				lst.insert(arr[i+(w-1)/2]);
 				output[i] = lst.median_even();
 			}
-			for(i=n-(w-1)/2;i<n;i++)
+			for(i = n-(w-1)/2 ; i < n ; i++)
 			{
 				lst.insert(arr[n-1]);
 				output[i] = lst.median_even();
@@ -79,6 +83,10 @@ int trimmed_filter(const double *arr, double *output, int n, const char* type, i
 		}
 		else
 		{
+			for(i=0;i<(w-1)/2;i++)
+			{
+				lst.insert(arr[i]);
+			}
 			for(i=0;i<n-(w-1)/2;i++)
 			{
 				lst.insert(arr[i+(w-1)/2]);
@@ -96,6 +104,10 @@ int trimmed_filter(const double *arr, double *output, int n, const char* type, i
 	{
 		list lst(w);
 		lst.initialize(arr[0]);
+		for(i=0;i < (w-1)/2;i++)
+		{
+			lst.insert(arr[i]);
+		}
 		for(i=0;i<n-(w-1)/2;i++)
 		{
 			lst.insert(arr[i+(w-1)/2]);
@@ -112,6 +124,10 @@ int trimmed_filter(const double *arr, double *output, int n, const char* type, i
 	{
 		list lst(w);
 		lst.initialize(arr[0]);
+        for(i=0;i < (w-1)/2;i++)
+        {
+            lst.insert(arr[i]);
+        }
         for(i=0;i<n-(w-1)/2;i++)
         {
             lst.insert(arr[i+(w-1)/2]);
@@ -121,6 +137,99 @@ int trimmed_filter(const double *arr, double *output, int n, const char* type, i
         {
             lst.insert(arr[n-1]);
             output[i] = lst.wmedian(h,w,alpha);
+        }
+    }
+    // local max finder
+	else if(!strcmp(type,"max"))
+	{
+		list lst(w);
+		lst.initialize(arr[0]);
+        for(i=0 ; i < (w-1)/2 ; i++)
+        {
+            lst.insert(arr[i]);
+        }
+        for(i = 0 ; i < n-(w-1)/2 ; i++)
+        {
+            lst.insert(arr[i+(w-1)/2]);
+            output[i] = lst.max();
+        }
+        for(i = n-(w-1)/2 ; i < n ; i++)
+        {
+            lst.insert(arr[n-1]);
+            output[i] = lst.max();
+        }
+    }
+    // local min finder
+	else if(!strcmp(type,"min"))
+	{
+		list lst(w);
+		lst.initialize(arr[0]);
+        for(i = 0 ; i < (w-1)/2 ; i++)
+        {
+            lst.insert(arr[i]);
+        }
+        for(i = 0 ; i < n-(w-1)/2 ; i++)
+        {
+            lst.insert(arr[i+(w-1)/2]);
+            output[i] = lst.min();
+        }
+        for(i = n-(w-1)/2 ; i < n ; i++)
+        {
+            lst.insert(arr[n-1]);
+            output[i] = lst.min();
+        }
+    }
+    else
+    {
+        return 1;
+    }
+    
+	return 0;
+}
+
+/////////////////////
+int trimmed_filter_max_min_indexes(const double *arr, int *output, int n, const char* type, int w)
+{
+	int i;
+	
+    // local max finder
+	if(!strcmp(type,"max_index"))
+	{
+		list lst(w);
+		lst.initialize(arr[0]);
+        for(i=0 ; i < (w-1)/2 ; i++)
+        {
+            lst.insert(arr[i], i);
+        }
+        for(i = 0 ; i < n-(w-1)/2 ; i++)
+        {
+            lst.insert(arr[i+(w-1)/2], i+(w-1)/2);
+            output[i] = lst.max_index();
+        }
+        for(i = n-(w-1)/2 ; i < n ; i++)
+        {
+            lst.insert(arr[n-1], n-1);
+            output[i] = lst.max_index();
+        }
+    }
+    // local min finder
+	else if(!strcmp(type,"min_index"))
+	{
+		list lst(w);
+		lst.initialize(arr[0]);
+        for(i = 0 ; i < (w-1)/2 ; i++)
+        {
+            lst.insert(arr[i], i);
+        }
+        for(i = 0 ; i < n-(w-1)/2 ; i++)
+        {
+            lst.insert(arr[i+(w-1)/2], i+(w-1)/2);
+            output[i] = lst.min_index();
+        }
+        for(i = n-(w-1)/2 ; i < n ; i++)
+        {
+            lst.insert(arr[n-1], n-1);
+            output[i] = lst.min_index();
         }
     }
     else

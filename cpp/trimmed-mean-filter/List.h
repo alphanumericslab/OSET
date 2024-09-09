@@ -18,6 +18,7 @@ class item
 {
 public:
 	double value;
+	int value_index;
 	int from;
 	int to;
 };
@@ -26,22 +27,28 @@ class list
 {
 private:
 	item* itmlist;
-	int ptr;
-	int len;
-	int start,stop;
+	int write_pointer;
+	int list_len;
+	int head_pointer;
+	int tail_pointer;
 
 	int resort(void);
 
 public:
-	list(int N,double init=0);
+	list(int N, double init = 0, int init_index = 0);
 	~list(void);
 	
-	int initialize(double x);
+	int initialize(double x, int init_index = 0);
 	int insert(double data);
+	int insert(double data, int data_index);
 	
 	double mean(int alpha);
 	double wmedian(const double *weight, int m, int alpha);
 	double median_odd(void);
 	double median_even(void);
+	double max(void);
+	int max_index(void);
+	double min(void);
+	int min_index(void);
 };
 #endif /*_LIST_H_*/

@@ -52,7 +52,7 @@ After successful compilation, you can use the `trimmed_filter` function from the
 To use the `trimmed_filter` function as a MATLAB MEX function, you need to compile it with the MATLAB MEX command. Open MATLAB and navigate to the root folder of the project. Then, run the following command in the MATLAB Command Window:
 
 ```matlab
-mex `trimmed_filter_mex.cpp` trimmed_filter.cpp list.cpp -output trimmed_filter
+mex trimmed_filter_mex.cpp trimmed_filter.cpp list.cpp -output trimmed_filter
 ```
 
 After successful compilation, you can call the `trimmed_filter` function directly from MATLAB as shown in the example section below. Note that the `mex` function requires an external C/C++ compiler on the local system. It requires setup, if it has not been set up before:
