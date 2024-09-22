@@ -171,7 +171,7 @@ for i = 1 : num_itr
         case 'wden' % wavelet denoising
             y_den = y;
             for k = 1 : num_ch_den_per_itr
-                eog_est = wden(y(k,:), shrinkage_params.TPTR, shrinkage_params.SORH, shrinkage_params.SCAL, shrinkage_params.NUM, shrinkage_params.WNAME);
+                eog_est = wden(y_den(k,:), shrinkage_params.TPTR, shrinkage_params.SORH, shrinkage_params.SCAL, shrinkage_params.NUM, shrinkage_params.WNAME);
                 y_den(k,:) = y_den(k,:) - eog_est;
             end
             eeg_refined = A * y_den;
