@@ -7,11 +7,11 @@ def tanh_saturation(x, ksigma):
     Saturates outlier samples using a tanh shape function.
 
     Args:
-        x (ndarray): Input data, can be a vector or a matrix (channels x time).
+        x (numpy.ndarray): Input data, can be a vector or a matrix (channels x time).
         ksigma (float): Scaling factor for the saturation level.
 
     Returns:
-        ndarray: Saturated data with outliers replaced by the saturation level.
+        numpy.ndarray: Saturated data with outliers replaced by the saturation level.
 
     Revision History:
         2023: Translated to Python from Matlab

@@ -8,14 +8,15 @@ def peak_det_matched_filter(x, fs, h, th, fmax) -> tuple:
     """
     peak_det_matched_filter - R-peak detector based on a matched filter
 
-    Syntax: [peaks, mn, r] = peak_det_matched_filter(x, fs, h, th, fmax)
+    Syntax:
+      [peaks, mn, r] = peak_det_matched_filter(x, fs, h, th, fmax)
 
     Args:
-        x:      Vector of input data
-        fs:     Sampling rate
-        h:      Template waveform
-        th:     Detection threshold
-        fmax:   Maximum expected frequency of the R-peaks
+      x (numpy.ndarray): vector of input data.
+      fs (int): Sampling rate.
+      h (numpy.ndarray): Template waveform.
+      th (float): detection threshold.
+      fmax (float): maximum expected frequency of the R-peaks.
 
     Returns:
         peaks:  Vector of R-peak impulse train
@@ -29,7 +30,7 @@ def peak_det_matched_filter(x, fs, h, th, fmax) -> tuple:
     The Open-Source Electrophysiological Toolbox
     https://github.com/alphanumericslab/OSET
     """
-    testing = list()
+
     n = len(x)
     length = len(h)
 
@@ -79,16 +80,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
     peak_det_matched_filter - R-peak detector based on a matched filter
-    
-    Syntax: [peaks, mn, r] = peak_det_matched_filter(x, fs, h, th, fmax)
-    
+
+    Syntax:
+      [peaks, mn, r] = peak_det_matched_filter(x, fs, h, th, fmax)
+
     Args:
-        x:      Vector of input data
-        fs:     Sampling rate
-        h:      Template waveform
-        th:     Detection threshold
-        fmax:   Maximum expected frequency of the R-peaks
-    
+      x (numpy.ndarray): vector of input data.
+      fs (int): Sampling rate.
+      h (numpy.ndarray): Template waveform.
+      th (float): detection threshold.
+      fmax (float): maximum expected frequency of the R-peaks.
+
     Returns:
         peaks:  Vector of R-peak impulse train
         mn:     Mean waveform of detected R-peaks
@@ -96,6 +98,10 @@ if __name__ == "__main__":
 
     Revision History:
         July 2023: Translated to Python from Matlab (peak_det_matched_filter.m)
+
+    Amulya Jain, 2023
+    The Open-Source Electrophysiological Toolbox
+    https://github.com/alphanumericslab/OSET
     """,
         formatter_class=argparse.RawTextHelpFormatter,
     )

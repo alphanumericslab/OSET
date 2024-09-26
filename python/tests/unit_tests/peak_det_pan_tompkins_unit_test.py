@@ -1,13 +1,11 @@
 # For this you need matlab and the new requirements.txt
 import argparse
-
 import matlab
 import matlab.engine
 import numpy as np
 import scipy.io
-from oset.ecg.peak_detection.peak_det_pan_tompkins import (
-    peak_det_pan_tompkins,
-)
+from oset.ecg.peak_detection.peak_det_pan_tompkins import peak_det_pan_tompkins
+
 
 import unit_test as testing
 
