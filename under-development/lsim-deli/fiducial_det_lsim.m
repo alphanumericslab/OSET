@@ -1163,7 +1163,7 @@ try
             before_peak(p) = TF_min(1);
             after_peak(p) = TF_min(1);
             T_peaks(p) = this_T_index(TF_min(1));
-        elseif (max(P_max/P_min ,P_min/P_max) < 2) && (min(P_min,P_max)/max(P_minU,P_maxU)>10) && (P_max>10^-10 || P_min>10^-10)
+        elseif (max(P_max/P_min ,P_min/P_max) < 2) && (P_max>10^-10 || P_min>10^-10) % && (min(P_min,P_max)/max(P_minU,P_maxU)>10)
             T_type{p} = 'bi-phasic';
             before_peak(p) = min(TF_min(1), TF_max(1));
             after_peak(p) = max(TF_min(1), TF_max(1));
