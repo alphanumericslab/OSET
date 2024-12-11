@@ -196,7 +196,7 @@ for ch = 1 : size(data, 1)
         non_zeros_bins = find(M(:, nn));
         if isempty(non_zeros_bins)
             error('Empty column in mapping matrix');
-        elseif length(non_zeros_bins) == 1 % only one point
+        elseif isscalar(non_zeros_bins) % only one point
             data_prior_est(ch, nn) = ECG_avg(non_zeros_bins);
             s_equiv_vars(nn) = ECG_intrinsic_var(non_zeros_bins);
         else % more than one point to average

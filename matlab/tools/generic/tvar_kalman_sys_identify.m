@@ -1,6 +1,6 @@
 function [a_kf_prior, a_kf_post, a_ks, P_kf_prior, P_kf_post, P_ks, kf_gain, eta, a_kf_pred, P_kf_pred, innovations] = tvar_kalman_sys_identify(y, L, varargin)
-% tvar_kalman_filter - A Kalamn filter and smoother using time-varying
-% autoregressive (TVAR) model.
+% tvar_kalman_sys_identify - A Kalamn filter and smoother using time-varying
+% autoregressive moving average (TV-ARMA) model.
 %
 % Syntax: [a_kf_prior, a_kf_post, a_ks, P_kf_prior, P_kf_post, P_ks, kf_gain, eta, a_kf_pred, P_kf_pred, innovations] = tvar_kalman_sys_identify(y, b, a, q, r, gamma, wlen, mode, predict_forward)
 %
