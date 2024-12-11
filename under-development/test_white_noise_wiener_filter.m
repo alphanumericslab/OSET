@@ -10,11 +10,17 @@ clc
 clear
 
 % Load the input audio signal
-[x, fs] = audioread('/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/121(Good).wav');
-x = x(:)';
+[x, fs] = audioread('/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/104(Good).wav', 'native');
+% [x, fs] = audioread('/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/46(Good).wav', 'native');
+% [x, fs] = audioread('/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/121(Good).wav', 'native');
+% [x, fs] = audioread('/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/127(Intermediate).wav', 'native');
+% [x, fs] = audioread('/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/128(Poor).wav', 'native');
+
+x = double(x(:)');
 
 % Set noise variance and apply Wiener filter
-params.nvar = (2e-4)^2;
+params.nvar = (5)^2;
+
 [y, h] = white_noise_wiener_filter(x, fs, 'fix', params);
 
 % Alternative example using automatic noise variance estimation
