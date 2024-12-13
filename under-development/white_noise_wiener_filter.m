@@ -54,7 +54,7 @@ switch nvar_est_mode
     case 'min-spectral-power'
         % Use Welch's method for noise variance estimation
         nfft = min(params.max_nfft, length(x));
-        P = pwelch(x, ones(1, nfft)/nfft, floor(params.spectral_est_overlap*nfft), nfft, fs, 'twosided');
+        P = pwelch(x, hamming(nfft), floor(params.spectral_est_overlap*nfft), nfft, fs, 'twosided');
         nvar = mean(P(P <= prctile(P, params.lower_prctile)));
     case 'quantization-level'
         % Estimate noise from input quantization levels (only applicable to unprocessed ADC/quantized data)
@@ -67,18 +67,18 @@ switch nvar_est_mode
         nvar = params.nvar;
 end
 
-% Adjust filter length for minimum-phase mode
-if mod(params.filter_len, 2) == 0 && isequal(params.innovation_filter_type, 'MIN_PHASE')
-    params.filter_len = params.filter_len + 1;
-    warning(['Filter length adjusted to odd value for minimum-phase mode: ', num2str(params.filter_len)]);
-end
-
 % Design the Wiener filter
 nfft = min(params.max_nfft, length(x));
 Px = pwelch(x, hamming(nfft), round(params.spectral_est_overlap*nfft), nfft, fs, 'twosided')'; % Power spectrum
 Ps = Px - nvar; % Signal power spectrum
 Ps(Ps < eps) = eps; % Ensure non-negative power
 H = Ps ./ Px; % Wiener filter frequency response
+
+% Adjust filter length for minimum-phase mode
+if mod(params.filter_len, 2) == 0 && isequal(params.innovation_filter_type, 'MIN_PHASE')
+    params.filter_len = params.filter_len + 1;
+    warning(['Filter length adjusted to odd value for minimum-phase mode: ', num2str(params.filter_len)]);
+end
 
 % Construct filter impulse response
 h0 = real(ifft(sqrt(H), params.filter_len, 2));
@@ -150,7 +150,7 @@ end
 % Function to generate default parameters
 function params = DefaultParameters()
 % DefaultParameters - Returns a structure with default parameter values.
-params.lower_prctile = 1.0;                  % Lower percentile threshold
+params.lower_prctile = 10.0;                  % Lower percentile threshold
 params.max_nfft = 1024;                      % Maximum FFT size
 params.spectral_est_overlap = 0.75;         % Overlap for spectral estimation
 params.filter_len = 512;                    % Wiener filter length
