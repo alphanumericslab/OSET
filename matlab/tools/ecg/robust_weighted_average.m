@@ -31,36 +31,41 @@ function [mn, vr_mn, varargout] = robust_weighted_average(x)
 num_beats = size(x, 1);
 if num_beats > 1
     % Average beat (mean)
-    mn0 = mean(x, 1,"omitmissing");
-    noise0 = x - mn0(ones(size(x, 1), 1), :);
-    vr = var(noise0, [], 2,"omitmissing");
+    mn0 = mean(x, 1,'omitnan');
+    noise0 = x - mn0;
+    vr = var(noise0, [], 2,'omitnan');
     sm = sum(1 ./ vr);
     weight = 1 ./ (vr * sm);
     if any(isnan(x(:)))
-        weight = repmat(weight(:),1,size(x, 2));
-        weight(isnan(x)) = 0;
-        ind_nan = sum(weight,1)==0;
-        weight = weight./sum(weight,1);
-        mn = sum(weight.* x, 1,"omitmissing");
+        weight_mat = repmat(weight,1,size(x, 2));
+        weight_mat(isnan(x))=0;
+        ind_nan = sum(weight_mat,1)==0;
+        weight_mat = weight_mat./sum(weight_mat,1);
+        mn = sum(weight_mat.* x,1,'omitnan');
         mn(ind_nan) = nan;
+        noise = x - mn;
+        vr_mn = var(noise, [], 1,'omitnan');
     else
         mn = weight'* x;
     end
-    noise = x - mn;
-    vr_mn = var(noise, [], 1,"omitmissing");
 
     if nargout > 2
         % Average beat (median)
-        md0 = median(x, 1);
+        md0 = median(x, 1,'omitnan');
         noise0 = x - md0;
-        vr = var(noise0, [], 2);
+        vr = var(noise0, [], 2,'omitnan');
         sm = sum(1 ./ vr);
         weight = 1 ./ (vr * sm);
-        md = weight' * x;
+        weight_mat = repmat(weight,1,size(x, 2));
+        weight_mat(isnan(x))=0;
+        ind_nan = sum(weight_mat,1)==0;
+        weight_mat = weight_mat./sum(weight_mat,1);
+        md = sum(weight_mat.* x,1,'omitnan');
+        md(ind_nan) = nan;
         varargout{1} = md;
         if nargout > 3
             noise = x - md;
-            vr_md = var(noise, [], 1);
+            vr_md = var(noise, [], 1,'omitnan');
             varargout{2} = vr_md;
         end
     end
