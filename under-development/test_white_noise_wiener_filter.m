@@ -19,8 +19,10 @@ clear
 x = double(x(:)');
 
 % Set noise variance and apply Wiener filter
-params.nvar = (5)^2;
-[y, h] = white_noise_wiener_filter(x, fs, 'fix', params);
+params.f_cut = 1500.0;
+[y, h] = white_noise_wiener_filter(x, fs, 'fixed-freq', params);
+% params.nvar = (5)^2;
+% [y, h] = white_noise_wiener_filter(x, fs, 'fix', params);
 
 % Alternative example using automatic noise variance estimation
 % [y, h] = white_noise_wiener_filter(x, fs, 'min-spectral-power');

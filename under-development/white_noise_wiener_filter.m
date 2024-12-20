@@ -7,7 +7,7 @@ function [y, h] = white_noise_wiener_filter(x, fs, nvar_est_mode, params)
 %   fs             - Sampling frequency (Hz)
 %   nvar_est_mode  - Noise variance estimation mode:
 %                    'min-spectral-power' (default), 'min-fft-power',
-%                    'quantization-level', 'fix'
+%                    'quantization-level', 'fix', 'fixed-freq'
 %   params         - Structure containing optional parameters for filtering.
 %                    See DefaultParameters() for default values.
 %
@@ -44,6 +44,11 @@ for i = 1:length(fields)
     end
 end
 
+% Estimate the spectrum
+nfft = min(params.max_nfft, length(x));
+Px = pwelch(x, hamming(nfft), round(params.spectral_est_overlap*nfft), nfft, fs, 'twosided')'; % Power spectrum
+ff = fs*(0:nfft-1)/nfft;
+
 % Estimate noise variance based on the specified mode
 switch nvar_est_mode
     case 'min-fft-power'
@@ -62,14 +67,16 @@ switch nvar_est_mode
         quanta = quanta(quanta > 0); % Remove zeros
         delta = mode(quanta); % ADC quantization level
         nvar = delta.^2 / 12; % Variance of uniform quantization noise (is a standard formula). See slide 348 onward here: https://www.researchgate.net/publication/325581786_Digital_Systems_Design_Course_Slides
+    case 'fixed-freq'
+        % Use a fixed-frequency to obtain the noise variance level
+        I_cutoff = find(ff >= params.f_cut, 1, 'first');
+        nvar = Px(I_cutoff);
     case 'fix'
         % Use a fixed noise variance provided as input in params
         nvar = params.nvar;
 end
 
 % Design the Wiener filter
-nfft = min(params.max_nfft, length(x));
-Px = pwelch(x, hamming(nfft), round(params.spectral_est_overlap*nfft), nfft, fs, 'twosided')'; % Power spectrum
 Ps = Px - nvar; % Signal power spectrum
 Ps(Ps < eps) = eps; % Ensure non-negative power
 H = Ps ./ Px; % Wiener filter frequency response
