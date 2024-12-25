@@ -16,9 +16,6 @@ th = 0.10  # an arbitrary value for testing
 
 
 def peak_det_matched_filter_robust_unit_test():
-    import warnings
-
-    warnings.warn("This unit test has not yet been deployed")
     ml = runMatLab(1)
     py = runPython(1)
     a = testing.compare_number_arrays(py[0], ml[0][0])

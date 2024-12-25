@@ -39,10 +39,7 @@ def lp_filter_zero_phase(x, fc):
         1
         - k * np.cos(2 * np.pi * fc)
         - np.sqrt(
-            (
-                2 * k * (1 - np.cos(2 * np.pi * fc))
-                - k**2 * np.sin(2 * np.pi * fc) ** 2
-            )
+            (2 * k * (1 - np.cos(2 * np.pi * fc)) - k**2 * np.sin(2 * np.pi * fc) ** 2)
         )
     ) / (1 - k)
     y = np.zeros_like(x)
