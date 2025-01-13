@@ -75,10 +75,16 @@ else
     flag_prune_P = 0;
 end
 
-if nargin > 7 && ~isempty(varargin{6})
+if nargin > 8 && ~isempty(varargin{6})
     max_clusters = varargin{6};
 else
-    max_clusters = 5;
+    max_clusters = max(3,min(6,ceil(length(data)/(10*fs))));
+end
+
+if nargin > 9 && ~isempty(varargin{7})
+    twave_shape = varargin{7};
+else
+    twave_shape = 'none'; % bi-phasic, min, max
 end
 
 if length(ecg_rpeaks_index)<3
@@ -110,7 +116,7 @@ ecg_rpeaks_index_org = ecg_rpeaks_index;
 ind_org = 1:length(ecg_rpeaks_index_org);
 
 
-[beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs, max_clusters);
+[beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs, max(2,max_clusters));
 % ecg_rpeaks_index_org = ecg_rpeaks_index;
 
 if flag_post_processing>0
@@ -123,7 +129,7 @@ ind_org(index_remove1) =[];
 
 rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
 N = min(60,ceil(length(ecg_rpeaks_index)/20));
-rr_intervals_ecg(rr_intervals_ecg>1.5*fs) = 1.5*fs;
+rr_intervals_ecg(rr_intervals_ecg>1.75*fs) = 1.75*fs;
 avg_intervals_ecg = movmean(rr_intervals_ecg,[N,N]);
 index_remove = 1+find(((diff(ecg_rpeaks_index(:))./avg_intervals_ecg-1)<-0.4 & ~(diff(ecg_rpeaks_index(:))>0.8*fs)) | diff(ecg_rpeaks_index(:))<0.25*fs);
 ecg_rpeaks_index(index_remove) =[];
@@ -164,7 +170,7 @@ try
 
     rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
     N = min(60,ceil(length(ecg_rpeaks_index)/20));
-    rr_intervals_ecg(rr_intervals_ecg>1.5*fs) = 1.5*fs;
+    rr_intervals_ecg(rr_intervals_ecg>1.5*fs) = 1.75*fs;
     avg_intervals_ecg = movmean(rr_intervals_ecg,[N,N]);
     avg_intervals_ecg = [avg_intervals_ecg;avg_intervals_ecg(end)];
     rr_intervals_ecg = [rr_intervals_ecg;rr_intervals_ecg(end)];
@@ -210,22 +216,42 @@ try
     fcm_features = ecg_blocks_normalized(:,sample_70ms:end);
     fcm_features = fillmissing(fcm_features,"linear");
 
-    fcm_exponent = 1.1;
-    % max_clusters = 5;
-    num_cluster = find_optimal_clusters(fcm_features, max_clusters, fcm_exponent);
-    fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=fcm_exponent, Verbose=0);
-    % fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
-    [fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
+    if max_clusters>1
+        fcm_exponent = 1.1;
+        % max_clusters = 5;
+        num_cluster = find_optimal_clusters(fcm_features, max_clusters, fcm_exponent);
+        fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=fcm_exponent, Verbose=0);
+        % fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
+        [fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
 
-    num_cluster = size(fcm_centers,1);
+    else
+        num_cluster = 1;
+    end
 
+    % if num_cluster>1
+    %     Rt = corrcoef(fcm_centers(:,end-size(t_bloks,2):end)','Rows','complete');
+    %     Rqrs = corrcoef(fcm_centers(:,1:end-size(t_bloks,2))','Rows','complete');
+    %     while  min([cond(Rqrs),cond(Rt),cond(Rqrs+Rt)])>20 && num_cluster>1
+    %         num_cluster = num_cluster-1;
+    %         fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=fcm_exponent, Verbose=0);
+    %         % fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
+    %         [fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
+    %         if num_cluster==1
+    %             break
+    %         else
+    %             Rt = corrcoef(fcm_centers(:,end-size(t_bloks,2):end)','Rows','complete');
+    %             Rqrs = corrcoef(fcm_centers(:,1:end-size(t_bloks,2))','Rows','complete');
+    %         end
+    %     end
+    %
+    % end
 
     if num_cluster>1
         [~,cluster_fcm] = max(fcm_part_mat);
     else
         cluster_fcm = ones(1,size(fcm_features,1));
     end
-    num_cls = size(fcm_centers,1);
+    num_cls = num_cluster;
     index_clustering = [];
     count_cls = zeros(num_cls,1);
     for c = 1:num_cls
@@ -234,16 +260,16 @@ try
         index_clustering = [index_clustering;[index_temp(:),c*ones(length(index_temp),1)]];
     end
 
-    % temp_coef = corrcoef(fcm_centers');
-    if length(cluster_fcm)<5
-        index_clustering(:,2)=1;
-    else
-        index_clustering_org = index_clustering;
-        for c = find(count_cls(:)'<3)
-            [~,cls_max] = max(count_cls);
-            index_clustering(index_clustering_org(:,2)==c,2) = cls_max;
-        end
-    end
+
+    % if length(cluster_fcm)<5
+    %     index_clustering(:,2)=1;
+    % else
+    %     index_clustering_org = index_clustering;
+    %     for c = find(count_cls(:)'<3)
+    %         [~,cls_max] = max(count_cls);
+    %         index_clustering(index_clustering_org(:,2)==c,2) = cls_max;
+    %     end
+    % end
 
     num_cls = unique(index_clustering(:,2));
 
@@ -374,7 +400,7 @@ try
         else
             starting_peak_p = ecg_rpeaks_index(p);
         end
-        
+
         this_thr = 0.1*max(data_r_env(starting_peak_p-3*sample_10ms:starting_peak_p)) + md_data_r_env;
         max_sample_qrson_thr = 2*sample_100ms+1 - find(data_r_env(starting_peak_p-2*sample_100ms:starting_peak_p) < this_thr, 1 ,"last");
         max_sample_qrson_thr = min(max_sample_qrson_thr,sample_100ms+sample_70ms);
@@ -413,6 +439,7 @@ try
             temp = ecg_denoised_std(this_qrson_index);
         end
 
+
         if length(temp)>min(5*sample_10ms,round(avg_intervals_ecg(p)/10)) && mean(temp(end-2*sample_10ms:end )) < 3*mean(temp(1:2*sample_10ms))
             a = polyfit(1:length(temp),temp,2);
             if a(1)>0
@@ -425,6 +452,17 @@ try
                 ind_drop_pq = 1;
             end
 
+            this_qrson_index = this_qrson_index(ind_drop_pq:end);
+        end
+
+        pwave_temp = data_bias(this_qrson_index(1)-sample_10ms*3:this_qrson_index(end));
+        [TF,P] = islocalmax(pwave_temp,'MaxNumExtrema',1,'MinProminence',0.05*val_rpeak);
+        TF_pmax = find(TF);
+        [TF,P] = islocalmin(pwave_temp,'MaxNumExtrema',1,'MinProminence',0.05*val_rpeak);
+        TF_pmin = find(TF);
+
+        if ~isempty(TF_pmax) && ~isempty(TF_pmin) && abs(TF_pmax-TF_pmin)>3*sample_10ms && length(pwave_temp)-max(TF_pmax,TF_pmin)>3*sample_10ms && max(TF_pmax,TF_pmin)>5*sample_10ms
+            ind_drop_pq = max(1,max(TF_pmax,TF_pmin)-sample_10ms*5);
             this_qrson_index = this_qrson_index(ind_drop_pq:end);
         end
 
@@ -1058,14 +1096,12 @@ try
     end
 
     ecg_Twave = lp_filter_zero_phase(ecg_Twave, 10/fs);
-
+    ecg_Twave_org = ecg_Twave;
     % [aa_hist,bb_hist] = hist(ecg_denoised_nT,100);
     % [~,idx_max] = max(aa_hist);
     % ecg_denoised_nT = ecg_denoised_nT - bb_hist(idx_max);
 
-    ecg_T_std = movstd(ecg_Twave,[win_sample_T,win_sample_T]);
-    ecg_T_ndiff = [zeros(1,win_sample_T-ceil(win_sample_T/2)), ecg_Twave(win_sample_T+1:end) - ecg_Twave(1:end-win_sample_T),zeros(1,win_sample_T-floor(win_sample_T/2))];
-    ecg_T_ndiff = abs(ecg_T_ndiff);
+    data_length = length(ecg_Twave);
 
     T_peaks = nan(length(ecg_rpeaks_index),1);
     before_peak = nan(length(ecg_rpeaks_index),1);
@@ -1073,53 +1109,161 @@ try
     biphasic_shape = nan(length(ecg_rpeaks_index),1);
     T_type = cell(length(ecg_rpeaks_index),1);
 
-    for p = 2:length(ecg_rpeaks_index)-1
+    for c = 1:length(num_cls)
+        ind_c = index_clustering(index_clustering(:,2)==num_cls(c),1);
+        cluster_ecg_beats = nan(length(ind_c),2*sample_350ms);
+        cluster_ecg_samples = zeros(length(ind_c),1);
+        cluster_qrs_samples = zeros(length(ind_c),1);
 
-        this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+min(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms);
+        for pcls = 1:length(ind_c)
+            p = ind_c(pcls)+1;
+            cluster_qrs_samples(pcls,1)= ecg_qrsoff_index(p) - ecg_qrson_index(p);
+            this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+...
+                min((sample_350ms+sample_100ms)*max(1,avg_intervals_ecg(p)/fs) , min(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms));
 
-        if any(this_T_index>length(data))
-            continue;
+            if any(this_T_index>length(data))
+                continue;
+            end
+
+            if length(this_T_index)<2*sample_70ms
+                this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+sample_250ms;
+            elseif  length(this_T_index)>2*sample_350ms
+                this_T_index = this_T_index(1:2*sample_350ms);
+            end
+            temp = ecg_Twave(this_T_index);
+            cluster_ecg_beats(pcls,1:length(temp)) = temp;
+            cluster_ecg_samples(pcls,1) = length(temp);
+
         end
 
-        if length(this_T_index)<2*sample_70ms
-            this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+sample_250ms;
-        end
+        qrs_dur_cls = median(cluster_qrs_samples,'omitnan');
+        avg_twave = mean(cluster_ecg_beats(:,1:round(mean(cluster_ecg_samples))), 1, 'omitmissing');
+        avg_twave_smoothed = movmean(avg_twave,[sample_10ms,sample_10ms]);
+        avg_twave_smoothed = fillmissing(avg_twave_smoothed,"nearest");
+        avg_twave_cls{c} = avg_twave_smoothed;
+        temp = avg_twave_smoothed(3*sample_10ms+1:end);
 
-        temp = ecg_Twave(this_T_index(5*sample_10ms+1:min(length(this_T_index),round(max(sample_350ms,avg_intervals_ecg(p)-2*sample_250ms)) ) ));
-        % a = polyfit(linspace(-1,1, length(temp)),temp,6);
-        % temp = polyval(a,linspace(-1,1, length(temp)));
-
-        [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms);
+        [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.1*std(temp));
         TF_max = find(TF);
         % temp2.*(temp-median(temp(1:20)))/max(temp2)
-        [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms);
+        [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.1*std(temp));
         TF_min =find(TF);
 
-        if isempty(TF_max) && isempty(TF_min)
-            temp(1)=ecg_Twave(this_T_index(1));
-            temp = temp  - linspace(temp(1),temp(end),length(temp));
-
-            [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms);
-            TF_max = find(TF);
-            [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms);
-            TF_min =find(TF);
+        cond_Tpeak = 0;
+        if isempty(TF_max) && isempty(TF_min) || (strcmp(twave_shape, 'bi-phasic') && (isempty(TF_max) || isempty(TF_min)))
+            cond_Tpeak = 1;
+            if strcmp(twave_shape, 'bi-phasic')
+                if isempty(TF_max)
+                    [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.01*std(temp));
+                    TF_max = find(TF);
+                end
+                if isempty(TF_min)
+                    [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.01*std(temp));
+                    TF_min =find(TF);
+                end
+            else
+                [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.05*std(temp));
+                TF_max = find(TF);
+                [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.05*std(temp));
+                TF_min =find(TF);
+            end
 
         end
+
+        if isempty(TF_max) && isempty(TF_min) || (strcmp(twave_shape, 'bi-phasic') && (isempty(TF_max) || isempty(TF_min)))
+            cond_Tpeak = 2;
+            temp = temp  - linspace(mean(temp(1:2*sample_10ms)),mean(temp(end-2*sample_10ms:end)),length(temp));
+            if strcmp(twave_shape, 'bi-phasic')
+                if isempty(TF_max)
+                    [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.01*std(temp));
+                    TF_max = find(TF);
+                end
+                if isempty(TF_min)
+                    [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.01*std(temp));
+                    TF_min =find(TF);
+                end
+            else
+                [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.05*std(temp));
+                TF_max = find(TF);
+                [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.05*std(temp));
+                TF_min =find(TF);
+            end
+
+        end
+
+        max_size = fs;
+
+        if ~isempty(TF_max) && ~isempty(TF_min)
+
+            % gain_twave = 1;min(1.1,max(1,median(avg_intervals_ecg,'omitmissing')/fs));
+            thr_twavedur = 3*sample_100ms ;%-min(sample_100ms,qrs_dur_cls));
+
+            [P_max,ind_max] = max(Pv_max);
+            [P_min,ind_min] = max(Pv_min);
+
+            if max(P_max/P_min ,P_min/P_max) < 4 && ~strcmp(twave_shape, 'bi-phasic') && (ind_max< thr_twavedur || ind_min< thr_twavedur )
+
+                if  any(TF_max> thr_twavedur) || any(TF_min>thr_twavedur)
+                    max_size = max([TF_max,TF_min])+5*sample_10ms;
+                end
+
+                if P_max/P_min<1.2
+                    Pv_max(TF_max(TF_max>thr_twavedur)) = 0;
+                    TF_max(TF_max>thr_twavedur) = [];
+                elseif P_min/P_max<1.2
+                    Pv_min(TF_min(TF_min>thr_twavedur)) = 0;
+                    TF_min(TF_min>thr_twavedur) = [];
+                end
+
+                [P_max,ind_max] = max(Pv_max);
+                [P_min,ind_min] = max(Pv_min);
+                if ind_min - ind_max> 0
+                    level_thr = ( mean(temp(1:ind_max))-mean(temp(ind_min:end)) ) / std(temp);
+                else
+                    level_thr = ( mean(temp(ind_max:end)) - mean(temp(1:ind_min)) ) / std(temp);
+                end
+
+                if ~isempty(TF_max) && ~isempty(TF_min) && (max(P_max/P_min ,P_min/P_max) >= 1.5 || max(P_max,P_min)< 0.75*std(temp) || level_thr>1.25 )&& max(P_max/P_min ,P_min/P_max) < 3 && ~isempty(TF_max) && ~isempty(TF_min)
+
+                    if (level_thr>1.75 || abs(ind_min - ind_max)/ min(min(TF_max),min(TF_min)) > 1 || max(ind_min,ind_max)>0.9*thr_twavedur)...
+                            && (max(ind_min,ind_max)>0.75*thr_twavedur ||  abs(ind_min - ind_max)> sample_100ms) && max(ind_min,ind_max)>0.7*thr_twavedur
+
+                        if ind_min - ind_max>0 && (P_min/P_max<1.2 || P_min< 0.75*std(temp) || level_thr>1.75 ) && P_min/P_max<2
+                            max_size = round(max([0.75*thr_twavedur, ind_min , ind_max] )+5*sample_10ms);
+                            Pv_min(ind_min) = 0;
+                            TF_min(TF_min==ind_min) = [];
+                        elseif ind_max - ind_min >0 && (P_max/P_min<1.2 || P_max< 0.75*std(temp) || level_thr>1.75 ) && P_max/P_min<2
+                            max_size = round(max([0.75*thr_twavedur, ind_min , ind_max] )+5*sample_10ms);
+                            Pv_max(ind_max) = 0;
+                            TF_max(TF_max==ind_max) = [];
+                        end
+                    end
+                end
+
+            end
+
+        end
+
+        temp = temp  - linspace(mean(temp(1:2*sample_10ms)),mean(temp(end-2*sample_10ms:end)),length(temp));
+        temp = temp/100;
 
         if ~isempty(TF_max)
             P = Pv_max;
-            if length(TF_max)==1
+            if isscalar(TF_max)
                 P_max=P(TF_max) + abs(temp(TF_max));
                 P(TF_max) = 0;
                 [P_maxU, TF_maxU] = max(P);
-                TF_max(2) = TF_maxU;
+                if P_maxU>0
+                    TF_max(2) = TF_maxU;
+                end
+
             else
                 P_max=P(TF_max(1))+ abs(temp(TF_max(1)));
                 P_maxU=P(TF_max(2))+ abs(temp(TF_max(2)));
-                if P_max < P_maxU
+                if P_max < P_maxU  && P(TF_max(1))/P(TF_max(2))<4
                     TF_max = flip(TF_max);
-                    P_max=P(TF_max(1));
-                    P_maxU=P(TF_max(2));
+                    P_max=P(TF_max(1))+ abs(temp(TF_max(1)));
+                    P_maxU=P(TF_max(2))+ abs(temp(TF_max(2)));
                 end
             end
         else
@@ -1127,22 +1271,24 @@ try
             P_maxU = 10^-12;
         end
 
-        TF_max = 5*sample_10ms+TF_max;
+        TF_max = 3*sample_10ms+TF_max;
 
         if ~isempty(TF_min)
             P = Pv_min;
-            if length(TF_min)==1
+            if isscalar(TF_min)
                 P_min=P(TF_min)+ abs(temp(TF_min));
                 P(TF_min) = 0;
                 [P_minU, TF_minU] = max(P);
-                TF_min(2) = TF_minU;
+                if P_minU>0
+                    TF_min(2) = TF_minU;
+                end
             else
                 P_min=P(TF_min(1))+ abs(temp(TF_min(1)));
                 P_minU=P(TF_min(2))+ abs(temp(TF_min(2)));
-                if P_min < P_minU
+                if P_min < P_minU && P(TF_min(1))/P(TF_min(2))<4
                     TF_min = flip(TF_min);
-                    P_min=P(TF_min(1));
-                    P_minU=P(TF_min(2));
+                    P_min=P(TF_min(1))+ abs(temp(TF_min(1)));
+                    P_minU=P(TF_min(2))+ abs(temp(TF_min(2)));
                 end
             end
 
@@ -1151,58 +1297,313 @@ try
             P_minU = 10^-12;
         end
 
-        TF_min = 5*sample_10ms+TF_min;
+        TF_min = 3*sample_10ms+TF_min;
 
-        if P_max/P_min > 3
-            T_type{p} = 'max';
-            before_peak(p) = TF_max(1);
-            after_peak(p) = TF_max(1);
-            T_peaks(p) = this_T_index(TF_max(1));
-        elseif P_min/P_max > 3
-            T_type{p} = 'min';
-            before_peak(p) = TF_min(1);
-            after_peak(p) = TF_min(1);
-            T_peaks(p) = this_T_index(TF_min(1));
-        elseif (max(P_max/P_min ,P_min/P_max) < 2) && (P_max>10^-10 || P_min>10^-10) % && (min(P_min,P_max)/max(P_minU,P_maxU)>10)
-            T_type{p} = 'bi-phasic';
-            before_peak(p) = min(TF_min(1), TF_max(1));
-            after_peak(p) = max(TF_min(1), TF_max(1));
-            if P_min/P_max > 1
-                biphasic_shape(p) = 1;
-                T_peaks(p) = this_T_index(TF_min(1));
+
+
+        if strcmp(twave_shape, 'bi-phasic') || (strcmp(twave_shape, 'none') && ~isempty(TF_max) && ~isempty(TF_min) && (max(TF_min(1),TF_max(1))< sample_350ms)  && ...
+                ((max(P_max/P_min ,P_min/P_max) < 2  && abs(TF_min(1) - TF_max(1))<sample_100ms+5*sample_10ms ) || (((max(P_max/P_min ,P_min/P_max) < 3) && abs(TF_min(1) - TF_max(1))<sample_100ms+2*sample_10ms) ) ...
+                || (((max(P_max/P_min ,P_min/P_max) < 4) && abs(TF_min(1) - TF_max(1))<sample_100ms)  && ((P_max>10^-10 || P_min>10^-10) && (min(P_min,P_max)/max(P_minU,P_maxU)>10)) )))
+
+            T_type_cls{c} = 'bi-phasic';
+            before_peak_cls(c) = min(TF_min(1), TF_max(1));
+            after_peak_cls(c) = max(TF_min(1), TF_max(1));
+            first_maxpeak(c) = TF_min(1) - TF_max(1) ;
+            if P_min/P_max > 1 || (P_min/P_max >= 0.99 && TF_min(1)>TF_max(1))
+                biphasic_shape_cls(c) = 1;
+                T_peaks_cls(c) = TF_min(1);
             else
-                biphasic_shape(p) = 2;
-                T_peaks(p) = this_T_index(TF_max(1));
+                biphasic_shape_cls(c) = 2;
+                T_peaks_cls(c) = TF_max(1);
             end
-        elseif P_max/P_min > 2 && (TF_max(2)>TF_max(1) && TF_max(2)>TF_min(1) && TF_max(1)<TF_min(1)) % there is U wave
-            T_type{p} = 'Umax';
-            before_peak(p) = TF_max(1);
-            after_peak(p) = TF_max(1);
-            T_peaks(p) = this_T_index(TF_max(1));
-            biphasic_shape(p) = round(max(min(length(this_T_index),sample_350ms),(TF_max(2)+2*TF_min(1))/3));
-        elseif P_min/P_max > 2  && (TF_min(2)>TF_max(1) && TF_min(2)>TF_min(1)&& TF_max(1)>TF_min(1)) % there is U wave
-            T_type{p} = 'Umin';
-            before_peak(p) = TF_min(1);
-            after_peak(p) = TF_min(1);
-            T_peaks(p) = this_T_index(TF_min(1));
-            biphasic_shape(p) = round(max(min(length(this_T_index),sample_350ms),(TF_min(2)+2*TF_max(1))/3));
+
+        elseif (strcmp(twave_shape, 'none') && P_min/P_max > 3) || strcmp(twave_shape, 'min')
+            T_type_cls{c} = 'min';
+            before_peak_cls(c) = TF_min(1);
+            after_peak_cls(c) = TF_min(1);
+            T_peaks_cls(c) = TF_min(1);
+
+        elseif (strcmp(twave_shape, 'none') && P_max/P_min > 3) || strcmp(twave_shape, 'max')
+            T_type_cls{c} = 'max';
+            before_peak_cls(c) = TF_max(1);
+            after_peak_cls(c) = TF_max(1);
+            T_peaks_cls(c) = TF_max(1);
+
+        elseif length(TF_max)>1 && P_max/P_min > 2 && (TF_max(2)>TF_max(1) && TF_max(2)>TF_min(1) && TF_max(1)<TF_min(1)) % there is U wave
+            T_type_cls{c} = 'Umax';
+            before_peak_cls(c) = TF_max(1);
+            after_peak_cls(c) = TF_max(1);
+            T_peaks_cls(c) = TF_max(1);
+            biphasic_shape_cls(c) = round(max(min(length(this_T_index),sample_350ms),(TF_max(2)+2*TF_min(1))/3));
+        elseif length(TF_min)>1 && P_min/P_max > 2  && (TF_min(2)>TF_max(1) && TF_min(2)>TF_min(1)&& TF_max(1)>TF_min(1)) % there is U wave
+            T_type_cls{c} = 'Umin';
+            before_peak_cls(c) = TF_min(1);
+            after_peak_cls(c) = TF_min(1);
+            T_peaks_cls(c) = TF_min(1);
+            biphasic_shape_cls(c) = round(max(min(length(this_T_index),sample_350ms),(TF_min(2)+2*TF_max(1))/3));
         else
             if P_max/P_min >= 1
-                T_type{p} = 'Nmax';
-                before_peak(p) = TF_max(1);
-                after_peak(p) = TF_max(1);
-                T_peaks(p) = this_T_index(TF_max(1));
-                biphasic_shape(p) = sample_350ms;
+                T_type_cls{c} = 'Nmax';
+                before_peak_cls(c) = TF_max(1);
+                after_peak_cls(c) = TF_max(1);
+                T_peaks_cls(c) = TF_max(1);
+                biphasic_shape_cls(c) = sample_350ms;
             elseif P_min/P_max > 1
-                T_type{p} = 'Nmin';
-                before_peak(p) = TF_min(1);
-                after_peak(p) = TF_min(1);
-                T_peaks(p) = this_T_index(TF_min(1));
-                biphasic_shape(p) = sample_350ms;
+                T_type_cls{c} = 'Nmin';
+                before_peak_cls(c) = TF_min(1);
+                after_peak_cls(c) = TF_min(1);
+                T_peaks_cls(c) = TF_min(1);
+                biphasic_shape_cls(c) = sample_350ms;
             end
         end
 
+        disp(T_type_cls{c})
+        if ~strcmp(T_type_cls{c},'bi-phasic')
+            yu=0;
+        end
+
+        for pcls = 1:length(ind_c)
+            p = ind_c(pcls)+1;
+            this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+...
+                min((sample_350ms+sample_100ms)*max(1,avg_intervals_ecg(p)/fs) , min(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms));
+
+            if any(this_T_index>length(data))
+                continue;
+            end
+
+            if length(this_T_index)<2*sample_70ms
+                this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+sample_250ms;
+            elseif  length(this_T_index)>2*sample_350ms
+                this_T_index = this_T_index(1:2*sample_350ms);
+            elseif length(this_T_index)> max_size
+                this_T_index = this_T_index(1:max_size);
+            end
+
+
+            % a = polyfit(linspace(-1,1, length(temp)),temp,6);
+            % temp = polyval(a,linspace(-1,1, length(temp)));
+
+            counter_p = 1;
+            while counter_p<8
+                if counter_p>1
+                    this_T_index = this_T_index(1):this_T_index(1)+T_minL-1;
+                end
+
+                temp = ecg_Twave(this_T_index(3*sample_10ms+1:length(this_T_index)) );
+                TF_max = [];
+                TF_min = [];
+
+                if   cond_Tpeak ==0
+                    [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.1*std(temp));
+                    TF_max = find(TF);
+                    % temp2.*(temp-median(temp(1:20)))/max(temp2)
+                    [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.1*std(temp));
+                    TF_min =find(TF);
+                end
+
+                if cond_Tpeak ==1 || (isempty(TF_max) && isempty(TF_min)) || ((isempty(TF_max) || isempty(TF_min)) && strcmp(T_type_cls{c},'bi-phasic'))
+                    if strcmp(T_type_cls{c},'bi-phasic')
+                        if isempty(TF_max)
+                            [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.01*std(temp));
+                            TF_max = find(TF);
+                        end
+                        if isempty(TF_min)
+                            [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.01*std(temp));
+                            TF_min =find(TF);
+                        end
+                    else
+                        [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.05*std(temp));
+                        TF_max = find(TF);
+                        [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.05*std(temp));
+                        TF_min =find(TF);
+                    end
+
+                end
+
+                if cond_Tpeak ==2 || (isempty(TF_max) && isempty(TF_min)) || ((isempty(TF_max) || isempty(TF_min)) && strcmp(T_type_cls{c},'bi-phasic'))
+
+                    temp = temp  - linspace(mean(temp(1:2*sample_10ms)),mean(temp(end-2*sample_10ms:end)),length(temp));
+                    if strcmp(T_type_cls{c},'bi-phasic')
+                        if isempty(TF_max)
+                            [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.01*std(temp));
+                            TF_max = find(TF);
+                        end
+                        if isempty(TF_min)
+                            [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.01*std(temp));
+                            TF_min =find(TF);
+                        end
+                    else
+                        [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.05*std(temp));
+                        TF_max = find(TF);
+                        [TF,Pv_min] = islocalmin(temp, 'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.05*std(temp));
+                        TF_min =find(TF);
+                    end
+                end
+
+                temp = temp  - linspace(mean(temp(1:2*sample_10ms)),mean(temp(end-2*sample_10ms:end)),length(temp));
+                temp = temp/100;
+                % temp = temp  - mean(temp);
+                if ~isempty(TF_max)
+                    P = Pv_max;
+                    if length(TF_max)==1
+                        P_max=P(TF_max) + abs(temp(TF_max));
+                        P(TF_max) = 0;
+                        [P_maxU, TF_maxU] = max(P);
+                        if P_maxU>0
+                            TF_max(2) = TF_maxU;
+                        end
+                    else
+                        P_max=P(TF_max(1))+ abs(temp(TF_max(1)));
+                        P_maxU=P(TF_max(2))+ abs(temp(TF_max(2)));
+                        if P_max < P_maxU  && P(TF_max(1))/P(TF_max(2))<4
+                            TF_max = flip(TF_max);
+                            P_max=P(TF_max(1))+ abs(temp(TF_max(1)));
+                            P_maxU=P(TF_max(2))+ abs(temp(TF_max(2)));
+                        end
+                    end
+                else
+                    P_max = 10^-10;
+                    P_maxU = 10^-12;
+                end
+
+                TF_max = 3*sample_10ms+TF_max;
+
+                if ~isempty(TF_min)
+                    P = Pv_min;
+                    if length(TF_min)==1
+                        P_min=P(TF_min)+ abs(temp(TF_min));
+                        P(TF_min) = 0;
+                        [P_minU, TF_minU] = max(P);
+                        if P_minU>0
+                            TF_min(2) = TF_minU;
+                        end
+                        TF_min(2) = TF_minU;
+                    else
+                        P_min=P(TF_min(1))+ abs(temp(TF_min(1)));
+                        P_minU=P(TF_min(2))+ abs(temp(TF_min(2)));
+                        if P_min < P_minU && P(TF_min(1))/P(TF_min(2))<4
+                            TF_min = flip(TF_min);
+                            P_min=P(TF_min(1))+ abs(temp(TF_min(1)));
+                            P_minU=P(TF_min(2))+ abs(temp(TF_min(2)));
+                        end
+                    end
+
+                else
+                    P_min = 10^-10;
+                    P_minU = 10^-12;
+                end
+
+
+                TF_min = 3*sample_10ms+TF_min;
+                try
+                    if strcmp(T_type_cls{c},'max')
+                        % if P_max/P_min <2
+                        %     error('Twave modifying');
+                        % end
+                        T_type{p} = 'max';
+                        before_peak(p) = TF_max(1);
+                        after_peak(p) = TF_max(1);
+                        T_peaks(p) = this_T_index(TF_max(1));
+
+                    elseif strcmp(T_type_cls{c},'min')
+                        % if P_min/P_max <2
+                        %     error('Twave modifying');
+                        % end
+                        T_type{p} = 'min';
+                        before_peak(p) = TF_min(1);
+                        after_peak(p) = TF_min(1);
+                        T_peaks(p) = this_T_index(TF_min(1));
+
+                    elseif strcmp(T_type_cls{c},'bi-phasic')
+                        % if (max(P_max/P_min ,P_min/P_max) > 10)
+                        %     error('Twave modifying');
+                        % elseif (first_maxpeak(c) >0 && TF_max(1)>=TF_min(1)) || (first_maxpeak(c) <=0 && TF_max(1)<=TF_min(1))
+                        %     error('Twave modifying');
+                        % elseif  abs(TF_max(1)-TF_min(1)) < abs(first_maxpeak(c))/2
+                        %     error('Twave modifying');
+                        % end
+                        T_type{p} = 'bi-phasic';
+                        before_peak(p) = min(TF_min(1), TF_max(1));
+                        after_peak(p) = max(TF_min(1), TF_max(1));
+                        if biphasic_shape_cls(c)==1
+                            biphasic_shape(p) = 1;
+                            T_peaks(p) = this_T_index(TF_min(1));
+                        else
+                            biphasic_shape(p) = 2;
+                            T_peaks(p) = this_T_index(TF_max(1));
+                        end
+
+                    elseif strcmp(T_type_cls{c},'Umax') % there is U wave
+                        % if P_max/P_min < 2
+                        %     error('Twave modifying');
+                        % end
+                        T_type{p} = 'Umax';
+                        before_peak(p) = TF_max(1);
+                        after_peak(p) = TF_max(1);
+                        T_peaks(p) = this_T_index(TF_max(1));
+                        biphasic_shape(p) = round(max(min(length(this_T_index),sample_350ms),(TF_max(2)+2*TF_min(1))/3));
+
+                    elseif strcmp(T_type_cls{c},'Umin') % there is U wave
+                        % if P_min/P_max < 2
+                        %     error('Twave modifying');
+                        % end
+                        T_type{p} = 'Umin';
+                        before_peak(p) = TF_min(1);
+                        after_peak(p) = TF_min(1);
+                        T_peaks(p) = this_T_index(TF_min(1));
+                        biphasic_shape(p) = round(max(min(length(this_T_index),sample_350ms),(TF_min(2)+2*TF_max(1))/3));
+
+                    else
+                        if strcmp(T_type_cls{c},'Nmax')
+                            T_type{p} = 'Nmax';
+                            before_peak(p) = TF_max(1);
+                            after_peak(p) = TF_max(1);
+                            T_peaks(p) = this_T_index(TF_max(1));
+                            biphasic_shape(p) = sample_350ms;
+                        elseif  strcmp(T_type_cls{c},'Nmin')
+                            T_type{p} = 'Nmin';
+                            before_peak(p) = TF_min(1);
+                            after_peak(p) = TF_min(1);
+                            T_peaks(p) = this_T_index(TF_min(1));
+                            biphasic_shape(p) = sample_350ms;
+                        end
+                    end
+                    this_T_index_cell{p} = this_T_index;
+                    if isempty(T_type{p})
+                        yu=0;
+                    end
+                    break
+
+                catch
+
+                    T_minL = min( data_length - this_T_index(1),length(avg_twave_cls{c}));
+                    ecg_Twave(this_T_index(1):this_T_index(1)+T_minL-1) = (ecg_Twave(this_T_index(1):this_T_index(1)+T_minL-1)  + counter_p*avg_twave_cls{c}(1:T_minL))/(1+counter_p);
+                    counter_p = counter_p + 1;
+                    if counter_p==7
+                        ecg_Twave(this_T_index(1):this_T_index(1)+T_minL-1) = avg_twave_cls{c}(1:T_minL);
+                    end
+                    if counter_p==8
+                        % T_type{p} = T_type_cls{c};
+                        % before_peak(p) = nan;
+                        % after_peak(p) = nan;
+                        % T_peaks(p) = nan;
+                        % biphasic_shape(p) = nan;
+                        % break;
+                        error('Not-converged T-wave')
+                    end
+                end
+            end
+
+
+        end
+
+
     end
+
+    % ecg_Twave = ecg_Twave_org;
+    ecg_T_std = movstd(ecg_Twave,[win_sample_T,win_sample_T]);
+    ecg_T_ndiff = [zeros(1,win_sample_T-ceil(win_sample_T/2)), ecg_Twave(win_sample_T+1:end) - ecg_Twave(1:end-win_sample_T),zeros(1,win_sample_T-floor(win_sample_T/2))];
+    ecg_T_ndiff = abs(ecg_T_ndiff);
 
     % if flag_post_processing>0
     %     before_peak_cell = cell(length(num_cls),1);
@@ -1248,7 +1649,12 @@ try
         if isnan(after_peak(p))
             after_peak(p) = 1;
         end
-        this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+min(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms);
+        % this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+min(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms);
+
+        this_T_index = this_T_index_cell{p};
+        % if before_peak(p)> 3*length(this_T_index)/4
+        %     this_T_index = unique([this_T_index,this_T_index_cell{p}]);
+        % end
 
         if any(this_T_index>length(data))
             continue;
@@ -1260,16 +1666,16 @@ try
 
         T_dur = length(this_T_index);
         if contains(T_type{p},'max')
-            T_peaks(p) = this_T_index(before_peak(p));
+            % T_peaks(p) = this_T_index(before_peak(p));
         elseif contains(T_type{p},'min')
-            T_peaks(p) = this_T_index(before_peak(p));
+            % T_peaks(p) = this_T_index(before_peak(p));
         elseif contains(T_type{p},'bi-phasic')
-            T_peaks(p) = this_T_index(before_peak(p));
+            % T_peaks(p) = this_T_index(before_peak(p));
         elseif contains(T_type{p},'Umax') ||  contains(T_type{p},'Umin')
-            T_peaks(p) = this_T_index(before_peak(p));
+            % T_peaks(p) = this_T_index(before_peak(p));
             this_T_index = this_T_index(1: min(T_dur,max(after_peak(p)+sample_70ms,biphasic_shape(p))));
         elseif contains(T_type{p},'Nmax') ||  contains(T_type{p},'Nmin')
-            T_peaks(p) = this_T_index(before_peak(p));
+            % T_peaks(p) = this_T_index(before_peak(p));
         end
 
         try
@@ -1775,6 +2181,10 @@ try
 
         % this_P_index = ecg_qrsoff_index(p)-round(min(0.66*(ecg_Toff_index(p-1)-ecg_qrsoff_index(p))),  (sample_100ms+sample_70ms)*max(1,avg_intervals_ecg(p)/(2*sample_350ms))):ecg_qrsoff_index(p);
 
+        if ecg_rpeaks_index(p)>4541.5*fs
+            yu=0;
+        end
+
         temp_back = min( 2*sample_250ms, max(min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms,floor(0.4*rr_intervals_ecg(p-1))) ,min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1)))));
         temp_back = min(ecg_qrson_index(p)-ecg_Toff_index(p-1)-sample_10ms , temp_back);
         if temp_back<=sample_70ms
@@ -1858,6 +2268,10 @@ try
 
     for p = 2:length(ecg_rpeaks_index)-1
 
+        if ecg_rpeaks_index(p)>4541.5*fs
+            yu=0;
+        end
+
         if isnan(Pafter_peak(p))
             Pafter_peak(p) = 1;
         end
@@ -1889,7 +2303,13 @@ try
 
 
         try
-            this_bP_index = this_P_index(1:Pbefore_peak(p));
+            if Pbefore_peak(p)>4*sample_10ms
+                this_bP_index = this_P_index(1:Pbefore_peak(p)-2*sample_10ms);
+            elseif Pbefore_peak(p)>3*sample_10ms
+                this_bP_index = this_P_index(1:Pbefore_peak(p)-sample_10ms);
+            else
+                this_bP_index = this_P_index(1:Pbefore_peak(p));
+            end
         catch
             this_bP_index = this_P_index(1:round(Pbefore_peak(p)/2));
         end
@@ -1911,7 +2331,11 @@ try
         mean_init_Poff_1{1,p-1} = [ecg_P_env(this_bP_index(1:dur_this));ecg_P_std(this_bP_index(1:dur_this))];
         mean_init_Poff_2{1,p-1} = [ecg_P_env(this_bP_index(dur_this:end));ecg_P_std(this_bP_index(dur_this:end))];
 
-        this_aP_index = this_P_index(Pafter_peak(p):end);
+        if length(this_P_index) - Pbefore_peak(p)>3*sample_10ms
+            this_aP_index = this_P_index(Pafter_peak(p)+sample_10ms:end);
+        else
+            this_aP_index = this_P_index(Pafter_peak(p):end);
+        end
 
         if isempty(this_aP_index)
             this_aP_index = this_P_index(ceil(Pbefore_peak(p)/2):end);
@@ -2036,7 +2460,7 @@ try
         end
 
         % if  contains(type_det , 'on')
-        cls_onoff_det{c} = round(cls_onoff_det{c}) ; % diff correction
+        cls_onoff_det{c} = round(cls_onoff_det{c}) + sample_10ms; % diff correction
         % else
         %     cls_onoff_det{c} = round(cls_onoff_det{c}) ; % diff correction
         % end
@@ -2371,14 +2795,17 @@ end
 end
 
 
-function [beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r] = preprocess_rpeaks(data, ecg_rpeaks_index, fs, max_clusters)
+function [beat_quality_score, ecg_rpeaks_index, P_rpeaks_index, max_min_r, index_clustering] = preprocess_rpeaks(data, ecg_rpeaks_index, fs, max_clusters)
 
 fs_fd = fs;
 sample_10ms = round(fs_fd*0.01);
 sample_70ms = round(fs_fd*0.07);
 sample_100ms = round(fs_fd*0.1);
+sample_200ms = round(fs_fd*0.2);
 sample_250ms = round(fs_fd*0.25);
-sample_350ms = round(fs_fd*0.35);
+sample_450ms = round(fs_fd*0.45);
+
+% Designing an optimal high-pass filter for QRS
 
 rpeak_intervals = cell(length(ecg_rpeaks_index)-2,1);
 for p = 2:length(ecg_rpeaks_index)-1
@@ -2388,7 +2815,7 @@ rpeak_intervals_mat = cell2mat( rpeak_intervals);
 L = length(rpeak_intervals_mat);
 
 Cxy = zeros(1,17);
-for f = 1:16 % in Hz
+for f = 1:16 % in Hz/2
     data_r = lp_filter_zero_phase(data, 35/fs);
     data_rh = data_r;
     data_r = data_r - lp_filter_zero_phase(data_r,0.5*f/fs);
@@ -2399,11 +2826,13 @@ for f = 1:16 % in Hz
     Cxy(f) = temp_coef(1,2);
 end
 Cxy(f+1) =0;
-f = find(Cxy<0.975,1,'first')/2;
+f_opt_qrs = find(Cxy<0.975,1,'first')/2;
 
+% Filtering ECG for enhancing QRS and adjust R-peak for different kind of
+% beats in cases with different ECG beat shapes such as PVC
 
 data_r = lp_filter_zero_phase(data, 35/fs);
-data_r = data_r - lp_filter_zero_phase(data_r,f/fs);
+data_r = data_r - lp_filter_zero_phase(data_r,f_opt_qrs/fs);
 
 P_rpeaks_index = ecg_rpeaks_index;
 max_min_r = 0*ecg_rpeaks_index;
@@ -2417,43 +2846,43 @@ for p = 1:length(ecg_rpeaks_index)
     [TF,P] = islocalmin(data_r(this_qrs_index),'MaxNumExtrema',1);
     TF_min = find(TF);
     if ~isempty(TF_min)
-        P_min = P(TF_min) * exp(-abs(TF_min-sample_100ms)/sample_250ms);
+        R_min = P(TF_min) * exp(-abs(TF_min-sample_100ms)/sample_250ms);
     else
-        P_min =0;
+        R_min =0;
     end
 
     [TF,P] = islocalmax(data_r(this_qrs_index),'MaxNumExtrema',1);
     TF_max = find(TF);
     if ~isempty(TF_max)
-        P_max = P(TF_max) *exp(-abs(TF_max-sample_100ms)/sample_250ms);
+        R_max = P(TF_max) *exp(-abs(TF_max-sample_100ms)/sample_250ms);
     else
-        P_max =0;
+        R_max =0;
     end
 
 
-    if P_max>= P_min && P_max>0
+    if R_max>= R_min && R_max>0
         ecg_rpeaks_index(p) = this_qrs_index(TF_max);
-        P_rpeaks_index(p) = P_max;
+        P_rpeaks_index(p) = R_max;
         max_min_r(p) = 1;
-    elseif P_min>0
+    elseif R_min>0
         ecg_rpeaks_index(p) = this_qrs_index(TF_min);
-        P_rpeaks_index(p) = P_min;
+        P_rpeaks_index(p) = R_min;
         max_min_r(p) = -1;
     else
 
-        [P_min,TF_min] = min(data_r(this_qrs_index));
-        P_min = abs(P_min);
+        [R_min,TF_min] = min(data_r(this_qrs_index));
+        R_min = abs(R_min);
 
-        [P_max,TF_max] = max(data_r(this_qrs_index));
-        P_max = abs(P_max);
+        [R_max,TF_max] = max(data_r(this_qrs_index));
+        R_max = abs(R_max);
 
-        if P_max>= P_min && P_max>0
+        if R_max>= R_min && R_max>0
             ecg_rpeaks_index(p) = this_qrs_index(TF_max);
-            P_rpeaks_index(p) = P_max;
+            P_rpeaks_index(p) = R_max;
             max_min_r(p) = 1;
-        elseif P_min>0
+        elseif R_min>0
             ecg_rpeaks_index(p) = this_qrs_index(TF_min);
-            P_rpeaks_index(p) = P_min;
+            P_rpeaks_index(p) = R_min;
             max_min_r(p) = -1;
         end
 
@@ -2463,35 +2892,51 @@ for p = 1:length(ecg_rpeaks_index)
 end
 
 
-avg_intervals_ecg = min(fs*1.5,1.25*median(diff(ecg_rpeaks_index),'omitmissing'));
+% avg_intervals_ecg = min(fs*1.5, 1.25*median(diff(ecg_rpeaks_index),'omitmissing'));
 
-pqrs_bloks = zeros(length(ecg_rpeaks_index)-2,sample_250ms+sample_70ms+1);
-t_bloks = zeros(length(ecg_rpeaks_index)-2,round(sample_350ms*min(2,max(max(1,avg_intervals_ecg/(2*sample_350ms)))))-sample_70ms);
+ecg_denoised = data;
+
+
+rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
+rr_intervals_ecg = [rr_intervals_ecg;rr_intervals_ecg(end)];
+avg_intervals_ecg = movmean(rr_intervals_ecg,[60,60]);
+avg_intervals_ecg = [avg_intervals_ecg;avg_intervals_ecg(end)];
+
+pqrs_bloks = nan(length(ecg_rpeaks_index)-2,sample_200ms+sample_70ms+1);
+t_bloks = nan(length(ecg_rpeaks_index)-2,round(sample_450ms*min(2,max(max(1,avg_intervals_ecg/(2*sample_450ms)))))-sample_70ms);
+
 for p = 2:length(ecg_rpeaks_index)-1
-    this_qrs_index = ecg_rpeaks_index(p)-min(sample_250ms,max(sample_70ms,floor(0.3*avg_intervals_ecg))):ecg_rpeaks_index(p)+sample_70ms;
-    if any(this_qrs_index<1)||any(this_qrs_index>length(data))
+    this_qrs_index = ecg_rpeaks_index(p)-min(sample_200ms,floor(0.4*rr_intervals_ecg(p-1))):ecg_rpeaks_index(p)+sample_70ms;
+    if any(this_qrs_index<1)||any(this_qrs_index>length(ecg_denoised))
         continue;
     end
-    pqrs_bloks(p-1,end-length(this_qrs_index)+1:end) = data(this_qrs_index) ;
+    pqrs_bloks(p-1,end-length(this_qrs_index)+1:end) = ecg_denoised(this_qrs_index) ;
 
-
-    this_t_index = ecg_rpeaks_index(p)+sample_70ms+1:ecg_rpeaks_index(p)+min(sample_350ms,max(sample_250ms,floor(0.7*avg_intervals_ecg)));
-    if any(this_t_index>length(data))
+    this_t_index = ecg_rpeaks_index(p)+sample_70ms+1:ecg_rpeaks_index(p)+min(sample_450ms*min(2,max(1,avg_intervals_ecg(p)/(1.5*sample_450ms))),floor(0.7*rr_intervals_ecg(p)));
+    if any(this_t_index>length(ecg_denoised))
         continue;
     end
 
-    t_bloks(p-1,1:length(this_t_index)) =  data(this_t_index);
+    t_bloks(p-1,1:length(this_t_index)) =  ecg_denoised(this_t_index);
 
 end
 
 ecg_blocks = [pqrs_bloks,t_bloks];
 
-max_val = max(prctile(pqrs_bloks(:),99.9),prctile(t_bloks(:),99.9));
-min_val = min(prctile(pqrs_bloks(:),0.1),prctile(t_bloks(:),0.1));
+ecg_blocks_org = ecg_blocks;
 
-ecg_blocks(ecg_blocks>max_val) = max_val;
-ecg_blocks(ecg_blocks<min_val) = min_val;
-% ecg_blocks = (ecg_blocks - min_val) / (max_val-min_val);
+max_val = prctile(ecg_blocks_org,99.5);
+min_val = prctile(ecg_blocks_org,0.5);
+
+
+for t=1:size(ecg_blocks_org,2)
+    ecg_blocks(ecg_blocks_org(:,t)>max_val(t),t) = max_val(t);
+    ecg_blocks(ecg_blocks_org(:,t)<min_val(t),t) = min_val(t);
+end
+
+ecg_blocks = fillmissing(ecg_blocks,"nearest",2);
+
+% Deterending each block (ECG beat)
 for p = 1:size(ecg_blocks,1)
     ecg_blocks(p,:) = ecg_blocks(p,:) - linspace(mean(ecg_blocks(p,1:sample_10ms),2),mean(ecg_blocks(p,end-sample_10ms+1:end),2),size(ecg_blocks,2));
 end
@@ -2501,21 +2946,20 @@ ecg_blocks(:,end-sample_10ms+1:end) = ecg_blocks(:,end-sample_10ms+1:end) .* lin
 
 ecg_blocks_normalized = ecg_blocks./sqrt(sum(ecg_blocks.^2,2)); % normalization to unit power
 
-fcm_features = ecg_blocks_normalized(:,sample_70ms:end);
+fcm_features = ecg_blocks_normalized(:,sample_70ms:end-sample_70ms);
 fcm_features = fillmissing(fcm_features,"linear");
 
 fcm_exponent = 1.1;
 num_cluster = find_optimal_clusters(fcm_features, max_clusters, fcm_exponent);
-fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=fcm_exponent, Verbose=0);
-% fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
-[fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
-
-num_cluster = size(fcm_centers,1);
 
 if num_cluster>1
+    fcm_options = fcmOptions(NumClusters=num_cluster,MaxNumIteration=25, Exponent=fcm_exponent, Verbose=0);
+    % fcm_options = fcmOptions(MaxNumIteration=25, Exponent=1.1, Verbose=0);
+    [fcm_centers, fcm_part_mat] = fcm(fcm_features,fcm_options);
     [~,cluster_fcm] = max(fcm_part_mat);
 else
     cluster_fcm = ones(1,size(fcm_features,1));
+    fcm_centers = 1;
 end
 
 num_cls = size(fcm_centers,1);
@@ -2527,15 +2971,15 @@ for c = 1:num_cls
     index_clustering = [index_clustering;[index_temp(:),c*ones(length(index_temp),1)]];
 end
 
-if length(cluster_fcm)<30
-    index_clustering(:,2)=1;
-else
-    index_clustering_org = index_clustering;
-    for c = find(count_cls(:)'<20)
-        [~,cls_max] = max(count_cls);
-        index_clustering(index_clustering_org(:,2)==c,2) = cls_max;
-    end
-end
+% if length(cluster_fcm)<30
+%     index_clustering(:,2)=1;
+% else
+%     index_clustering_org = index_clustering;
+%     for c = find(count_cls(:)'<20)
+%         [~,cls_max] = max(count_cls);
+%         index_clustering(index_clustering_org(:,2)==c,2) = cls_max;
+%     end
+% end
 
 num_cls = unique(index_clustering(:,2));
 
