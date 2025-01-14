@@ -1357,7 +1357,7 @@ try
             end
         end
 
-        disp(T_type_cls{c})
+        % disp(T_type_cls{c})
         if ~strcmp(T_type_cls{c},'bi-phasic')
             yu=0;
         end
