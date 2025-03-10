@@ -23,6 +23,7 @@ function [mn, vr_mn, varargout] = robust_weighted_average(x)
 %   2021: Return the median beat and its variance
 %   2023: Renamed from deprecated version RWAverage
 %   2023: Added varargout to speed up when median estimates are not required
+%   2025: Handling NAN values in data
 %
 % Reza Sameni, 2008-2023
 % The Open-Source Electrophysiological Toolbox
@@ -47,6 +48,8 @@ if num_beats > 1
         vr_mn = var(noise, [], 1,'omitnan');
     else
         mn = weight'* x;
+        noise = x - mn;
+        vr_mn = var(noise, [], 1,'omitnan');
     end
 
     if nargout > 2
@@ -56,12 +59,18 @@ if num_beats > 1
         vr = var(noise0, [], 2,'omitnan');
         sm = sum(1 ./ vr);
         weight = 1 ./ (vr * sm);
-        weight_mat = repmat(weight,1,size(x, 2));
-        weight_mat(isnan(x))=0;
-        ind_nan = sum(weight_mat,1)==0;
-        weight_mat = weight_mat./sum(weight_mat,1);
-        md = sum(weight_mat.* x,1,'omitnan');
-        md(ind_nan) = nan;
+        if any(isnan(x(:)))
+            weight_mat = repmat(weight,1,size(x, 2));
+            weight_mat(isnan(x))=0;
+            ind_nan = sum(weight_mat,1)==0;
+            weight_mat = weight_mat./sum(weight_mat,1);
+            md = sum(weight_mat.* x,1,'omitnan');
+            md(ind_nan) = nan;
+
+        else
+            md = weight'* x;
+        end
+
         varargout{1} = md;
         if nargout > 3
             noise = x - md;
