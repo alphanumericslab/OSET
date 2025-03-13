@@ -16,55 +16,57 @@ function featureset = ecg_angles_features(data, position, fs)
     %   Emory University, Georgia, USA
     %   Email: bmemousavi@gmail.com
     %   Date: SEP 24, 2024
+    % Author: Sajjad Karimi
+    % Date: Mar 18, 2025
 
     %% Constant value
     convert_s_ms =1000;
     %% Define ECG points
     p = position.P;
     qrs_onset = position.QRSon;
-    qrs = position.R;
+    rpeak = position.R;
     qrs_offset = position.QRSoff;
     t = position.T;
 
     %% Calculate intervals
-    rt_interval = convert_s_ms * ( t - qrs) / fs;
-    pr_interval = convert_s_ms * (qrs - p) / fs;
-    qr_interval = convert_s_ms * (qrs - qrs_onset) / fs;
-    rs_interval = convert_s_ms * (qrs_offset - qrs) / fs;
+    rt_interval = convert_s_ms * ( t - rpeak) / fs;
+    pr_interval = convert_s_ms * (rpeak - p) / fs;
+    qr_interval = convert_s_ms * (rpeak - qrs_onset) / fs;
+    rs_interval = convert_s_ms * (qrs_offset - rpeak) / fs;
 
-    % Initialize rt_amp with NaNs of the same size as qrs
-    rt_amp = NaN * ones(size(qrs)); 
+    % Initialize rt_amp with NaNs of the same size as rpeak
+    rt_amp = NaN * ones(size(rpeak)); 
     % Loop over each index and compute the difference
-    for i = 1:length(qrs)
-          if ~isnan(qrs(i)) && ~isnan(t(i)) 
-                rt_amp(i) = data(qrs(i)) - data(t(i));
+    for i = 1:length(rpeak)
+          if ~isnan(rpeak(i)) && ~isnan(t(i)) 
+                rt_amp(i) = data(rpeak(i)) - data(t(i));
           end
     end
 
-    % Initialize pr_amp with NaNs of the same size as qrs
-    pr_amp = NaN * ones(size(qrs)); 
+    % Initialize pr_amp with NaNs of the same size as rpeak
+    pr_amp = NaN * ones(size(rpeak)); 
     % Loop over each index and compute the difference
-    for i = 1:length(qrs)
-          if ~isnan(qrs(i)) && ~isnan(p(i)) 
-                pr_amp(i) = data(qrs(i)) - data(p(i));
+    for i = 1:length(rpeak)
+          if ~isnan(rpeak(i)) && ~isnan(p(i)) 
+                pr_amp(i) = data(rpeak(i)) - data(p(i));
           end
     end
 
-    % Initialize qr_amp with NaNs of the same size as qrs
-    qr_amp = NaN * ones(size(qrs)); 
+    % Initialize qr_amp with NaNs of the same size as rpeak
+    qr_amp = NaN * ones(size(rpeak)); 
     % Loop over each index and compute the difference
-    for i = 1:length(qrs)
-          if ~isnan(qrs(i)) && ~isnan(qrs_onset(i)) 
-                qr_amp(i) = data(qrs(i)) - data(qrs_onset(i));
+    for i = 1:length(rpeak)
+          if ~isnan(rpeak(i)) && ~isnan(qrs_onset(i)) 
+                qr_amp(i) = data(rpeak(i)) - data(qrs_onset(i));
           end
     end
 
-    % Initialize rs_amp with NaNs of the same size as qrs
-    rs_amp = NaN * ones(size(qrs)); 
+    % Initialize rs_amp with NaNs of the same size as rpeak
+    rs_amp = NaN * ones(size(rpeak)); 
     % Loop over each index and compute the difference
-    for i = 1:length(qrs)
-          if ~isnan(qrs(i)) && ~isnan(qrs_offset(i)) 
-                rs_amp(i) = data(qrs(i)) - data(qrs_offset(i));
+    for i = 1:length(rpeak)
+          if ~isnan(rpeak(i)) && ~isnan(qrs_offset(i)) 
+                rs_amp(i) = data(rpeak(i)) - data(qrs_offset(i));
           end
     end
 
