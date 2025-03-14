@@ -1,4 +1,4 @@
-function features = ecg_hrv_features(R_peaks, fs)
+function [feature_vec, feature_info]  = ecg_hrv_features(rpeak_indexes, fs)
 %%
 % Matlab function for extracting Heart Rate Variability (HRV) features.
 % based on time units (seconds).
@@ -17,15 +17,19 @@ function features = ecg_hrv_features(R_peaks, fs)
 % Date: Dec 17, 2024
 % Location: Emory University, Georgia, USA
 % Email: bmemousavi@gmail.com
+% Author: Sajjad Karimi
+% Location: Emory University, Georgia, USA
+% Email: sajjadkarimi91@gmail.com
+% Date: Mar 14, 2025
 %=======================================================================
 %% Constant value
 convert_s_ms =1000;
 
 % Extract features if length(R_peaks) > 3
-if length(R_peaks) > 3
+if length(rpeak_indexes) > 3
         
     % Compute RR intervals in samples
-    RR_intervals_samples = diff(R_peaks); % Time between successive R-peaks in samples
+    RR_intervals_samples = diff(rpeak_indexes); % Time between successive R-peaks in samples
 
     % Convert RR intervals to time in seconds using sampling frequency (fs)
     RR_intervals_seconds = RR_intervals_samples / fs;
@@ -66,7 +70,7 @@ if length(R_peaks) > 3
     HR_mean = mean(HR);
 
     % Store the HRV features
-    features.N_beats = length(R_peaks);
+    features.N_beats = length(rpeak_indexes);
     features.RMSSD = RMSSD;  
     features.SDNN = SDNN;
     features.HR_median = median_HR;
@@ -76,7 +80,7 @@ if length(R_peaks) > 3
     
 else
     % Return NaNs if insufficient R-peaks
-    features.N_beats = length(R_peaks);
+    features.N_beats = length(rpeak_indexes);
     features.RMSSD = nan;
     features.SDNN = nan;
     features.HR_median = nan;
@@ -85,4 +89,12 @@ else
     features.HR_lower_5 = nan;
     
 end
+
+feature_vec = [features.N_beats, features.RMSSD, features.SDNN, features.HR_median, features.HR_mean, features.HR_upper_5, features.HR_lower_5 ];
+% Define feature info
+feature_info.names = {'n_beats', 'rmssd', 'sdnn', 'hr_median', 'hr_mean', 'hr_upper_5', 'hr_lower_5'};
+feature_info.units = {'scaler', 'ms', 'ms', 'bpm', 'bpm', 'bpm', 'bpm'};
+feature_info.description = {"Number of ECG beat", "Root Mean Square of Successive Differences for HRV", ...
+    "Standard Deviation of Normal-to-Normal Intervals", "Median heart-rate", "Mean heart-rate", "95% heart-rate", "5% heart-rate"};
+
 end

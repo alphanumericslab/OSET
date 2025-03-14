@@ -1,6 +1,7 @@
-function [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, exit_flag] = ecg_feature_extraction(ecg_data, fs, lead_names, n_svd, num_morpho_samples, norm_flag)
-% all_features_vector = extract_ecg_features_one_record(signal_name, data, fs, n_eigenvalues, n_features, f_notch)
-% Description: Extract features from one record of ECG signal
+function [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, exit_flag] = ...
+    ecg_feature_extraction(ecg_data, fs, lead_names, n_svd, num_morpho_samples, norm_flag, feature_list, flatten_flag)
+
+% Description: Extract features from one record of multi-channel ECG signal
 %
 % INPUT:
 % ecg_data - ECG signal as matrix CxT which C indicates number of ECG channels (in microvolts).
@@ -9,7 +10,9 @@ function [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, exit_fla
 % n_svd - Number of eigenvalues for SVD features (default 5).
 % num_morpho_samples - Number of samples for ECG average beat (default 25).
 % norm_flag - A boolian value for normalizing ECG average beat before sampling (default true).
-%
+% feature_list - A cell array contaning a subset of {'snr', 'hrv','interval', 'amplitude', 'angle', 'svd', 'morpho'}
+%                to return selected subset of all ECG features (default all features)
+
 % DEPENDENCIES:
 % 1. peak_det_likelihood function from the OSET package
 % 2. peak_det_likelihood_long_recs function from the OSET package
@@ -34,10 +37,13 @@ function [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, exit_fla
 
 % Author: Seyedeh Somayyeh Mousavi
 % Date: Jan 11, 2025
-% Author: Sajjad Karimi
-% Date: Mar 20, 2025
 % Location: Emory University, Georgia, USA
 % Email: bmemousavi@gmail.com
+% Author:
+%   Sajjad Karimi
+%   Emory University, Georgia, USA
+%   Email: sajjadkarimi91@gmail.com
+%   Date: Mar 14, 2025
 
 
 [C, T] = size(ecg_data); % number of channels
@@ -61,8 +67,15 @@ if nargin < 6 || isempty(norm_flag)
 end
 
 
+if nargin < 7 || isempty(feature_list)
+    feature_list = { 'amplitude', 'angle', 'hjorth' };
+end
 
+if nargin<8
+    flatten_flag = true;
+end
 
+exit_flag = 0;
 
 % Define ECG-related features
 ecg_feature_names = {
@@ -122,9 +135,9 @@ ecg_feature_description = {
     "Hjorth parameters: Activity","Hjorth parameters: Mobility","Hjorth parameters: Complexity"};
 
 
-exit_flag = 0;
-% n_features = 2 + 7 + 29 + 32 + 12 + 3 + n_eigenvalues + num_samples;
-n_features = length(ecg_feature_names) + n_svd + num_morpho_samples; % per channel
+
+
+% n_features = length(ecg_feature_names) + n_svd + num_morpho_samples; % per channel
 
 for n = 1:n_svd
     ecg_feature_names{end+1} = ['svd', num2str(n)];
@@ -149,6 +162,14 @@ end
 
 
 %% Feature Extraction
+
+feature_list_all = {'snr', 'hrv','interval', 'amplitude', 'angle', 'hjorth', 'svd', 'morpho'};
+[~ , ilocb] = ismember(feature_list,feature_list_all);
+
+num_features =         [2     7      29           32          12        3      n_svd   num_morpho_samples]; % per channel
+
+n_features = sum(num_features(ilocb));
+
 ecg_features_vector = [];
 ecg_fiducial_position = cell(C,1);
 ecg_feature_names_ch = cell(1,C*n_features);
@@ -156,13 +177,15 @@ ecg_feature_names_ch = cell(1,C*n_features);
 seg_len_time = min(10,T/fs); % 10 seconds or signal length for data with shorter than 10s
 pad_len_time = 1;
 
+ecg_feature_names = [];
+
 for c = 1:C
 
     data_channel = ecg_data(c, :);
     try
 
         % Detect peaks based on recording length
-        [~, R_peaks_indexes] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time);
+        [~, rpeak_indexes] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time);
 
         % Run ECG fiducial points detector
         % position = fiducial_det_lsim(data_channel, R_peaks_indexes, fs);
@@ -173,35 +196,41 @@ for c = 1:C
         % [position, ~, ~] = wavedet_3D(data_channel', R_peaks_indexes, heasig);
 
         flag_post_processing = 1;
-        position = fiducial_det_lsim( data_channel', R_peaks_indexes, fs, flag_post_processing);
+        position = fiducial_det_lsim( data_channel', rpeak_indexes, fs, flag_post_processing);
 
         ecg_fiducial_position{c} = position;
-        R_peaks_indexes = position.R;
+        rpeak_indexes = position.R;
 
         % Extract all features
-        [snr_features, mean_beat] = ecg_snr_features(data_channel, R_peaks_indexes);
-        hrv_features = ecg_hrv_features(R_peaks_indexes, fs);
-        ti_features = ecg_time_intervals_features(R_peaks_indexes, position, fs);
-        amps_areas_features = ecg_area_amp_features(data_channel, position, fs);
-        angles_features = ecg_angles_features(data_channel, position, fs);
-        complexity_analysis_features = hjorth_time_features(mean_beat,fs);
-        svd_features = ecg_svd_features(data_channel, R_peaks_indexes, n_svd);
-        sampled_values = morphology_features(mean_beat, num_morpho_samples, norm_flag);
+        % [snr_features, snr_feature_info, mean_beat] = ecg_snr_features(data_channel, rpeak_indexes);
+        % [hrv_features, hrv_feature_info] = ecg_hrv_features(rpeak_indexes, fs);
+        % [ti_features, ti_feature_info] = ecg_time_intervals_features(rpeak_indexes, position, fs);
+        % [amps_areas_features, amp_feature_info] = ecg_area_amp_features(data_channel, position, fs);
+        % [angles_features, angle_feature_info] = ecg_angles_features(data_channel, position, fs);
+        % [hjorth_features, hjorth_feature_info] = hjorth_time_features(mean_beat,fs);
+        % [svd_features, svd_feature_info] = ecg_svd_features(data_channel, rpeak_indexes, n_svd);
+        % [sample_morpho, morpho_feature_info] = morphology_features(mean_beat, num_morpho_samples, norm_flag);
 
-        % Convert feature structures to arrays
-        snr_features = struct2array(snr_features);
-        hrv_features = struct2array(hrv_features);
-        ti_features = struct2array(ti_features);
-        amps_areas_features = struct2array(amps_areas_features);
-        angles_features = struct2array(angles_features);
-        hjorth_features= struct2array(complexity_analysis_features);
-        % svd_features = struct2array(svd_features);
+        % % Concatenate extracted features into a single vector
+        % all_features = [snr_features, hrv_features, ti_features, amps_areas_features, angles_features, hjorth_features, svd_features, sample_morpho];
 
-        % Concatenate extracted features into a single vector
-        all_features = [snr_features, hrv_features, ti_features, amps_areas_features, angles_features, hjorth_features, svd_features, sampled_values];
+        [featureset{1}, this_feature_info{1}, mean_beat] = ecg_snr_features(data_channel, rpeak_indexes);
+        [featureset{2}, this_feature_info{2}] = ecg_hrv_features(rpeak_indexes, fs);
+        [featureset{3}, this_feature_info{3}] = ecg_time_intervals_features(rpeak_indexes, position, fs);
+        [featureset{4}, this_feature_info{4}] = ecg_area_amp_features(data_channel, position, fs);
+        [featureset{5}, this_feature_info{5}] = ecg_angles_features(data_channel, position, fs);
+        [featureset{6}, this_feature_info{6}] = hjorth_time_features(mean_beat,fs);
+        [featureset{7}, this_feature_info{7}] = ecg_svd_features(data_channel, rpeak_indexes, n_svd);
+        [featureset{8}, this_feature_info{8}] = morphology_features(mean_beat, num_morpho_samples, norm_flag);
+
+
+
+        all_features = cell2mat(featureset(ilocb));
 
         % Append to the overall feature vector
         ecg_features_vector = cat(2, ecg_features_vector, all_features);
+
+        this_feature_info = this_feature_info(ilocb);
 
     catch ME
         % Error handling: display message and set NaN values for problematic channel
@@ -209,6 +238,18 @@ for c = 1:C
         fprintf("Error in processing signal_channel: %s, %d\n", c);
         ecg_features_vector = cat(2, ecg_features_vector, nan(1, n_features));
         exit_flag = exit_flag -1;
+
+    end
+
+    if c==1 || isempty(ecg_feature_names)
+        ecg_features_units = [];
+        ecg_feature_description = [];
+
+        for f = 1:length(this_feature_info)
+            ecg_feature_names = [ecg_feature_names, this_feature_info{f}.names];
+            ecg_features_units = [ecg_features_units, this_feature_info{f}.units];
+            ecg_feature_description = [ecg_feature_description, this_feature_info{f}.description];
+        end
 
     end
 

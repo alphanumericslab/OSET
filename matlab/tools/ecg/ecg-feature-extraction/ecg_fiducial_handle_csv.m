@@ -99,6 +99,7 @@ end
 
 
 C = length(ecg_fiducial_position);
+num_decimal_places = 6; % for Amplititude values 
 
 for c = 1:C
 
@@ -109,8 +110,13 @@ for c = 1:C
     features_matrix_index_fill = features_matrix_index;
     features_matrix_index_fill(isnan(features_matrix_index_fill)) = 1;
 
+
     features_matrix_amp = ecg_data_lead(features_matrix_index_fill);
+    % Limit the number of decimal places to reduce the file sizes
+    features_matrix_amp = round(features_matrix_amp * 10^num_decimal_places) / 10^num_decimal_places;
+
     features_matrix_amp(isnan(features_matrix_index)) = nan;
+
 
     csv_data = [ repmat(c,size(features_matrix_index,1),1), (-1 + first_index + features_matrix_index) , features_matrix_amp];
 
