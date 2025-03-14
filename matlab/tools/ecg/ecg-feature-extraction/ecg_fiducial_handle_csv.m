@@ -1,4 +1,4 @@
-function ecg_fiducial_handle_csv(output_csv_file_name, ecg_data, fs, ecg_fiducial_position, lead_names, first_index)
+function ecg_fiducial_handle_csv(output_csv_file_name, ecg_data, fs, ecg_fiducial_position, lead_names, first_index, overwrite_flag)
 
 % all_features_vector = extract_ecg_features_one_record(signal_name, data, fs, n_eigenvalues, n_features, f_notch)
 % Description: Extract features from one record of ECG signal
@@ -30,6 +30,17 @@ function ecg_fiducial_handle_csv(output_csv_file_name, ecg_data, fs, ecg_fiducia
 % Date: Mar 20, 2025
 % Location: Emory University, Georgia, USA
 % Email: sajjadkarimi91@gmail.com
+
+
+if nargin<7 || isempty(overwrite_flag)
+    overwrite_flag = false;
+end
+
+
+if overwrite_flag && exist(output_csv_file_name, 'file')
+    delete(output_csv_file_name); % Delete the file
+    fprintf('File "%s" deleted.\n', output_csv_file_name);
+end
 
 % Check if file does not exist make .csv file with headers, units, gains
 % and description

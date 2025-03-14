@@ -1,16 +1,17 @@
-function feature_handle_csv(output_csv_file_name, features_matrix, feature_names, features_units, feature_description,  fs, window_time_info, num_decimal_places)
+function feature_handle_csv(output_csv_file_name, features_matrix, feature_names, features_units, feature_description,  fs, window_time_info, num_decimal_places, overwrite_flag)
 
-% Description: write extracted features in output_csv_filename file with standard OSET AI-ML ready format 
+% Description: write extracted features in output_csv_filename file with standard OSET AI-ML ready format
 %
 % INPUT:
-% output_csv_filename -  
-% features_matrix   -  
-% feature_names -  
-% features_units -  
-% feature_description -  
-% fs - 
-% window_time_info -  
-% num_decimal_places - 
+% output_csv_filename -
+% features_matrix   -
+% feature_names -
+% features_units -
+% feature_description -
+% fs -
+% window_time_info -
+% num_decimal_places -
+% overwrite_flag -
 
 % Author: Sajjad Karimi
 % Date: Mar 20, 2025
@@ -41,6 +42,15 @@ if nargin<8 || isempty(num_decimal_places)
     num_decimal_places = 6;
 end
 
+if nargin<8 || isempty(overwrite_flag)
+    overwrite_flag = false;
+end
+
+
+if overwrite_flag && exist(output_csv_file_name, 'file')
+    delete(output_csv_file_name); % Delete the file
+    fprintf('File "%s" deleted.\n', output_csv_file_name);
+end
 
 % Check if file does not exist make .csv file with headers, units, gains
 % and description
