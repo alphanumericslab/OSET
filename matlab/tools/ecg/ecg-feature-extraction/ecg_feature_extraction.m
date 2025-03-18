@@ -85,7 +85,7 @@ exit_flag = 0;
 feature_list_all = {'snr', 'hrv','interval', 'amplitude', 'angle', 'hjorth', 'svd', 'morpho'};
 [~ , ilocb] = ismember(feature_list,feature_list_all);
 
-num_features =         [2     7      29           32          12        3      n_svd   num_morpho_samples]; % per channel
+num_features =         [2     11     29          32          12        3      n_svd   num_morpho_samples]; % per channel
 
 n_features = sum(num_features(ilocb));
 

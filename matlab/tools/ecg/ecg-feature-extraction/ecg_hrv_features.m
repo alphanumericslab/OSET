@@ -27,13 +27,13 @@ convert_s_ms =1000;
 
 % Extract features if length(R_peaks) > 3
 if length(rpeak_indexes) > 3
-        
+
     % Compute RR intervals in samples
     RR_intervals_samples = diff(rpeak_indexes); % Time between successive R-peaks in samples
 
     % Convert RR intervals to time in seconds using sampling frequency (fs)
     RR_intervals_seconds = RR_intervals_samples / fs;
-    
+
     % Filtering for non-normal beats
     RR_intervals_seconds(RR_intervals_seconds<0.2) = [];
     RR_intervals_seconds(RR_intervals_seconds>2) = [];
@@ -58,10 +58,10 @@ if length(rpeak_indexes) > 3
     % Feature 3: Calculate median heart rate
     median_HR = median(HR);
 
-    % Feature 4: Calculate heart rate for lower 5% 
+    % Feature 4: Calculate heart rate for lower 5%
     HR_lower_5 = prctile(HR, 5);
 
-    % Feature 5: Calculate heart rate for upper 5% 
+    % Feature 5: Calculate heart rate for upper 5%
     HR_upper_5 = prctile(HR, 95);
 
     % Feature 6: Calculate heart rate for the interquartile range (5%-95%)
@@ -69,15 +69,22 @@ if length(rpeak_indexes) > 3
     HR = HR(HR >= IQR_HR(1) & HR <= IQR_HR(2));  % Filter HR values within the range
     HR_mean = mean(HR);
 
+    [pip, ials, pnn_ss, pnn_as ] = hrf(RR_intervals_seconds , fs);
     % Store the HRV features
     features.N_beats = length(rpeak_indexes);
-    features.RMSSD = RMSSD;  
+    features.RMSSD = RMSSD;
     features.SDNN = SDNN;
     features.HR_median = median_HR;
     features.HR_mean = HR_mean;
     features.HR_upper_5 = HR_upper_5;
     features.HR_lower_5 = HR_lower_5;
-    
+
+    features.hrf_pip = pip;
+    features.hrf_ials = ials;
+    features.hrf_pnn_ss = pnn_ss;
+    features.hrf_pnn_as = pnn_as;
+
+
 else
     % Return NaNs if insufficient R-peaks
     features.N_beats = length(rpeak_indexes);
@@ -87,14 +94,23 @@ else
     features.HR_mean = nan;
     features.HR_upper_5 = nan;
     features.HR_lower_5 = nan;
-    
+    features.hrf_pip = nan;
+    features.hrf_ials = nan;
+    features.hrf_pnn_ss = nan;
+    features.hrf_pnn_as = nan;
+
 end
 
-feature_vec = [features.N_beats, features.RMSSD, features.SDNN, features.HR_median, features.HR_mean, features.HR_upper_5, features.HR_lower_5 ];
+feature_vec = [features.N_beats, features.RMSSD, features.SDNN, features.HR_median, features.HR_mean, features.HR_upper_5, features.HR_lower_5,...
+    features.hrf_pip, features.hrf_ials, features.hrf_pnn_ss, features.hrf_pnn_as];
 % Define feature info
-feature_info.names = {'n_beats', 'rmssd', 'sdnn', 'hr_median', 'hr_mean', 'hr_upper_5', 'hr_lower_5'};
-feature_info.units = {'scaler', 'ms', 'ms', 'bpm', 'bpm', 'bpm', 'bpm'};
+feature_info.names = {'n_beats', 'rmssd', 'sdnn', 'hr_median', 'hr_mean', 'hr_upper_5', 'hr_lower_5',...
+    'hrf_pip', 'hrf_ials', 'hrf_pnn_ss', 'hrf_pnn_as'};
+feature_info.units = {'scaler', 'ms', 'ms', 'bpm', 'bpm', 'bpm', 'bpm','scaler','scaler','scaler','scaler'};
 feature_info.description = {"Number of ECG beat", "Root Mean Square of Successive Differences for HRV", ...
-    "Standard Deviation of Normal-to-Normal Intervals", "Median heart-rate", "Mean heart-rate", "95% heart-rate", "5% heart-rate"};
+    "Standard Deviation of Normal-to-Normal Intervals", "Median heart-rate", "Mean heart-rate", "95% heart-rate", "5% heart-rate",...
+    "Heart rate fragmentation: Percentage of inflection points", "Heart rate fragmentation: Inverse average length of the acceleration/deceleration segments",...
+    "Heart rate fragmentation: Percentage of short segments", "Heart rate fragmentation: The percentage of NN intervals in alternation segments"};
+
 
 end
