@@ -69,7 +69,7 @@ if length(rpeak_indexes) > 3
     HR = HR(HR >= IQR_HR(1) & HR <= IQR_HR(2));  % Filter HR values within the range
     HR_mean = mean(HR);
 
-    [pip, ials, pnn_ss, pnn_as ] = hrf(RR_intervals_seconds , fs);
+    [pip, ials, pnn_ss, pnn_as ] = hrf(RR_intervals_seconds * convert_s_ms , fs);
     % Store the HRV features
     features.N_beats = length(rpeak_indexes);
     features.RMSSD = RMSSD;
