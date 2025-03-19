@@ -31,7 +31,7 @@ end
 
 % r for defining "acceptable" level of noise
 if nargin > 1 && ~isempty(fs)
-    r = 1/fs;
+    r = 1000/fs;
 else
     r = 4 ; % set to 4 millisecond tolerance by assuming fs = 250
 end
