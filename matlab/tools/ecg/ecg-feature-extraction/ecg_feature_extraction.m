@@ -172,11 +172,12 @@ end
 
 if flatten_flag==0
     ecg_feature_names_ch = ecg_feature_names;
-end
+else
+    % Repeat cell array C times
+    ecg_features_units = repmat(ecg_features_units, 1, C);
+    ecg_feature_description = repmat(ecg_feature_description, 1, C);
 
-% Repeat cell array C times
-ecg_features_units = repmat(ecg_features_units, 1, C);
-ecg_feature_description = repmat(ecg_feature_description, 1, C);
+end
 
 ecg_feature_description = ecg_feature_description';
 ecg_feature_names_ch = ecg_feature_names_ch';
