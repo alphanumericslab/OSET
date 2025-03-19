@@ -65,16 +65,17 @@ for n = 1: num_windows
     end
 
     win_ecg_data = ecg_data(:,start_index:stop_index);
-    [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, exit_flag] = ecg_feature_extraction(win_ecg_data, fs, lead_names);
+    flatten_flag = false;
+    [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, exit_flag] = ecg_feature_extraction(win_ecg_data, fs, lead_names,  [], [], [], [], flatten_flag);
 
 
     features_matrix = ecg_features_vector;
     feature_names = ecg_feature_info.names;
     features_units = ecg_feature_info.units;
     feature_description = ecg_feature_info.description;
-    window_time_info = [start_index,stop_index];
+    window_time_info = repmat( [start_index,stop_index], size(ecg_data,1), 1);
 
-    feature_handle_csv(feature_csv_file_name, features_matrix, feature_names, features_units, feature_description,  fs, window_time_info)
+    feature_handle_csv(feature_csv_file_name, features_matrix, feature_names, features_units, feature_description,  fs, window_time_info, lead_names(:))
 
     ecg_fiducial_handle_csv(fiducial_csv_file_name, win_ecg_data, fs,  ecg_fiducial_position, lead_names, start_index)
 

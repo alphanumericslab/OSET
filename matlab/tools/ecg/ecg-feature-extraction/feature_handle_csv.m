@@ -1,4 +1,4 @@
-function feature_handle_csv(output_csv_file_name, features_matrix, feature_names, features_units, feature_description,  fs, window_time_info, num_decimal_places, overwrite_flag)
+function feature_handle_csv(output_csv_file_name, features_matrix, feature_names, features_units, feature_description,  fs, window_time_info, source_names, num_decimal_places, overwrite_flag)
 
 % Description: write extracted features in output_csv_filename file with standard OSET AI-ML ready format
 %
@@ -38,11 +38,15 @@ if nargin<7 || isempty(window_time_info)
     window_time_info = [1,fs*10];
 end
 
-if nargin<8 || isempty(num_decimal_places)
+if nargin<8 || isempty(source_names)
+    source_names = repmat({"NA"}, size(features_matrix,1),1);
+end
+
+if nargin<9 || isempty(num_decimal_places)
     num_decimal_places = 6;
 end
 
-if nargin<8 || isempty(overwrite_flag)
+if nargin<10 || isempty(overwrite_flag)
     overwrite_flag = false;
 end
 
@@ -69,13 +73,13 @@ if ~exist(output_csv_file_name, 'file')
     feature_description = feature_description(:).';
 
     % Header information
-    csv_var_names = [{'start_time', 'win_len'}, feature_names];
+    csv_var_names = [{'source', 'start_time', 'stop_time'}, feature_names];
 
-    csv_var_description = [{"Starting index of this window", "Processing window duration"}, feature_description];
+    csv_var_description = [{"Indicate source channel or modality for each row", "Starting index of this window", "Stoping index of this window"}, feature_description];
 
-    csv_units = [{'s','s'}, features_units ];
+    csv_units = [{'na','s','s'}, features_units ];
 
-    csv_gain = [{num2str(1/fs),num2str(1/fs)}, repmat({'1'}, 1, length(feature_names))];
+    csv_gain = [{'1',num2str(1/fs),num2str(1/fs)}, repmat({'1'}, 1, length(feature_names))];
 
 
     % Open the file for writing
@@ -105,11 +109,15 @@ end
 first_index = window_time_info(:,1);
 stop_index = window_time_info(:,2);
 
-csv_data = [first_index, stop_index-first_index+1, features_matrix];
+csv_data = [first_index, stop_index, features_matrix];
 
 % Limit the number of decimal places to reduce the file sizes
 csv_data = round(csv_data * 10^num_decimal_places) / 10^num_decimal_places;
 
 % Append the data to the file
-writematrix(csv_data, output_csv_file_name, 'WriteMode', 'append');
+% writematrix(csv_data, output_csv_file_name, 'WriteMode', 'append');
+
+csv_data = [source_names, num2cell(csv_data)];
+writecell(csv_data, output_csv_file_name, 'WriteMode', 'append');
+
 
