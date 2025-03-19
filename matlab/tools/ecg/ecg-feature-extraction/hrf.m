@@ -51,6 +51,7 @@ drri = [3*r*sign(drri(1)), drri]; % adding a dummy value
 
 drri(drri<r & drri>-r) = 0; % set small diff values to zero
 ind_zero_diff = find(drri==0);
+ind_zero_diff(ind_zero_diff==1) =[];
 
 % % nextfill zero ∆NN for correct computing of ∆NNi x ∆NNi-1
 % drri(ind_zero_diff) = nan;
