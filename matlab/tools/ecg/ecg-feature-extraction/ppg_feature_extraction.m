@@ -82,6 +82,7 @@ for c = 1:C
     data_channel = ppg_data(c, :);
     try
 
+        flag_post_processing = 1;
         ppg_positions = fiducial_det_ppg(data_channel, ecg_rpeaks_index, fs, flag_post_processing);
         ppg_fiducial_position{c} = ppg_positions;
 
@@ -109,6 +110,7 @@ for c = 1:C
         obs_ppg{2,1} = dat_ppg.systole';
         obs_ppg{3,1} = dat_ppg.diastole';
         obs_ppg{4,1} = data_rr_sys';
+
         for e = 1:size(obs_ppg,1)
             channels_observations{1,e} = obs_ppg{e,1}(2:end);
             channels_observations{2,e} = obs_ppg{e,1}(1:end-1);
@@ -116,7 +118,7 @@ for c = 1:C
 
         for e = 1:size(obs_ppg,1)
             mn_ppg(1,e) =  mean(channels_observations{1,e},'omitnan');
-            rmssd_ppg(1,e) =  sqrt(0.5)*std(feature_preprocessing(channels_observations{1,e}-channels_observations{2,e}),[],'omitnan');%/ std(channels_observations{1,e}+channels_observations{2,e});%mean(channels_observations{1,e}(this_block_ecg_min>0)) - mean(channels_observations{1,e}(this_block_ecg_min<=0));
+            rmssd_ppg(1,e) =  sqrt(0.5)*std(channels_observations{1,e}-channels_observations{2,e},[],'omitnan');%/ std(channels_observations{1,e}+channels_observations{2,e});%mean(channels_observations{1,e}(this_block_ecg_min>0)) - mean(channels_observations{1,e}(this_block_ecg_min<=0));
             sdnn_ppg(1,e) =  sqrt(0.5)*std(channels_observations{1,e},[],'omitnan');
         end
 
