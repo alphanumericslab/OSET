@@ -139,7 +139,7 @@ for c = 1:C
 
     if c==1 || isempty(ppg_feature_names)
 
-        ppg_features_units = repmat({'ms'}, 1, size(features_matrix,2));
+        ppg_features_units = repmat({'ms'}, 1, size(all_features,2));
 
         % Define feature info
         ppg_feature_names = {'onsys_mean', 'systole_mean',  'diastole_mean', 'puls_mean',...
