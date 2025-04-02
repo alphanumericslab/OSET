@@ -317,14 +317,16 @@ if isequal(params.two_stage_env, 1)
     if ~isfield(params, 'power_env_wlen2') || isempty(params.power_env_wlen2)
         params.power_env_wlen2 = 0.075;
         if params.verbose, disp(['   params.power_env_wlen2 = ', num2str(params.power_env_wlen2)]), end
-        % signal power
-        power_env_wlen2 = ceil(params.power_env_wlen2 * fs);
-        data_filtered_env2_padded = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_filtered_padded.^2, 1)));
-        data_filtered_env2 = data_filtered_env2_padded(left_pad_len + 1 : left_pad_len + sig_len);
-        % residual power
-        data_residual_env2_padded = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_residual_padded.^2, 1)));
-        % data_residual_env2 = data_residual_env2_padded(left_pad_len + 1 : left_pad_len + sig_len);
     end
+
+    % signal power
+    power_env_wlen2 = ceil(params.power_env_wlen2 * fs);
+    data_filtered_env2_padded = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_filtered_padded.^2, 1)));
+    data_filtered_env2 = data_filtered_env2_padded(left_pad_len + 1 : left_pad_len + sig_len);
+    % residual power
+    data_residual_env2_padded = filtfilt(ones(power_env_wlen2, 1), power_env_wlen2, sqrt(mean(data_residual_padded.^2, 1)));
+    % data_residual_env2 = data_residual_env2_padded(left_pad_len + 1 : left_pad_len + sig_len);
+
     % signal power combined (two stages)
     data_filtered_env_padded = sqrt(abs(data_filtered_env1_padded .* data_filtered_env2_padded));
     data_filtered_env = sqrt(abs(data_filtered_env1 .* data_filtered_env2));
@@ -332,7 +334,7 @@ if isequal(params.two_stage_env, 1)
     % residual power combined (two stages)
     data_residual_env_padded = sqrt(abs(data_residual_env1_padded .* data_residual_env2_padded));
     % data_residual_env = sqrt(abs(data_residual_env1 .* data_residual_env2));
-    
+
     if params.PLOT_DIAGNOSTIC
         figure
         plot(data')
