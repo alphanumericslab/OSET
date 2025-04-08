@@ -86,11 +86,15 @@ sig_len = size(data, 2); % signal length
 if ~isfield(params, 'left_pad_len') || isempty(params.left_pad_len)
     left_pad_len = round(1.0*fs);
     if params.verbose, disp(['left_pad_len = ', num2str(left_pad_len)]), end
+else
+    left_pad_len = params.left_pad_len;
 end
 
 if ~isfield(params, 'right_pad_len') || isempty(params.right_pad_len)
     right_pad_len = round(1.0*fs);
     if params.verbose, disp(['right_pad_len = ', num2str(right_pad_len)]), end
+else
+    right_pad_len = params.right_pad_len;
 end
 
 if ~isfield(params, 'left_pad') || isempty(params.left_pad)
@@ -122,6 +126,8 @@ if ~isfield(params, 'filter_type') || isempty(params.filter_type)
     if params.verbose, disp(['params.filter_type = ', params.filter_type]), end
 end
 switch params.filter_type
+    case 'BYPASS' % No filter
+        data_filtered_padded = data_padded;
     case 'MDMN' % Median + MA filter
         if ~isfield(params, 'wlen_md') || isempty(params.wlen_md)
             params.wlen_md = 0.075;
@@ -460,17 +466,18 @@ if params.REFINE_PEAKS && length(peak_indexes) > 1
     if ~isfield(params, 'OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC') || isempty(params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC)
         params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC = true;
         if params.verbose, disp(['params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC = ', num2str(params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC)]), end
-        pparams.ff_low_cutoff = 3.0/fs;
-        pparams.ff_high_cutoff = min(0.5, 50.0/fs);
-        pparams.pre_to_post_filter_power_ratio_th = 3.0;
-        pparams.percentile = 90.0;
-        pparams.percentile_fraction = 0.25;
-        if params.verbose, disp(['   pparams.ff_low_cutoff = ', num2str(pparams.ff_low_cutoff)]), end
-        if params.verbose, disp(['   pparams.ff_high_cutoff = ', num2str(pparams.ff_high_cutoff)]), end
-        if params.verbose, disp(['   pparams.pre_to_post_filter_power_ratio_th = ', num2str(pparams.pre_to_post_filter_power_ratio_th)]), end
-        if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
-        if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
     end
+    pparams.ff_low_cutoff = 3.0/fs;
+    pparams.ff_high_cutoff = min(0.5, 50.0/fs);
+    pparams.pre_to_post_filter_power_ratio_th = 3.0;
+    pparams.percentile = 90.0;
+    pparams.percentile_fraction = 0.25;
+    if params.verbose, disp(['   pparams.ff_low_cutoff = ', num2str(pparams.ff_low_cutoff)]), end
+    if params.verbose, disp(['   pparams.ff_high_cutoff = ', num2str(pparams.ff_high_cutoff)]), end
+    if params.verbose, disp(['   pparams.pre_to_post_filter_power_ratio_th = ', num2str(pparams.pre_to_post_filter_power_ratio_th)]), end
+    if params.verbose, disp(['   pparams.percentile = ', num2str(pparams.percentile)]), end
+    if params.verbose, disp(['   pparams.percentile_fraction = ', num2str(pparams.percentile_fraction)]), end
+
     if params.OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC
         [~, peaks_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC] = refine_peaks_filter_energy_impacted_beats(data_mn_all_channels_padded, data_filtered_mn_all_channels_padded, peak_indexes_padded, pparams);
         peaks_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC = peaks_OMIT_BEATS_MOST_IMPACTED_BY_PRE_PROC(left_pad_len + 1 : left_pad_len + sig_len);
@@ -506,13 +513,15 @@ if params.REFINE_PEAKS && length(peak_indexes) > 1
     %% detect beats with low variance
     if ~isfield(params, 'OMIT_LOW_POWER_BEATS') || isempty(params.OMIT_LOW_POWER_BEATS)
         params.OMIT_LOW_POWER_BEATS = true;
-        % max_amp_k_sigma = 2.0;
-        pparams.beat_std_med_frac_th = 0.5;
-        pparams.max_amp_prctile = 90.0;
         if params.verbose, disp(['params.OMIT_LOW_POWER_BEATS = ', num2str(params.OMIT_LOW_POWER_BEATS)]), end
-        if params.verbose, disp(['   pparams.beat_std_med_frac_th = ', num2str(pparams.beat_std_med_frac_th)]), end
-        if params.verbose, disp(['   pparams.max_amp_prctile = ', num2str(pparams.max_amp_prctile)]), end
     end
+    % max_amp_k_sigma = 2.0;
+    pparams.beat_std_med_frac_th = 0.5;
+    pparams.max_amp_prctile = 90.0;
+
+    if params.verbose, disp(['   pparams.beat_std_med_frac_th = ', num2str(pparams.beat_std_med_frac_th)]), end
+    if params.verbose, disp(['   pparams.max_amp_prctile = ', num2str(pparams.max_amp_prctile)]), end
+
     if params.OMIT_LOW_POWER_BEATS
         % peak_indexes_refined = refine_peaks_low_power_beats(data_filtered_env, peak_indexes, max_amp_k_sigma, beat_std_med_frac_th, params.PLOT_DIAGNOSTIC);
         [~, peaks_OMIT_LOW_POWER_BEATS] = refine_peaks_low_power_beats(data_filtered_mn_all_channels_padded, peak_indexes_padded, pparams.max_amp_prctile, pparams.beat_std_med_frac_th, params.PLOT_DIAGNOSTIC);
@@ -548,10 +557,12 @@ if params.REFINE_PEAKS && length(peak_indexes) > 1
     %% detect beats with low correlation coefficient with the average beat
     if ~isfield(params, 'OMIT_LOW_CORRCOEF_BEATS') || isempty(params.OMIT_LOW_CORRCOEF_BEATS)
         params.OMIT_LOW_CORRCOEF_BEATS = true;
-        pparams.k_sigma = 3.0;
         if params.verbose, disp(['params.OMIT_LOW_CORRCOEF_BEATS = ', num2str(params.OMIT_LOW_CORRCOEF_BEATS)]), end
-        if params.verbose, disp(['   pparams.k_sigma = ', num2str(pparams.k_sigma)]), end
     end
+
+    pparams.k_sigma = 3.0;
+    if params.verbose, disp(['   pparams.k_sigma = ', num2str(pparams.k_sigma)]), end
+
     if params.OMIT_LOW_CORRCOEF_BEATS
         [~, peaks_OMIT_LOW_CORRCOEF_BEATS] = refine_peaks_waveform_similarity(data_filtered_env_padded, peak_indexes_padded, pparams, 'BEAT-STD', params.PLOT_DIAGNOSTIC);
         %[~, peaks_OMIT_LOW_CORRCOEF_BEATS] = refine_peaks_waveform_similarity(data_filtered_mn_all_channels_padded, peak_indexes_padded, pparams, 'BEAT-STD', params.PLOT_DIAGNOSTIC);
@@ -614,11 +625,15 @@ if params.REFINE_PEAKS && length(peak_indexes) > 1
     if ~isfield(params, 'OMIT_LOW_AMP_PEAKS_PRCTL_ABS') || isempty(params.OMIT_LOW_AMP_PEAKS_PRCTL_ABS)
         params.OMIT_LOW_AMP_PEAKS_PRCTL_ABS = true;
         if params.verbose, disp('params.OMIT_LOW_AMP_PEAKS_PRCTL_ABS = true'), end
-        if ~isfield(params, 'peak_amps_hist_prctile')
-            pparams.peak_amps_hist_prctile = 25.0;
-            if params.verbose, disp('   pparams.peak_amps_hist_prctile = 25.0'), end
-        end
     end
+
+    if ~isfield(params, 'peak_amps_hist_prctile')
+        pparams.peak_amps_hist_prctile = 25.0;
+        if params.verbose, disp('   pparams.peak_amps_hist_prctile = 25.0'), end
+    else
+        pparams.peak_amps_hist_prctile = params.peak_amps_hist_prctile;
+    end
+
     if params.OMIT_LOW_AMP_PEAKS_PRCTL_ABS
         [~, peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS] = refine_peaks_low_amp_peaks_prctile(data_filtered_env_padded, peak_indexes_padded, 'PRCTILE', pparams.peak_amps_hist_prctile, params.PLOT_DIAGNOSTIC);
         peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS = peaks_OMIT_LOW_AMP_PEAKS_PRCTL_ABS(left_pad_len + 1 : left_pad_len + sig_len);
@@ -775,10 +790,10 @@ if params.RETURN_SIGNAL_PEAKS
     envelope_to_peak_search_wlen = floor(fs * params.envelope_to_peak_search_wlen / 2);
 
     peak_likelihood_boxes = peak_surrounding_likelihood(sig_len, peak_indexes, fs, 'BOX', params.envelope_to_peak_search_wlen, []);
-    peak_indexes = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1)), :), peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
+    peak_indexes = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1), 1), :), peak_indexes, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 
     peak_likelihood_boxes = peak_surrounding_likelihood(sig_len, peak_indexes_consensus, fs, 'BOX', params.envelope_to_peak_search_wlen, []);
-    peak_indexes_consensus = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1)), :), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
+    peak_indexes_consensus = find_closest_peaks(data .* peak_likelihood_boxes(ones(size(data_filtered, 1), 1), :), peak_indexes_consensus, envelope_to_peak_search_wlen, params.PEAK_SIGN, params.PLOT_DIAGNOSTIC);
 end
 
 if params.PLOT_DIAGNOSTIC
