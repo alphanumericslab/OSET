@@ -128,7 +128,7 @@ ecg_rpeaks_index(index_remove1) =[];
 ind_org(index_remove1) =[];
 
 rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
-N = min(60,ceil(length(ecg_rpeaks_index)/20));
+N = max(5,min(60,ceil(length(ecg_rpeaks_index)/20)));
 rr_intervals_ecg(rr_intervals_ecg>1.75*fs) = 1.75*fs;
 avg_intervals_ecg = movmean(rr_intervals_ecg,[N,N]);
 index_remove = 1+find(((diff(ecg_rpeaks_index(:))./avg_intervals_ecg-1)<-0.4 & ~(diff(ecg_rpeaks_index(:))>0.8*fs)) | diff(ecg_rpeaks_index(:))<0.25*fs);
@@ -169,8 +169,8 @@ end
 try
 
     rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
-    N = min(60,ceil(length(ecg_rpeaks_index)/20));
-    rr_intervals_ecg(rr_intervals_ecg>1.5*fs) = 1.75*fs;
+    N = max(5,min(60,ceil(length(ecg_rpeaks_index)/20)));
+    rr_intervals_ecg(rr_intervals_ecg>1.75*fs) = 1.75*fs;
     avg_intervals_ecg = movmean(rr_intervals_ecg,[N,N]);
     avg_intervals_ecg = [avg_intervals_ecg;avg_intervals_ecg(end)];
     rr_intervals_ecg = [rr_intervals_ecg;rr_intervals_ecg(end)];
@@ -178,12 +178,19 @@ try
 
     pqrs_bloks = zeros(length(ecg_rpeaks_index)-2,sample_250ms+sample_70ms+1);
     t_bloks = zeros(length(ecg_rpeaks_index)-2,round(sample_350ms*min(2,max(max(1,avg_intervals_ecg/(2*sample_350ms)))))-sample_70ms);
+    max_T = size(t_bloks,2);
+    max_qrs = size(t_bloks,2);
 
     for p = 2:length(ecg_rpeaks_index)-1
         this_qrs_index = ecg_rpeaks_index(p)-min(sample_250ms,floor(0.3*rr_intervals_ecg(p-1))):ecg_rpeaks_index(p)+sample_70ms;
         if any(this_qrs_index<1)||any(this_qrs_index>length(data))
             continue;
         end
+
+        if length(this_qrs_index)>max_qrs
+            this_qrs_index = this_qrs_index(end-max_qrs+1:end);
+        end
+
         pqrs_bloks(p-1,end-length(this_qrs_index)+1:end) = data(this_qrs_index) ;
 
 
@@ -192,10 +199,13 @@ try
             continue;
         end
 
+        if length(this_t_index)>max_T
+            this_t_index = this_t_index(1:max_T);
+        end
+
         t_bloks(p-1,1:length(this_t_index)) =  data(this_t_index);
 
     end
-
     ecg_blocks = [pqrs_bloks,t_bloks];
 
     max_val = max(prctile(pqrs_bloks(:),99.9),prctile(t_bloks(:),99.9));
@@ -794,9 +804,9 @@ try
         ind_extrm =[];
 
         if  change_sign>0
-            rpeak_val = abs(data_bias(starting_peak_p));
+            rpeak_val = abs(data_bias(stoping_peak_p));
         else
-            rpeak_val = max(abs(data_bias(starting_peak_p)),abs(data_bias(ecg_rpeaks_index(p))));
+            rpeak_val = max(abs(data_bias(stoping_peak_p)),abs(data_bias(ecg_rpeaks_index(p))));
         end
 
         if max_min_r(p)<0 && change_sign>0 || max_min_r(p)>0 && change_sign<0
@@ -1108,6 +1118,7 @@ try
     after_peak = nan(length(ecg_rpeaks_index),1);
     biphasic_shape = nan(length(ecg_rpeaks_index),1);
     T_type = cell(length(ecg_rpeaks_index),1);
+    T_peaks_cls_samples = nan(length(num_cls),1);
 
     for c = 1:length(num_cls)
         ind_c = index_clustering(index_clustering(:,2)==num_cls(c),1);
@@ -1142,6 +1153,7 @@ try
         avg_twave_smoothed = fillmissing(avg_twave_smoothed,"nearest");
         avg_twave_cls{c} = avg_twave_smoothed;
         temp = avg_twave_smoothed(3*sample_10ms+1:end);
+        T_peaks_cls_samples(c) = round(mean(cluster_ecg_samples));
 
         [TF,Pv_max] = islocalmax(temp,'MaxNumExtrema',2,'MinSeparation',sample_70ms,'MinProminence',0.1*std(temp));
         TF_max = find(TF);
@@ -1334,13 +1346,13 @@ try
             before_peak_cls(c) = TF_max(1);
             after_peak_cls(c) = TF_max(1);
             T_peaks_cls(c) = TF_max(1);
-            biphasic_shape_cls(c) = round(max(min(length(this_T_index),sample_350ms),(TF_max(2)+2*TF_min(1))/3));
+            biphasic_shape_cls(c) = round(max(min(T_peaks_cls_samples(c),sample_350ms),(TF_max(2)+2*TF_min(1))/3));
         elseif length(TF_min)>1 && P_min/P_max > 2  && (TF_min(2)>TF_max(1) && TF_min(2)>TF_min(1)&& TF_max(1)>TF_min(1)) % there is U wave
             T_type_cls{c} = 'Umin';
             before_peak_cls(c) = TF_min(1);
             after_peak_cls(c) = TF_min(1);
             T_peaks_cls(c) = TF_min(1);
-            biphasic_shape_cls(c) = round(max(min(length(this_T_index),sample_350ms),(TF_min(2)+2*TF_max(1))/3));
+            biphasic_shape_cls(c) = round(max(min(T_peaks_cls_samples(c),sample_350ms),(TF_min(2)+2*TF_max(1))/3));
         else
             if P_max/P_min >= 1
                 T_type_cls{c} = 'Nmax';
@@ -2904,12 +2916,18 @@ avg_intervals_ecg = [avg_intervals_ecg;avg_intervals_ecg(end)];
 
 pqrs_bloks = nan(length(ecg_rpeaks_index)-2,sample_200ms+sample_70ms+1);
 t_bloks = nan(length(ecg_rpeaks_index)-2,round(sample_450ms*min(2,max(max(1,avg_intervals_ecg/(2*sample_450ms)))))-sample_70ms);
-
+max_T = size(t_bloks,2);
+max_qrs = size(t_bloks,2);
 for p = 2:length(ecg_rpeaks_index)-1
     this_qrs_index = ecg_rpeaks_index(p)-min(sample_200ms,floor(0.4*rr_intervals_ecg(p-1))):ecg_rpeaks_index(p)+sample_70ms;
     if any(this_qrs_index<1)||any(this_qrs_index>length(ecg_denoised))
         continue;
     end
+
+    if length(this_qrs_index)>max_qrs
+        this_qrs_index = this_qrs_index(end-max_qrs+1:end);
+    end
+
     pqrs_bloks(p-1,end-length(this_qrs_index)+1:end) = ecg_denoised(this_qrs_index) ;
 
     this_t_index = ecg_rpeaks_index(p)+sample_70ms+1:ecg_rpeaks_index(p)+min(sample_450ms*min(2,max(1,avg_intervals_ecg(p)/(1.5*sample_450ms))),floor(0.7*rr_intervals_ecg(p)));
@@ -2917,6 +2935,9 @@ for p = 2:length(ecg_rpeaks_index)-1
         continue;
     end
 
+    if length(this_t_index)>max_T
+        this_t_index = this_t_index(1:max_T);
+    end
     t_bloks(p-1,1:length(this_t_index)) =  ecg_denoised(this_t_index);
 
 end
