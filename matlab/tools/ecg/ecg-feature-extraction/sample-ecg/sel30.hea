@@ -1,0 +1,8 @@
+sel30 2 250 224993
+sel30.dat 212 200 12 0 13 -10702 0 ECG1
+sel30.dat 212 200 12 0 20 -30717 0 ECG2
+#Produced by xform_new from record 30, beginning at 26:35.000
+#Produced by xform_new from record 30, beginning at 7:39:30.000
+#------------------------------------------
+#Produced by "/files2/scheherazade/plaguna/database/delay" from record sel30
+#The signal 0 was delayed with a delay=7 samples
