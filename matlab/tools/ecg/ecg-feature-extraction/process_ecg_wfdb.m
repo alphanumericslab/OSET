@@ -122,6 +122,35 @@ for ch = 1:length(info_ch)
         cnt = cnt +1;
         ch_I(cnt) = ch;
         lead_names_temp{cnt} = info_ch(ch).Description;
+        ecg_rmbaseline = sig(:,ch) - lp_filter_zero_phase(sig(:,ch), 0.5/fs); % High pass filter
+        % Signal unit detection and conversion logic:
+        % 1. First check if units are explicitly specified in the WFDB header
+        if ~isempty(info_ch(ch).Units)
+            % Case 1: If units are in microvolts (uV, uv, micro)
+            if contains(info_ch(ch).Units, 'uv') || contains(info_ch(ch).Units, 'uV') || contains(info_ch(ch).Units, 'micro')
+                % Convert to millivolts if signal amplitude is too large (>10)
+                if std(ecg_rmbaseline, 'omitmissing')> 10
+                    sig(:,ch) = sig(:,ch)/1000;
+                end
+                % Case 2: If units are not in millivolts (mV, mv, milli)
+            elseif ~(contains(info_ch(ch).Units, 'mv') || contains(info_ch(ch).Units, 'mV') || contains(info_ch(ch).Units, ',milli'))
+                % Convert to millivolts if signal amplitude is too small (<0.01)
+                if std(ecg_rmbaseline, 'omitmissing') < 0.01 && std(ecg_rmbaseline, 'omitmissing') > 0.00001
+                    sig(:,ch) = sig(:,ch)*1000;
+                end
+            end
+            % 2. If units are not specified, use signal amplitude to infer units
+        else
+            % Case 1: If signal amplitude is very small (<0.005), assume it's in volts
+            % and convert to millivolts
+            if std(ecg_rmbaseline, 'omitmissing') < 0.005 && std(ecg_rmbaseline, 'omitmissing') > 0.00002
+                sig(:,ch) = sig(:,ch)*1000;
+                % Case 2: If signal amplitude is very large (>20), assume it's in microvolts
+                % and convert to millivolts
+            elseif std(ecg_rmbaseline, 'omitmissing')> 20
+                sig(:,ch) = sig(:,ch)/1000;
+            end
+        end
     end
 end
 
@@ -241,7 +270,5 @@ for n = 1:num_windows
 end
 
 end
-
-
 
 
