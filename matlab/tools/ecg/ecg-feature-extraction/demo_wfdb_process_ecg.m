@@ -35,7 +35,7 @@ process_ecg_wfdb(input_wfdb_address, ecg_csv_file_name, lead_names_target, windo
 % custom lead configuration. Features are flattened across channels.
 input_wfdb_address = './sample-ecg/sel30.dat';
 ecg_csv_file_name = './sample-ecg/sel30_ecg.csv';
-lead_names_target = {'ECG1', 'ECG2', 'V4', 'V5', 'V6'};  % Custom lead names
+lead_names_target = {'ECG1', 'ECG2'};  % Custom lead names
 window_dur = 60;    % Process in 1-minute windows
 start_time = 10;    % Start from 10 seconds
 stop_time = 430;    % Process until 430 seconds

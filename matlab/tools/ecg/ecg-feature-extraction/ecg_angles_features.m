@@ -1,6 +1,6 @@
 function [feature_vec, feature_info] = ecg_angles_features(data, position, fs)
 % featureset = ecg_angles_features(data, position, fs)
-% Extract features related to the ECG -Angles
+% Extract features related to the ECG amplitude-to-interval ratios
 %
 % Inputs:
 %   data: ECG signal (1D array).
@@ -8,8 +8,8 @@ function [feature_vec, feature_info] = ecg_angles_features(data, position, fs)
 %   fs: Sampling frequency (Hz)
 %
 % Output:
-%   featureset: Stucture containing features related to the ECG -Angles
-%   (degree)
+%   featureset: Structure containing features related to ECG amplitude-to-interval ratios
+%   Units: mv/ms (millivolts per millisecond)
 %
 % Author:
 %   Seyedeh Somayyeh Mousavi
@@ -19,7 +19,7 @@ function [feature_vec, feature_info] = ecg_angles_features(data, position, fs)
 % Author: Sajjad Karimi
 % Location: Emory University, Georgia, USA
 % Email: sajjadkarimi91@gmail.com
-% Date: Mar 14, 2025
+% Date: Apr 10, 2025
 
 %% Constant value
 convert_s_ms =1000;
@@ -72,7 +72,7 @@ for i = 1:length(rpeak)
     end
 end
 
-% Calculte tan
+% Calculate ratios
 ratio_rt = rt_amp./ rt_interval;
 ratio_pr = pr_amp./ pr_interval;
 ratio_qr = qr_amp./ qr_interval;
@@ -86,88 +86,63 @@ valid_ratio_rs = ratio_rs(~isnan(ratio_rs));
 
 %% Check if any valid values are present for valid_ratio_rt
 if isempty(valid_ratio_rt)
-    mean_rt_angles = NaN;
-    std_rt_angles = NaN;
-    median_rt_angles = NaN;
+    mean_rt_ratio = NaN;
+    std_rt_ratio = NaN;
+    median_rt_ratio = NaN;
 else
-
-    valid_ratio_rt_angles = rad2deg(atan(valid_ratio_rt));
-    mean_rt_angles = mean(valid_ratio_rt_angles);
-    std_rt_angles = std(valid_ratio_rt_angles);
-    median_rt_angles = median(valid_ratio_rt_angles);
+    mean_rt_ratio = mean(valid_ratio_rt);
+    std_rt_ratio = std(valid_ratio_rt);
+    median_rt_ratio = median(valid_ratio_rt);
 end
+
 %% Check if any valid values are present for valid_ratio_pr
 if isempty(valid_ratio_pr)
-    mean_pr_angles = NaN;
-    std_pr_angles = NaN;
-    median_pr_angles = NaN;
+    mean_pr_ratio = NaN;
+    std_pr_ratio = NaN;
+    median_pr_ratio = NaN;
 else
-
-    valid_ratio_pr_angles = rad2deg(atan(valid_ratio_pr));
-    mean_pr_angles = mean(valid_ratio_pr_angles);
-    std_pr_angles = std(valid_ratio_pr_angles);
-    median_pr_angles = median(valid_ratio_pr_angles);
+    mean_pr_ratio = mean(valid_ratio_pr);
+    std_pr_ratio = std(valid_ratio_pr);
+    median_pr_ratio = median(valid_ratio_pr);
 end
+
 %% Check if any valid values are present for valid_ratio_qr
 if isempty(valid_ratio_qr)
-    mean_qr_angles = NaN;
-    std_qr_angles = NaN;
-    median_qr_angles = NaN;
+    mean_qr_ratio = NaN;
+    std_qr_ratio = NaN;
+    median_qr_ratio = NaN;
 else
-
-    valid_ratio_qr_angles = rad2deg(atan(valid_ratio_qr));
-    mean_qr_angles = mean(valid_ratio_qr_angles);
-    std_qr_angles = std(valid_ratio_qr_angles);
-    median_qr_angles = median(valid_ratio_qr_angles);
+    mean_qr_ratio = mean(valid_ratio_qr);
+    std_qr_ratio = std(valid_ratio_qr);
+    median_qr_ratio = median(valid_ratio_qr);
 end
 
 %% Check if any valid values are present for valid_ratio_rs
 if isempty(valid_ratio_rs)
-    mean_rs_angles = NaN;
-    std_rs_angles = NaN;
-    median_rs_angles = NaN;
+    mean_rs_ratio = NaN;
+    std_rs_ratio = NaN;
+    median_rs_ratio = NaN;
 else
-
-    valid_ratio_rs_angles = rad2deg(atan(valid_ratio_rs));
-    mean_rs_angles = mean(valid_ratio_rs_angles);
-    std_rs_angles = std(valid_ratio_rs_angles);
-    median_rs_angles = median(valid_ratio_rs_angles);
+    mean_rs_ratio = mean(valid_ratio_rs);
+    std_rs_ratio = std(valid_ratio_rs);
+    median_rs_ratio = median(valid_ratio_rs);
 end
 
-%%  Results
-% % Store pr_angles results
-% featureset.mean_pr_angles = mean_pr_angles;
-% featureset.std_pr_angles = std_pr_angles;
-% featureset.median_pr_angles = median_pr_angles;
-% 
-% % Store qr_angles results
-% featureset.mean_qr_angles = mean_qr_angles;
-% featureset.std_qr_angles = std_qr_angles;
-% featureset.median_qr_angles = median_qr_angles;
-% 
-% % Store rs_angles results
-% featureset.mean_rs_angles = mean_rs_angles;
-% featureset.std_rs_angles = std_rs_angles;
-% featureset.median_rs_angles = median_rs_angles;
-% 
-% % Store rt_angles results
-% featureset.mean_rt_angles = mean_rt_angles;
-% featureset.std_rt_angles = std_rt_angles;
-% featureset.median_rt_angles = median_rt_angles;
-
-feature_vec = [mean_pr_angles, std_pr_angles, median_pr_angles, mean_qr_angles, std_qr_angles, median_qr_angles,...
-    mean_rs_angles, std_rs_angles, median_rs_angles, mean_rt_angles, std_rt_angles, median_rt_angles];
+%% Results
+feature_vec = [mean_pr_ratio, std_pr_ratio, median_pr_ratio, mean_qr_ratio, std_qr_ratio, median_qr_ratio,...
+    mean_rs_ratio, std_rs_ratio, median_rs_ratio, mean_rt_ratio, std_rt_ratio, median_rt_ratio];
 
 % Define feature info
-feature_info.names = {    'mean_pr_angles', 'std_pr_angles', 'median_pr_angles', ...
-    'mean_qr_angles', 'std_qr_angles', 'median_qr_angles', ...
-    'mean_rs_angles', 'std_rs_angles', 'median_rs_angles', ...
-    'mean_rt_angles', 'std_rt_angles', 'median_rt_angles'};
+names = {    'mean_pr_ratio', 'std_pr_ratio', 'median_pr_ratio', ...
+    'mean_qr_ratio', 'std_qr_ratio', 'median_qr_ratio', ...
+    'mean_rs_ratio', 'std_rs_ratio', 'median_rs_ratio', ...
+    'mean_rt_ratio', 'std_rt_ratio', 'median_rt_ratio'};
 
-feature_info.units = repmat({'degree'}, 1, length(feature_info.names));
-feature_info.description = {"Mean P and R peaks angle", "Standard deviation P and R peaks angle", "Median P and R peaks angle", ...
-    "Mean QRSon and R peak angle", "Standard deviation QRSon and R peak angle", "Median QRSon and R peak angle", ...
-    "Mean R peak and QRSoff angle", "Standard deviation R peak and QRSoff peak angle", "Median R peak and QRSoff angle", ...
-    "Mean R and T peaks angle", "Standard deviation R and T peaks angle", "Median R and T peaks angle"};
+units = repmat({'mv/ms'}, 1, length(names));
+description = {"Mean P-R amplitude-to-interval ratio", "Standard deviation P-R amplitude-to-interval ratio", "Median P-R amplitude-to-interval ratio", ...
+    "Mean Q-R amplitude-to-interval ratio", "Standard deviation Q-R amplitude-to-interval ratio", "Median Q-R amplitude-to-interval ratio", ...
+    "Mean R-S amplitude-to-interval ratio", "Standard deviation R-S amplitude-to-interval ratio", "Median R-S amplitude-to-interval ratio", ...
+    "Mean R-T amplitude-to-interval ratio", "Standard deviation R-T amplitude-to-interval ratio", "Median R-T amplitude-to-interval ratio"};
+feature_info = struct('names', {names}, 'units', {units}, 'description', {description} );
 
 end
