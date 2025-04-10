@@ -195,6 +195,16 @@ num_windows = floor(T/win_len);
 % % % [~, filename, ~] = fileparts(input_wfdb_address);
 % % % ecg_csv_file_name = fullfile(save_csv_path, [filename, '_ecg.csv']);
 
+if flatten_flag == 0
+
+    lead_names_csv = cell(cnt,1);
+    for j = 1:cnt
+        lead_names_csv{j,1} = lead_names{1,j};
+    end
+else
+    lead_names_csv{1} = 'ECG';
+end
+
 % Process each window
 for n = 1:num_windows
     start_index = (n-1)*win_len+1;
@@ -214,10 +224,19 @@ for n = 1:num_windows
         continue
     end
 
-    window_time_info = repmat([start_index,stop_index], size(ecg_data,1), 1);
+    if flatten_flag == 0
+        window_time_info = repmat([start_index,stop_index], size(ecg_data,1), 1);
+        lead_names_csv = cell(cnt,1);
+        for j = 1:cnt
+            lead_names_csv{j,1} = lead_names{1,j};
+        end
+    else
+        window_time_info = [start_index,stop_index];
+
+    end
     feature_handle_csv(ecg_csv_file_name, ecg_features_vector, ecg_feature_info.names, ...
         ecg_feature_info.units, ecg_feature_info.description, fs, window_time_info, ...
-        lead_names(:), [],  (n==1) );
+        lead_names_csv, [],  (n==1) );
 
 end
 

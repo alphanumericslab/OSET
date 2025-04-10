@@ -309,9 +309,17 @@ item_type = {'s','s','s','d','d','d','d','d','s'};
 n_files=0;
 n_item=0;
 str = fgets(fid);
+
+[~, filename, ~] = fileparts(headname);
 while ischar(str)
 
-    if strcmp(str(1),'#')
+    if length(str)>length(filename)
+
+        if  ~strcmp(str(1:length(filename)),filename)
+            str = fgets(fid);
+            continue
+        end
+    else
         str = fgets(fid);
         continue
     end
