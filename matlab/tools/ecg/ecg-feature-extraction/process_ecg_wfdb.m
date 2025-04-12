@@ -116,12 +116,23 @@ lead_names_temp = cell(1,length(lead_names_target));
 ch_I  = zeros(1,length(lead_names_target));
 cnt = 0;
 
+
 % Collect descriptions from info_ch
 for ch = 1:length(info_ch)
-    if contains(info_ch(ch).Description,lead_names_target)
+    temp_desk =  info_ch(ch).Description;
+    % Remove \r and \n characters using find
+    idx = find(temp_desk == newline | temp_desk == char(13));
+    if ~isempty(idx)
+        temp_desk(idx) = '';
+    end
+    temp_desk = strtrim(temp_desk);  % Remove any leading/trailing whitespace
+    cell_index = strcmp(temp_desk,lead_names_target);
+
+    if any(cell_index)
+        index_lead = find(cell_index);
         cnt = cnt +1;
         ch_I(cnt) = ch;
-        lead_names_temp{cnt} = info_ch(ch).Description;
+        lead_names_temp{cnt} = lead_names_target{index_lead(1)};
         ecg_rmbaseline = sig(:,ch) - lp_filter_zero_phase(sig(:,ch), 0.5/fs); % High pass filter
         % Signal unit detection and conversion logic:
         % 1. First check if units are explicitly specified in the WFDB header
@@ -246,8 +257,13 @@ for n = 1:num_windows
     % ECG feature extraction
     win_ecg_data = ecg_data(:,start_index:stop_index);
 
-    [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, ~] = ...
-        ecg_feature_extraction(win_ecg_data, fs, lead_names, [], [], [], [], flatten_flag);
+    try
+        [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, ~] = ...
+            ecg_feature_extraction(win_ecg_data, fs, lead_names, [], [], [], [], flatten_flag);
+    catch
+        disp(['error in processing a segment of ', input_wfdb_address])
+        continue
+    end
 
     if all(isnan(ecg_features_vector(:)))
         continue
