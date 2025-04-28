@@ -1,12 +1,19 @@
 function [feature_vec, feature_info] = morphology_features(mean_beat, num_samples, norm_flag)
-% feature = ecg_complexity_features(data)
-% Extract features related to the complexity analysis of ECG signal
+% featureset = morphology_features(mean_beat, num_samples, norm_flag)
+% Extract features related to the morphology of the average ECG beat
 %
 % Inputs:
-%   data: ECG signal (1D array).
+%   mean_beat: Average ECG beat signal (1D array)
+%   num_samples: Number of samples to extract from the mean beat
+%   norm_flag: Boolean flag to indicate whether to normalize the samples
+%              (1: normalize, 0: do not normalize)
 %
 % Output:
-%   feature: Structure containing two values (Mobility and Complexity)
+%   feature_vec: Vector containing the sampled values from the mean beat
+%   feature_info: Structure containing feature information with fields:
+%       - names: Cell array of feature names
+%       - units: Cell array of feature units ('mv' or 'scaler')
+%       - description: Cell array of feature descriptions
 %
 % Author:
 %   Sajjad Karimi

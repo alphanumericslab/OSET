@@ -87,7 +87,7 @@ else
     twave_shape = 'none'; % bi-phasic, min, max
 end
 
-if length(ecg_rpeaks_index)<3
+if length(ecg_rpeaks_index)<4
     L = length(ecg_rpeaks_index);
 
     positions.Pon = nan(1,L);

@@ -141,16 +141,23 @@ for c = 1:C
         end
         this_feature_info = this_feature_info(ilocb);
 
+        error_flag = 0;
     catch ME
         % Error handling: display message and set NaN values for problematic channel
         disp(ME.message);
         fprintf("Error in processing signal_channel: %s, %d\n", c);
-        ecg_features_vector = cat(2, ecg_features_vector, nan(1, n_features));
+        if flatten_flag>0
+            ecg_features_vector = cat(2, ecg_features_vector, nan(1, n_features));
+        else
+            ecg_features_vector = cat(1, ecg_features_vector, nan(1, n_features));
+        end
+
         exit_flag = exit_flag -1;
+        error_flag = 1;
 
     end
 
-    if c==1 || isempty(ecg_feature_names)
+    if (c==1 || isempty(ecg_feature_names)) && error_flag==0
         ecg_features_units = [];
         ecg_feature_description = [];
 
@@ -161,13 +168,18 @@ for c = 1:C
         end
 
     end
+end
 
+if exit_flag == -C
+    error("No valid features were extracted")
+end
+
+for c = 1:C
     if flatten_flag>0
         for n = 1:length(ecg_feature_names)
             ecg_feature_names_ch{(c-1)*n_features+n} = [ecg_feature_names{n},'_', lead_names{c}];
         end
     end
-
 end
 
 if flatten_flag==0
