@@ -171,7 +171,8 @@ for c = 1:C
 end
 
 if exit_flag == -C
-    error("No valid features were extracted")
+    ecg_feature_info = [];
+    return
 end
 
 for c = 1:C
