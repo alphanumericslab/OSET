@@ -1,7 +1,8 @@
-function [data, fs, sigInfo] = rddat(record)
+function [data, fs, sigInfo] = rddat_wfdb(record)
 % Description: Read WFDB .dat file without WFDB library support
 %
-% This function reads and decodes WFDB format signal files (.dat) along with their
+% This function is part of the OSET (Open-Source Electrophysiological Toolbox)
+% and reads and decodes WFDB format signal files (.dat) along with their
 % associated header files (.hea). It supports various WFDB formats including 8-bit,
 % 16-bit, 24-bit, and format 212 (12-bit packed).
 %
@@ -64,7 +65,7 @@ function [data, fs, sigInfo] = rddat(record)
 % Date: Apr. 2025
 %
 % Example:
-%   [data, info] = rddat('100');
+%   [data, info] = rddat_wfdb('100');
 %   % Reads signal from 100.dat and header from 100.hea
 
 data=[];

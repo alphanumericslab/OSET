@@ -88,9 +88,9 @@ rng(42);
 
 % Load the WFDB file
 if strcmp(input_wfdb_address(end-2:end), 'mat')
-    [sig, fs, info_ch] = rdmat(input_wfdb_address(1:end-4));
+    [sig, fs, info_ch] = rdmat_wfdb(input_wfdb_address(1:end-4));
 else
-    [sig, fs, info_ch] = rddat(input_wfdb_address(1:end-4));
+    [sig, fs, info_ch] = rddat_wfdb(input_wfdb_address(1:end-4));
 end
 
 if nargin < 3 || isempty(lead_names_target)
