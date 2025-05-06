@@ -38,7 +38,7 @@ The pipeline processes ECG signals to extract features using a statistical appro
 
 There are two main ways to use this feature extraction pipeline:
 
-#### Option 1: Using `process_ecg_wfdb` (Recommended for beginners)
+#### Option 1: Using `process_ecg_wfdb` (Recommended)
 
 This function processes WFDB format ECG files and saves extracted features to CSV files.
 
