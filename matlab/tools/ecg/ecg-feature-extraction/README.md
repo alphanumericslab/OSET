@@ -1,96 +1,167 @@
 # ECG Feature Extraction Pipeline
 
-This project provides an ECG feature extraction pipeline that extracts features from ECG signals. The pipeline aims to report ECG signal features using a statistical approach (mean, median, and standard deviation for each feature). Additionally, there are other features to consider, including Singular Value Decomposition (SVD)-based features, that should be added to the 84 extracted features per lead.
+This project is part of the OSET (Open-Source Electrophysiological Toolbox) and provides a comprehensive ECG feature extraction pipeline. The toolbox extracts a wide range of features from ECG signals that can be used for machine learning and statistical analysis applications.
 
 ## Overview
 
-- The ECG signals should be in the **WFDB** format.
-- The ECG signals should be in **millivolts (mv)** or **microvolts (μV)**.
-- All signals should have the same number of leads and include noise filtering (notch filter) to remove power line noise.
-- The output will be a **CSV file** that contains the extracted features, with units reported for each feature.
+The pipeline processes ECG signals to extract features using a statistical approach (mean, median, and standard deviation for each feature). The extracted features can be used for:
+- Machine learning model development
+- Statistical analysis of ECG data
+- Clinical research and diagnosis support
+
+## Key Features
+- Processes ECG signals in **WFDB** format (.mat or .dat files with accompanying .hea files)
+- Handles signals in **millivolts (mV)** or **microvolts (μV)**
+- Supports multi-lead ECG recordings
+- Performs automatic noise filtering and preprocessing
+- Exports features to **CSV files** with units for easy integration with ML frameworks
+- Provides detailed feature descriptions
 
 ## Requirements
 
-- **ECG signals in WFDB format**:  
-  Ensure that the input ECG signals are provided in the WFDB format (.mat and .hea).
-
+- **MATLAB** (R2019b or later recommended)
+- **WFDB format ECG signals**:  
+  Input ECG signals should be in WFDB format (.mat/.dat with .hea files)
 - **OSET Package**:  
-  This project utilizes the OSET package for preprocessing, R peak detection, and fiducial point detection.  
-  To use the package, follow these steps:  
-  1. Clone the OSET repository
-  2. Add the OSET package to your MATLAB path 
+  The code requires the OSET package for preprocessing, R peak detection, and fiducial point detection
 
-## Running the Code
+## Getting Started
 
-To extract the features, use the [`extract_ecg_features_path_wfdb`](extract_ecg_features_path_wfdb.m) function. Here is a [`test script`](test_script.m) to run the function and this is an example of [`.csv output file`](ECG_features.csv). Below are the parameters you need to set before running the function:
+### Setup
+1. Clone the OSET repository or download this ECG feature extraction module
+2. Add the OSET package to your MATLAB path:
+   ```matlab
+   addpath(genpath('/path/to/OSET/matlab/tools/ecg'));
+   ```
 
-### Parameters:
-- **Path to the folder containing input ECG signals**  
-  Define the path to the directory containing your ECG signals.
+### Running the Code
 
-- **Path to save the output CSV file**  
-  Specify the directory where the output CSV file will be saved.
+There are two main ways to use this feature extraction pipeline:
 
-- **Name of the output CSV file**  
-  Define the name for the output CSV file that will contain the extracted features.
+#### Option 1: Using `process_ecg_wfdb` (Recommended for beginners)
 
-- **Lead List**  
-  Define the list of ECG leads (e.g., `["I", "II", "III"]`).
-
-- **Number of SVD Features to Compute per Lead**  
-  Specify the number of Singular Value Decomposition (SVD) features to compute per lead.
-
-- **Frequency for Notch Filtering (double)**  
-  Define the notch filter frequency (in Hz), typically used to remove power line interference.
-
-### Example Usage:
+This function processes WFDB format ECG files and saves extracted features to CSV files.
 
 ```matlab
-% Set the parameters
-input_path = 'path_to_input_folder';   % Path to folder containing ECG signals
-output_path = 'path_to_output_folder'; % Path to save the output CSV file
-output_filename = 'extracted_features.csv'; % Output CSV file name
-lead_list = {'I', 'II', 'III'};       % List of ECG leads
-n_svd_features = 10;                   % Number of SVD features to compute per lead
-f_notch = 50;                          % Notch filter frequency (Hz)
+% Example usage:
+input_wfdb_address = './sample-ecg/HR00001.mat';  % Path to ECG file
+ecg_csv_file_name = './output/HR00001_features.csv';  % Output file
+lead_names_target = {'I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'};
+window_dur = 10;    % Process in 10-second windows
+start_time = 0;     % Start from beginning
+stop_time = 0;      % Process until the end
+flatten_flag = 0;   % Stack features by channel (0) or flatten (1)
 
-% Call the feature extraction function
-extract_ecg_features_one_record(input_path, output_path, output_filename, lead_list, n_svd_features, f_notch);
+process_ecg_wfdb(input_wfdb_address, ecg_csv_file_name, lead_names_target, window_dur, start_time, stop_time, flatten_flag);
 ```
 
-## ECG Features Extracted
+For a complete demonstration with various ECG file formats, refer to [`demo_wfdb_process_ecg.m`](demo_wfdb_process_ecg.m).
 
-1. [**SNR Features**](ecg_snr_features.m) (2):  
- The function calculates and reports the mean and median signal-to-noise ratio (SNR) based on noise levels for beats of lead.
+#### Option 2: Using `ecg_feature_extraction` (For advanced users)
 
-2. [**SVD Features**](ecg_svd_features.m):  
-  Singular Value Decomposition (SVD) features, with the number of features defined by the user.
+This approach gives you more control over the preprocessing and feature extraction pipeline.
 
-3. [**HRV Features**](ecg_hrv_features.m) (7):  
-  This function extracts Heart Rate Variability (HRV) features, including:
-   - **SDNN** (Standard Deviation of NN intervals)  
-   - **RMSSD** (Root Mean Square of Successive RR Interval Differences)  
-   Additionally, the function calculates:
-   - Median heart rate
-   - Mean heart rate
-   - Upper and lower 5% heart rate
-   - Number of beats
+```matlab
+% Load and preprocess your data
+[ecg_data, fs, lead_names] = load_your_ecg_data();  % Replace with your loading function
 
-4. [**Angles Features**](ecg_angles_features.m) (12):  
-   The angles between R peaks and the P, S, Q, and T peaks are calculated, and the mean, median, and standard deviation of these angles are reported.
+% Extract features
+flatten_flag = false;  % Features stacked by channel
+[ecg_features_vector, ecg_feature_info, ecg_fiducial_position] = ecg_feature_extraction(ecg_data, fs, lead_names, [], [], [], [], flatten_flag);
 
-5. [**Amplitude and Area under the Curve Features**](ecg_area_amp_features.m) (32):  
-   Features related to the ECG signal's morphology and time intervals:  
-   - QRS complex, P-wave, and T-wave amplitudes  
-   - Area under the curve for these components  
-   - ST segment analysis,
-   - Ratio of the amplitude of R to T and P waves.
-   - Corrected QT interval, using the Fridericia and Bazett formulas.
+% Save features to CSV
+feature_handle_csv('output_features.csv', ecg_features_vector, ecg_feature_info.names, ecg_feature_info.units, ecg_feature_info.description, fs, window_time_info, lead_names);
+```
 
-6. [**Time Interval Features**](ecg_time_intervals_features.m) (29):  
-   Features related to time intervals, reporting the mean, median, and standard deviation for all waves, segments, and intervals.
+For a complete example of preprocessing and feature extraction, refer to [`sample_run_ecg_feature_extraction.m`](sample_run_ecg_feature_extraction.m).
 
-7. [**ECG Complexity Analysis**](ecg_complexity_features.m) (2):  
-   Mobility and complexity calculations.
+### Important Parameters
+
+- **input_wfdb_address**: Path to the WFDB format ECG file
+- **ecg_csv_file_name**: Path to save the output CSV file
+- **lead_names_target**: List of ECG leads to process
+- **window_dur**: Duration of windows for processing (in seconds)
+- **flatten_flag**: 
+  - `0`: Features are organized by channel [Channels × Features]
+  - `1`: Features are flattened across channels [1 × (Channels × Features)]
+
+## Feature Categories
+
+The pipeline extracts the following categories of features:
+
+1. **SNR Features** (2): Signal-to-noise ratio measurements
+2. **SVD Features**: Singular Value Decomposition features (user-defined count)
+3. **HRV Features** (7): Heart Rate Variability metrics (SDNN, RMSSD, etc.)
+4. **Angles Features** (12): Angular relationships between different ECG waves
+5. **Amplitude and Area Features** (32): Wave amplitudes and areas under the curve
+6. **Time Interval Features** (29): Durations of waves, segments, and intervals
+7. **Complexity Features** (2): Mobility and complexity measurements
+8. **Morphology Features**: Sampled values from the average beat (user-defined count)
+
+## Preparing Features for Machine Learning
+
+The features exported to CSV can be directly used for machine learning applications:
+
+1. **Feature Selection**: The CSV includes feature names and descriptions to help you select relevant features
+2. **Feature Engineering**: You can combine or transform features as needed
+3. **Model Training**: Import the CSV into your preferred ML framework
+
+```python
+# Example of using the features in Python (after extraction)
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+
+# Load features
+features = pd.read_csv('output_features.csv')
+X = features.iloc[:, 2:]  # Assuming first two columns are metadata
+y = your_labels  # Your classification labels
+
+# Split and train
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+```
+
+## Advanced Usage
+
+### Processing Large Datasets
+
+For large datasets, we recommend:
+1. Processing files in batches
+2. Using the windowing approach with appropriate `window_dur`
+3. Parallel processing multiple files when possible
+
+### Custom Feature Subsets
+
+You can extract specific feature subsets by modifying the feature extraction function calls or by filtering the output CSV.
+
+## Troubleshooting
+
+- **Missing WFDB Header**: Ensure both .dat/.mat and .hea files are present
+- **Lead Naming**: Lead names are case-sensitive and must match those in the header
+- **Memory Issues**: Reduce window size for large recordings
+- **NaN Values**: Check signal quality or try different preprocessing parameters
+
+## Further Information
+
+For more details on specific feature extraction algorithms, refer to the documentation in the individual feature extraction scripts.
+
+## Authors & Contact
+
+### Contributors
+- **Sajjad Karimi**
+  - Location: Emory University, Georgia, USA
+  - Email: sajjadkarimi91@gmail.com
+  
+- **Seyedeh Somayyeh Mousavi**
+  - Location: Emory University, Georgia, USA
+  - Email: bmemousavi@gmail.com
+
+### Project Lead
+- **Reza Sameni**
+  - Email: reza.sameni@gmail.com
+
+For questions, issues, or collaborations related to the OSET toolbox, please contact the authors.
 
 
