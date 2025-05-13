@@ -206,17 +206,19 @@ end
 
 ind_skip = sum(ind_skip,1)>0;
 
+T = size(ecg_data,2); % # of ECG channels
+T = min(T,stop_time*fs);
 if stop_time>0 && start_time>0 && stop_time>start_time
-    ecg_data = ecg_data(:, start_time*fs+1:stop_time*fs);
-    ind_skip = ind_skip(start_time*fs+1:stop_time*fs);
+    ecg_data = ecg_data(:, start_time*fs+1:T);
+    ind_skip = ind_skip(start_time*fs+1:T);
 
 elseif  stop_time==0 && start_time>0
     ecg_data = ecg_data(:, start_time*fs+1:end);
     ind_skip = ind_skip(start_time*fs+1:end);
 
 elseif  stop_time>0 && start_time==0
-    ecg_data = ecg_data(:, 1:stop_time*fs);
-    ind_skip = ind_skip(1:stop_time*fs);
+    ecg_data = ecg_data(:, 1:T);
+    ind_skip = ind_skip(1:T);
 
 end
 

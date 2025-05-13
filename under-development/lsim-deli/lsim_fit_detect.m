@@ -23,7 +23,7 @@ temp_pi0 = [1;zeros(max_state-1,1)];
 init_model.pi_0_lsim{1,1} = temp_pi0/sum(temp_pi0);
 init_model.pi_0_lsim{2,1} = temp_pi0/sum(temp_pi0);
 
-for b = 1:num_batch
+parfor b = 1:num_batch
 
     try
         if b~=num_batch
