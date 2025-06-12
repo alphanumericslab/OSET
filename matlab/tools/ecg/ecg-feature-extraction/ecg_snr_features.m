@@ -31,7 +31,7 @@ beat_length = round(increasing_beat_length * median(diff(rpeak_indexes)));
 if mod(beat_length, 2) == 0
     beat_length = beat_length + 1;
 end
-
+beat_length = ceil([0.3*beat_length,0.7*beat_length]);
 % Calculate SNR values
 [snr_median, snr_mean, mean_beat, median_beat] = events_snr(data, rpeak_indexes, beat_length);
 

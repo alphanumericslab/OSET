@@ -23,7 +23,7 @@ function [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, exit_fla
 % OUTPUT:
 % ecg_features_vector - includes the following features per each channel:
 %   1. SNR features (2)
-%   2. HRV features (7)
+%   2. HRV features (11)
 %   3. Features related to time interval (29)
 %   4. Features related to amplitude and area under curve (32)
 %   5. Features related to angle (12)

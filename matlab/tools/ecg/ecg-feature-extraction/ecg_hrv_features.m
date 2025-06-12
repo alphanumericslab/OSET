@@ -35,15 +35,17 @@ if length(rpeak_indexes) > 3
     RR_intervals_seconds = RR_intervals_samples / fs;
 
     % Filtering for non-normal beats
-    RR_intervals_seconds(RR_intervals_seconds<0.2) = [];
-    RR_intervals_seconds(RR_intervals_seconds>2) = [];
+    RR_intervals_seconds(RR_intervals_seconds<max(0.5*median(RR_intervals_seconds),0.2)) = [];
+    RR_intervals_seconds(RR_intervals_seconds>min(2*median(RR_intervals_seconds),2)) = [];
 
-    % RR intervals [2.5 97.5] percentile for filtering
+    % RR intervals [5 95] percentile for filtering
     IQR_RR = prctile(RR_intervals_seconds, [2.5 97.5]);
     filtered_RR = RR_intervals_seconds(RR_intervals_seconds >= IQR_RR(1) & RR_intervals_seconds <= IQR_RR(2));
 
     % Feature 1: RMSSD (Root Mean Square of Successive Differences)
-    RMSSD = sqrt(mean(diff(filtered_RR).^2));
+    dRR = diff(filtered_RR);
+    dRR(abs(dRR)>0.240) = []; % ignore values beyond 240ms
+    RMSSD = sqrt(mean(dRR.^2));
     % Convert to milliseconds
     RMSSD = RMSSD * convert_s_ms;
 
