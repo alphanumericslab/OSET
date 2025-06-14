@@ -116,50 +116,54 @@ lead_names_temp = cell(1,length(lead_names_target));
 ch_I  = zeros(1,length(lead_names_target));
 cnt = 0;
 
-
-% Collect descriptions from info_ch
+% First pass: collect all channel descriptions
+all_descriptions = cell(1,length(info_ch));
 for ch = 1:length(info_ch)
-    temp_desk =  info_ch(ch).Description;
-    % Remove \r and \n characters using find
+    temp_desk = info_ch(ch).Description;
+    % Remove \r and \n characters
     idx = find(temp_desk == newline | temp_desk == char(13));
     if ~isempty(idx)
         temp_desk(idx) = '';
     end
     temp_desk = strtrim(temp_desk);  % Remove any leading/trailing whitespace
-    cell_index = strcmp(temp_desk,lead_names_target);
+    all_descriptions{ch} = temp_desk;
+end
 
-    if any(cell_index)
-        index_lead = find(cell_index);
-        cnt = cnt +1;
-        ch_I(cnt) = ch;
-        lead_names_temp{cnt} = lead_names_target{index_lead(1)};
-        ecg_rmbaseline = sig(:,ch) - lp_filter_zero_phase(sig(:,ch), 0.5/fs); % High pass filter
-        % Signal unit detection and conversion logic:
-        % 1. First check if units are explicitly specified in the WFDB header
-        if ~isempty(info_ch(ch).Units)
+% Second pass: process channels in lead_names_target order
+for target_idx = 1:length(lead_names_target)
+    target_lead = lead_names_target{target_idx};
+    % Find matching channel
+    ch_idx = find(strcmp(all_descriptions, target_lead));
+    if ~isempty(ch_idx)
+        cnt = cnt + 1;
+        ch_I(cnt) = ch_idx(1);
+        lead_names_temp{cnt} = target_lead;
+        ecg_rmbaseline = sig(:,ch_idx(1)) - lp_filter_zero_phase(sig(:,ch_idx(1)), 0.5/fs);
+
+        % Signal unit detection and conversion logic
+        if ~isempty(info_ch(ch_idx(1)).Units)
             % Case 1: If units are in microvolts (uV, uv, micro)
-            if contains(info_ch(ch).Units, 'uv') || contains(info_ch(ch).Units, 'uV') || contains(info_ch(ch).Units, 'micro')
+            if contains(info_ch(ch_idx(1)).Units, 'uv') || contains(info_ch(ch_idx(1)).Units, 'uV') || contains(info_ch(ch_idx(1)).Units, 'micro')
                 % Convert to millivolts if signal amplitude is too large (>10)
                 if std(ecg_rmbaseline, 'omitmissing')> 10
-                    sig(:,ch) = sig(:,ch)/1000;
+                    sig(:,ch_idx(1)) = sig(:,ch_idx(1))/1000;
                 end
                 % Case 2: If units are not in millivolts (mV, mv, milli)
-            elseif ~(contains(info_ch(ch).Units, 'mv') || contains(info_ch(ch).Units, 'mV') || contains(info_ch(ch).Units, ',milli'))
+            elseif ~(contains(info_ch(ch_idx(1)).Units, 'mv') || contains(info_ch(ch_idx(1)).Units, 'mV') || contains(info_ch(ch_idx(1)).Units, ',milli'))
                 % Convert to millivolts if signal amplitude is too small (<0.01)
                 if std(ecg_rmbaseline, 'omitmissing') < 0.01 && std(ecg_rmbaseline, 'omitmissing') > 0.00001
-                    sig(:,ch) = sig(:,ch)*1000;
+                    sig(:,ch_idx(1)) = sig(:,ch_idx(1))*1000;
                 end
             end
-            % 2. If units are not specified, use signal amplitude to infer units
         else
             % Case 1: If signal amplitude is very small (<0.005), assume it's in volts
             % and convert to millivolts
             if std(ecg_rmbaseline, 'omitmissing') < 0.005 && std(ecg_rmbaseline, 'omitmissing') > 0.00002
-                sig(:,ch) = sig(:,ch)*1000;
+                sig(:,ch_idx(1)) = sig(:,ch_idx(1))*1000;
                 % Case 2: If signal amplitude is very large (>20), assume it's in microvolts
                 % and convert to millivolts
             elseif std(ecg_rmbaseline, 'omitmissing')> 20
-                sig(:,ch) = sig(:,ch)/1000;
+                sig(:,ch_idx(1)) = sig(:,ch_idx(1))/1000;
             end
         end
     end
