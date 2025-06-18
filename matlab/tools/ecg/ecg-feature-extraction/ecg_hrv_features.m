@@ -58,7 +58,7 @@ if length(rpeak_indexes) > 3
     HR = 60 ./ RR_intervals_seconds;  % HR in beats per minute based on RR intervals in seconds
 
     % Feature 3: Calculate median heart rate
-    median_HR = median(HR);
+    median_HR = 60 / median(RR_intervals_seconds);
 
     % Feature 4: Calculate heart rate for lower 5%
     HR_lower_5 = prctile(HR, 5);
@@ -67,9 +67,10 @@ if length(rpeak_indexes) > 3
     HR_upper_5 = prctile(HR, 95);
 
     % Feature 6: Calculate heart rate for the interquartile range (5%-95%)
-    IQR_HR = prctile(HR, [5 95]);
-    HR = HR(HR >= IQR_HR(1) & HR <= IQR_HR(2));  % Filter HR values within the range
-    HR_mean = mean(HR);
+    % IQR_HR = prctile(HR, [5 95]);
+    % HR = HR(HR >= IQR_HR(1) & HR <= IQR_HR(2));  % Filter HR values within the range
+    HR_mean = 60 / mean(RR_intervals_seconds);
+
 
     [pip, ials, pnn_ss, pnn_as ] = hrf(RR_intervals_seconds * convert_s_ms , fs);
     % Store the HRV features

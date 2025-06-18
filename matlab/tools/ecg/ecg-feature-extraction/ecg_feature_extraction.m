@@ -1,5 +1,5 @@
 function [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, exit_flag] = ...
-    ecg_feature_extraction(ecg_data, fs, lead_names, n_svd, num_morpho_samples, norm_flag, feature_list, flatten_flag)
+    ecg_feature_extraction(ecg_data, fs, lead_names, n_svd, num_morpho_samples, norm_flag, feature_list, flatten_flag, sync_rpeaks)
 
 % Description: Extract features from one record of multi-channel ECG signal
 %
@@ -77,6 +77,10 @@ if nargin < 8 || isempty(flatten_flag)
     flatten_flag = true;
 end
 
+if nargin < 9 || isempty(sync_rpeaks)
+    sync_rpeaks = true;
+end
+
 exit_flag = 0;
 
 
@@ -100,14 +104,23 @@ pad_len_time = 1;
 
 ecg_feature_names = [];
 
+if sync_rpeaks>0
+    params.RETURN_SIGNAL_PEAKS = false;
+    % Detect peaks based on recording length
+    ecg_data = ecg_data./std(ecg_data,[],2);
+    [~, rpeak_indexes] = peak_det_likelihood_long_recs(ecg_data, fs, seg_len_time, pad_len_time, params);
+end
+
 for c = 1:C
 
     data_channel = ecg_data(c, :);
     try
 
-        % Detect peaks based on recording length
-        [~, rpeak_indexes] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time);
 
+        if sync_rpeaks==0
+            % Detect peaks based on recording length
+            [~, rpeak_indexes] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time);
+        end
         % Run ECG fiducial points detector
         % position = fiducial_det_lsim(data_channel, R_peaks_indexes, fs);
         % Run wavedet_3D
