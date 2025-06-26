@@ -2734,6 +2734,26 @@ catch err
     index_R = 1:L;
     index_R(index_remove) =[];
 
+    if  exist('positions', 'var') == 0
+        L = length(ecg_rpeaks_index_org);
+
+        positions.Pon = nan(1,L);
+        positions.P = nan(1,L);
+        positions.Poff = nan(1,L);
+
+        positions.QRSon = nan(1,L);
+        positions.R = ecg_rpeaks_index_org(:)';
+        positions.QRSoff = nan(1,L);
+
+        positions.Ton = nan(1,L);
+        positions.T = nan(1,L);
+        positions.Toff = nan(1,L);
+
+        positions.P_score = zeros(1,L);
+        positions.beat_quality_score = zeros(1,L);
+
+        return
+    end
 
     if ~isfield(positions,'Pon')
         positions_out.Pon = nan(1,L);
