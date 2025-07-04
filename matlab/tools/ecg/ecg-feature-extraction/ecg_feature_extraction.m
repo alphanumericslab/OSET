@@ -108,7 +108,7 @@ if sync_rpeaks>0
     params.RETURN_SIGNAL_PEAKS = false;
     % Detect peaks based on recording length
     ecg_data = ecg_data./std(ecg_data,[],2);
-    [~, rpeak_indexes] = peak_det_likelihood_long_recs(ecg_data, fs, seg_len_time, pad_len_time, params);
+    [~, rpeak_indexes_in] = peak_det_likelihood_long_recs(ecg_data, fs, seg_len_time, pad_len_time, params);
 end
 
 for c = 1:C
@@ -119,7 +119,7 @@ for c = 1:C
 
         if sync_rpeaks==0
             % Detect peaks based on recording length
-            [~, rpeak_indexes] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time);
+            [~, rpeak_indexes_in] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time);
         end
         % Run ECG fiducial points detector
         % position = fiducial_det_lsim(data_channel, R_peaks_indexes, fs);
@@ -130,7 +130,7 @@ for c = 1:C
         % [position, ~, ~] = wavedet_3D(data_channel', R_peaks_indexes, heasig);
 
         flag_post_processing = 1;
-        position = fiducial_det_lsim( data_channel', rpeak_indexes, fs, flag_post_processing);
+        position = fiducial_det_lsim( data_channel', rpeak_indexes_in, fs, flag_post_processing);
 
         ecg_fiducial_position{c} = position;
         rpeak_indexes = position.R;
