@@ -119,7 +119,7 @@ cnt = 0;
 % First pass: collect all channel descriptions
 all_descriptions = cell(1,length(info_ch));
 for ch = 1:length(info_ch)
-    temp_desk = info_ch(ch).Description;
+    temp_desk = char(info_ch(ch).Description);
     % Remove \r and \n characters
     idx = find(temp_desk == newline | temp_desk == char(13));
     if ~isempty(idx)
