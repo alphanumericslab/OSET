@@ -213,4 +213,6 @@ ecg_feature_info.names = ecg_feature_names_ch;
 ecg_feature_info.units = ecg_features_units;
 ecg_feature_info.description = ecg_feature_description;
 
+ecg_features_vector(isinf(ecg_features_vector)) = nan;
+
 end
