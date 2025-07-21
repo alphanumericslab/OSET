@@ -1,4 +1,4 @@
-function process_ecg_wfdb(input_wfdb_address, ecg_csv_file_name, lead_names_target, window_dur, start_time, stop_time, flatten_flag)
+function process_ecg_wfdb(input_wfdb_address, ecg_csv_file_name, lead_names_target, window_dur, start_time, stop_time, flatten_flag, save_fiducials)
 
 % Description: Process WFDB files to extract ECG features and save them as CSV files
 %
@@ -111,6 +111,11 @@ end
 if nargin < 7 || isempty(flatten_flag)
     flatten_flag = 0;
 end
+
+if nargin < 8 || isempty(save_fiducials)
+    save_fiducials = 0;
+end
+
 
 lead_names_temp = cell(1,length(lead_names_target));
 ch_I  = zeros(1,length(lead_names_target));
@@ -251,32 +256,79 @@ else
     lead_names_csv{1} = 'ECG';
 end
 
+sync_rpeaks = true;
+
+ind_skip_cell = cell(num_windows,1);
+ecg_data_cell = cell(num_windows,1);
+
+for n = 1:num_windows
+    start_index = (n-1)*win_len+1;
+    stop_index = min(n*win_len, T);
+    ind_skip_cell{n} = ind_skip(start_index:stop_index);
+    ecg_data_cell{n} = ecg_data(:,start_index:stop_index);
+end
+
+clear ecg_data ind_skip
+
 % Process each window
+parfor n = 1:num_windows
+
+    start_index = (n-1)*win_len+1;
+    stop_index = min(n*win_len, T);
+
+    ecg_feature_info = [];
+    ecg_fiducial_position = [];
+
+    if any(ind_skip_cell{n})
+        ecg_features_vector = nan(1,length(lead_names));
+    else
+
+
+        % ECG feature extraction
+        win_ecg_data = ecg_data_cell{n};
+
+        try
+            [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, ~] = ...
+                ecg_feature_extraction(double(win_ecg_data), fs, lead_names, [], [], [], [], flatten_flag, sync_rpeaks);
+        catch
+            disp(['error in processing a segment of ', input_edf_address])
+            ecg_features_vector = nan(1,length(lead_names));
+        end
+
+    end
+
+    ecg_features_vector_cell{n} = ecg_features_vector;
+    ecg_feature_info_cell{n} = ecg_feature_info;
+    ecg_fiducial_position_cell{n} = ecg_fiducial_position;
+
+
+end
+
+
+% Process each window
+ecg_features_vector_all = [];
+window_time_info_all = [];
+lead_names_csv_all = [];
+flag_first = false;
+
+% Initialize variables for fiducial position processing
+all_fiducial_data = [];
+
 for n = 1:num_windows
     start_index = (n-1)*win_len+1;
     stop_index = min(n*win_len, T);
 
-    if any(ind_skip(start_index:stop_index))
-        continue;
-    end
-
-    % ECG feature extraction
-    win_ecg_data = ecg_data(:,start_index:stop_index);
-
-    try
-        [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, ~] = ...
-            ecg_feature_extraction(win_ecg_data, fs, lead_names, [], [], [], [], flatten_flag);
-    catch
-        disp(['error in processing a segment of ', input_wfdb_address])
-        continue
-    end
-
+    ecg_features_vector = ecg_features_vector_cell{n};
+    ecg_feature_info = ecg_feature_info_cell{n};
+    ecg_fiducial_position = ecg_fiducial_position_cell{n};
     if all(isnan(ecg_features_vector(:)))
         continue
     end
 
+    flag_first = true;
+
     if flatten_flag == 0
-        window_time_info = repmat([start_index,stop_index], size(ecg_data,1), 1);
+        window_time_info = repmat([start_index,stop_index], C,1);
         lead_names_csv = cell(cnt,1);
         for j = 1:cnt
             lead_names_csv{j,1} = lead_names{1,j};
@@ -285,10 +337,89 @@ for n = 1:num_windows
         window_time_info = [start_index,stop_index];
 
     end
-    feature_handle_csv(ecg_csv_file_name, ecg_features_vector, ecg_feature_info.names, ...
-        ecg_feature_info.units, ecg_feature_info.description, fs, window_time_info, ...
-        lead_names_csv, [],  (n==1) );
 
+    if save_fiducials > 0
+        % Process fiducial positions: add start_index-1 to all indices and gather data
+        window_rows = []; % Collect all rows for this window
+        if ~isempty(ecg_fiducial_position) && iscell(ecg_fiducial_position)
+            for ch = 1:length(ecg_fiducial_position)
+                if ~isempty(ecg_fiducial_position{ch})
+                    fiducials = ecg_fiducial_position{ch};
+
+                    % Get all field names from the structure
+                    field_names = fieldnames(fiducials);
+
+                    % Process each field and add start_index-1 to indices
+                    for f = 1:length(field_names)
+                        field_name = field_names{f};
+                        field_data = fiducials.(field_name);
+
+                        % Add start_index-1 to the indices (excluding quality scores)
+                        if isnumeric(field_data) && ~isempty(field_data) && ...
+                                ~strcmp(field_name, 'P_score') && ~strcmp(field_name, 'beat_quality_score')
+                            fiducials.(field_name) = field_data + (start_index - 1);
+                        end
+                    end
+
+                    % Create a table row for each beat in this channel
+                    num_beats = length(fiducials.R);
+                    for beat = 1:num_beats
+                        row_data = struct();
+                        row_data.Window = stop_index;
+                        row_data.Channel = lead_names{ch};
+                        row_data.Beat = beat;
+
+                        % Add all fiducial point data
+                        for f = 1:length(field_names)
+                            field_name = field_names{f};
+                            field_data = fiducials.(field_name);
+                            if isnumeric(field_data) && length(field_data) >= beat
+                                row_data.(field_name) = field_data(beat);
+                            else
+                                row_data.(field_name) = NaN;
+                            end
+                        end
+
+                        % Add to window rows collection
+                        if isempty(window_rows)
+                            window_rows = struct2table(row_data);
+                        else
+                            window_rows = [window_rows; struct2table(row_data)];
+                        end
+                    end
+                end
+            end
+        end
+
+        if isempty(all_fiducial_data)
+            all_fiducial_data = window_rows;
+        else
+            all_fiducial_data = [all_fiducial_data; window_rows];
+        end
+
+    end
+
+    ecg_features_vector_all = [ecg_features_vector_all; ecg_features_vector];
+    window_time_info_all = [window_time_info_all; window_time_info];
+    lead_names_csv_all = [lead_names_csv_all; lead_names_csv];
+
+    ecg_feature_info_valid =  ecg_feature_info;
+
+end
+
+
+% Save the fiducial position table if data was collected
+if flag_first
+    if save_fiducials
+        [fiducial_path, fiducial_name, fiducial_ext] = fileparts(ecg_csv_file_name);
+        fiducial_csv_file_name = fullfile(fiducial_path, [fiducial_name, '_fiducial_positions', fiducial_ext]);
+        writetable(all_fiducial_data, fiducial_csv_file_name);
+        % fprintf('Fiducial positions saved to: %s\n', fiducial_csv_file_name);
+    end
+
+    feature_handle_csv(ecg_csv_file_name, ecg_features_vector_all, ecg_feature_info_valid.names, ...
+        ecg_feature_info_valid.units, ecg_feature_info_valid.description, fs, window_time_info_all, ...
+        lead_names_csv_all, [],  true );
 end
 
 end
