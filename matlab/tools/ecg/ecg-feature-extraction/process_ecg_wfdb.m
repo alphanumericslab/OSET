@@ -256,7 +256,7 @@ else
     lead_names_csv{1} = 'ECG';
 end
 
-sync_rpeaks = true;
+sync_rpeaks = false;
 
 ind_skip_cell = cell(num_windows,1);
 ecg_data_cell = cell(num_windows,1);
@@ -270,40 +270,76 @@ end
 
 clear ecg_data ind_skip
 
-% Process each window
-parfor n = 1:num_windows
+if num_windows>4
+    % Process each window
+    parfor n = 1:num_windows
 
-    start_index = (n-1)*win_len+1;
-    stop_index = min(n*win_len, T);
+        ecg_feature_info = [];
+        ecg_fiducial_position = [];
 
-    ecg_feature_info = [];
-    ecg_fiducial_position = [];
-
-    if any(ind_skip_cell{n})
-        ecg_features_vector = nan(1,length(lead_names));
-    else
-
-
-        % ECG feature extraction
-        win_ecg_data = ecg_data_cell{n};
-
-        try
-            [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, ~] = ...
-                ecg_feature_extraction(double(win_ecg_data), fs, lead_names, [], [], [], [], flatten_flag, sync_rpeaks);
-        catch
-            disp(['error in processing a segment of ', input_edf_address])
+        if any(ind_skip_cell{n})
             ecg_features_vector = nan(1,length(lead_names));
+        else
+
+
+            % ECG feature extraction
+            win_ecg_data = ecg_data_cell{n};
+
+            try
+                [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, ~] = ...
+                    ecg_feature_extraction(double(win_ecg_data), fs, lead_names, [], [], [], [], flatten_flag, sync_rpeaks);
+            catch
+                disp(['error in processing a segment of ', input_wfdb_address])
+                ecg_features_vector = nan(1,length(lead_names));
+            end
+
         end
+
+        ecg_features_vector_cell{n} = ecg_features_vector;
+        ecg_feature_info_cell{n} = ecg_feature_info;
+        ecg_fiducial_position_cell{n} = ecg_fiducial_position;
+
 
     end
 
-    ecg_features_vector_cell{n} = ecg_features_vector;
-    ecg_feature_info_cell{n} = ecg_feature_info;
-    ecg_fiducial_position_cell{n} = ecg_fiducial_position;
+else
+
+    ecg_features_vector_cell = cell(1,num_windows);
+    ecg_feature_info_cell = cell(1,num_windows);
+    ecg_fiducial_position_cell = cell(1,num_windows);
+
+    % Process each window
+    for n = 1:num_windows
+
+        ecg_feature_info = [];
+        ecg_fiducial_position = [];
+
+        if any(ind_skip_cell{n})
+            ecg_features_vector = nan(1,length(lead_names));
+        else
+
+
+            % ECG feature extraction
+            win_ecg_data = ecg_data_cell{n};
+
+            try
+                [ecg_features_vector, ecg_feature_info, ecg_fiducial_position, ~] = ...
+                    ecg_feature_extraction(double(win_ecg_data), fs, lead_names, [], [], [], [], flatten_flag, sync_rpeaks);
+            catch
+                disp(['error in processing a segment of ', input_wfdb_address])
+                ecg_features_vector = nan(1,length(lead_names));
+            end
+
+        end
+
+        ecg_features_vector_cell{n} = ecg_features_vector;
+        ecg_feature_info_cell{n} = ecg_feature_info;
+        ecg_fiducial_position_cell{n} = ecg_fiducial_position;
+
+    end
 
 
 end
-
 
 % Process each window
 ecg_features_vector_all = [];
