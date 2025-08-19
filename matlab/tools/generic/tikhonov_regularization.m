@@ -26,7 +26,7 @@ function y = tikhonov_regularization(x, diff_order_or_filter_coefs, lambda)
 %   The Open-Source Electrophysiological Toolbox
 %   https://github.com/alphanumericslab/OSET
 
-if (length(diff_order_or_filter_coefs) == 1)
+if isscalar(diff_order_or_filter_coefs)
     h = diff([zeros(1, diff_order_or_filter_coefs), 1, zeros(1, diff_order_or_filter_coefs)], diff_order_or_filter_coefs);
 else
     h = diff_order_or_filter_coefs;

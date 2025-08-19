@@ -26,3 +26,6 @@ else
     noise_median = stacked_beats - median_beat_moving;%mean_beat_replicated;
     snr_median = 10*log10(var(median_beat_moving, [], 2) ./ var(noise_median, [], 2));
 end
+
+snr_mean = snr_mean(:)';
+snr_median = snr_median(:)';

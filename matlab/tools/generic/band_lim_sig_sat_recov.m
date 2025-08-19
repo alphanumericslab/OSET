@@ -40,7 +40,7 @@ function y = band_lim_sig_sat_recov(x, th_bottom, th_top, n_itr, ff_low, ff_high
 % https://github.com/alphanumericslab/OSET
 
 % The default factor beyond max/min that the signal should never exceed
-default_upper_lower_extreme_scale_factor = 0.25;
+default_upper_lower_extreme_scale_factor = 1.0;
 
 if nargin < 7 || isempty(th_bottom_end)
     th_bottom_end = th_bottom - default_upper_lower_extreme_scale_factor*abs(th_bottom);
