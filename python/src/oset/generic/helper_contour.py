@@ -1,3 +1,6 @@
+# Author: Seyedeh Somayyeh Mousavi and Reza Sameni
+# 2024-2025
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
