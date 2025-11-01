@@ -7,22 +7,24 @@ clear
 clc
 
 % Parameters
-ITR = 100;
+ITR = 10;
 K = 1000;
-dim1 = 15;
+dim1 = 32;
 dim2 = 3;
 
 % Preallocate
 e1 = zeros(1, K);
 e2 = zeros(1, K);
 
+tic
 % Monte Carlo comparison
 for k = 1:K
     A = randn(dim1, dim2);
     B = randn(dim1, dim2);
-    [~, ~, e1(k)] = subspace_mapping(A, B, 1);
-    [~, ~, e2(k)] = subspace_mapping(A, B, ITR);
+    [~, ~, e1(k)] = subspace_mapping(A, B, 1, 'rotate');
+    [~, ~, e2(k)] = subspace_mapping(A, B, ITR, 'rotate');
 end
+toc
 
 % Plot results
 figure
@@ -43,3 +45,7 @@ grid on
 xlabel('Sample')
 ylabel('\Delta Error (Single - Iterative)')
 set(gca, 'FontSize', 13)
+
+e1_mean = mean(e1)
+
+e2_mean = mean(e2)

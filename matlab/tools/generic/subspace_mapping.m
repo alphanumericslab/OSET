@@ -1,7 +1,7 @@
-function [S, R, e] = subspace_mapping(A, B, ITR)
+function [S, R, e] = subspace_mapping(A, B, ITR, mode)
 % SUBSPACE_MAPPING  Estimates scaling (S) and rotation (R) matrices between subspaces A and B.
 %
-%   [S, R, e] = subspace_mapping(A, B, ITR) finds diagonal scaling S and 
+%   [S, R, e] = subspace_mapping(A, B, ITR) finds diagonal scaling S and
 %   orthogonal rotation R that minimize the Frobenius norm:
 %
 %       ||A - B*S*R||_F
@@ -9,6 +9,7 @@ function [S, R, e] = subspace_mapping(A, B, ITR)
 %   Inputs:
 %       A, B : Matrices of equal size (m×n) representing subspaces.
 %       ITR  : Number of iterations for better convergence (default = 1).
+%       mode : 'rotate' (det(R)=+1), 'flip' (det(R)=-1) or 'any' (det(R)=+/-1) 
 %
 %   Outputs:
 %       S : Diagonal scaling matrix (n×n)
@@ -29,12 +30,35 @@ if nargin < 3 || isempty(ITR)
     ITR = 1;
 end
 
+if nargin < 4 || isempty(mode)
+    mode = 'orthonormal';
+end
+
+
 n = size(A,2);
 S = eye(n);
 
 for k = 1:ITR
-    [U, ~, V] = svd(S * B' * A);
+    [U, sigma, V] = svd(S * B' * A);
     R = U * V';
+    switch mode
+        case 'rotate'
+            if det(R) < 0 % flip the sign of the eigenvector corresponding to the smallest singular value
+                [~, I] = min(diag(sigma));
+                V(:, I) = -V(:, I);
+                R = U * V';
+            end
+        case 'flip'
+            if det(R) > 0 % flip the sign of the eigenvector corresponding to the smallest singular value
+                [~, I] = min(diag(sigma));
+                V(:, I) = -V(:, I);
+                R = U * V';
+            end
+        case 'any'
+
+        otherwise
+            error('Undefined mode')
+    end
     Num = B' * A * R';
     Den = B' * B;
     S = diag(diag(Num) ./ diag(Den));
