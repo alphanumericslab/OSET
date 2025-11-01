@@ -31,7 +31,7 @@ if nargin < 3 || isempty(ITR)
 end
 
 if nargin < 4 || isempty(mode)
-    mode = 'orthonormal';
+    mode = 'any';
 end
 
 
