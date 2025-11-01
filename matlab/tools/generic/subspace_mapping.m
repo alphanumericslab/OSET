@@ -9,7 +9,7 @@ function [S, R, e] = subspace_mapping(A, B, ITR, mode)
 %   Inputs:
 %       A, B : Matrices of equal size (m×n) representing subspaces.
 %       ITR  : Number of iterations for better convergence (default = 1).
-%       mode : 'rotate' (det(R)=+1), 'flip' (det(R)=-1) or 'any' (det(R)=+/-1) 
+%       mode : 'rotate' (det(R) = +1), 'reflect' (det(R) = -1) or 'any' (det(R) = +/-1) 
 %
 %   Outputs:
 %       S : Diagonal scaling matrix (n×n)
@@ -48,7 +48,7 @@ for k = 1:ITR
                 V(:, I) = -V(:, I);
                 R = U * V';
             end
-        case 'flip'
+        case 'reflect'
             if det(R) > 0 % flip the sign of the eigenvector corresponding to the smallest singular value
                 [~, I] = min(diag(sigma));
                 V(:, I) = -V(:, I);
