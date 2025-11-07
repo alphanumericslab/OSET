@@ -208,7 +208,7 @@ for c = 1:C
     ecg_raw = ecg_raw - (movmean(movmedian(ecg_raw(:),[round(0.3*fs),round(0.3*fs)]),[round(0.15*fs),round(0.15*fs)]))';
 
     ecg_raw = ecg_raw - lp_filter_zero_phase(ecg_raw, 0.1/fs); % High pass filter
-    ecg_raw = lp_filter_zero_phase(ecg_raw, 30/fs); % Low pass filter
+    ecg_raw = lp_filter_zero_phase(ecg_raw, min(fs/2,100)/fs); % Low pass filter
 
     ecg_data(c,:) = ecg_raw;
 end
