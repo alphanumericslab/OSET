@@ -57,7 +57,7 @@ if nargin<3  || isempty(lead_names)
 end
 
 if nargin<4 || isempty(n_svd)
-    n_svd = 5;
+    n_svd = 10;
 end
 
 if nargin < 5 || isempty(num_morpho_samples)
@@ -107,7 +107,7 @@ ecg_feature_names = [];
 if sync_rpeaks>0
     params.RETURN_SIGNAL_PEAKS = false;
     % Detect peaks based on recording length
-    ecg_data = ecg_data./std(ecg_data,[],2);
+    % ecg_data = ecg_data./std(ecg_data,[],2);
     [~, rpeak_indexes_in] = peak_det_likelihood_long_recs(ecg_data, fs, seg_len_time, pad_len_time, params);
 end
 
