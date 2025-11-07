@@ -1,5 +1,5 @@
 function [feature_vec, feature_info] = ecg_time_intervals_features(rpeak_indexes, position, fs)
-% featureset = ecg_time_intervals_features(R_peaks_indexes, position, fs)
+% function [feature_vec, feature_info] = ecg_time_intervals_features(R_peaks_indexes, position, fs)
 % Extract features related to the ECG time interval
 %
 % Inputs:
@@ -196,44 +196,44 @@ end
 % featureset.mean_pr_interval = mean_pr_interval;
 % featureset.std_pr_interval = std_pr_interval;
 % featureset.median_pr_interval = median_pr_interval;
-% 
+%
 % % Store qt_interval results
 % featureset.mean_qt_interval = mean_qt_interval;
 % featureset.std_qt_interval = std_qt_interval;
 % featureset.median_qt_interval = median_qt_interval;
 % featureset.QTc_b = QTc_b;
 % featureset.QTc_f = QTc_f;
-% 
+%
 % % Store st_segment results
 % featureset.mean_st_segment = mean_st_segment;
 % featureset.std_st_segment = std_st_segment;
 % featureset.median_st_segment = median_st_segment;
-% 
+%
 % % Store pr_segment results
 % featureset.mean_pr_segment = mean_pr_segment;
 % featureset.std_pr_segment = std_pr_segment;
 % featureset.median_pr_segment = median_pr_segment;
-% 
+%
 % % Store pr_peaks results
 % featureset.mean_pr_peaks = mean_pr_peaks;
 % featureset.std_pr_peaks = std_pr_peaks;
 % featureset.median_pr_peaks = median_pr_peaks;
-% 
+%
 % % Store qr_peaks results
 % featureset.mean_qr_peaks = mean_qr_peaks;
 % featureset.std_qr_peaks = std_qr_peaks;
 % featureset.median_qr_peaks = median_qr_peaks;
-% 
+%
 % % Store qrs_complex results
 % featureset.mean_qrs_complex = mean_qrs;
 % featureset.std_qrs_complex = std_qrs;
 % featureset.median_qrs_complex = median_qrs;
-% 
+%
 % % Store rs_peaks results
 % featureset.mean_rs_peaks = mean_rs_peaks;
 % featureset.std_rs_peaks = std_rs_peaks;
 % featureset.median_rs_peaks = median_rs_peaks;
-% 
+%
 % % Store rt_peaks results
 % featureset.mean_rt_peaks = mean_rt_peaks;
 % featureset.std_rt_peaks = std_rt_peaks;
@@ -243,6 +243,9 @@ feature_vec = [mean_pr_interval, std_pr_interval, median_pr_interval, mean_qt_in
     mean_st_segment, std_st_segment, median_st_segment, mean_pr_segment, std_pr_segment, median_pr_segment, ...
     mean_pr_peaks, std_pr_peaks, median_pr_peaks, mean_qr_peaks, std_qr_peaks, median_qr_peaks, mean_qrs, std_qrs, median_qrs, ...
     mean_rs_peaks, std_rs_peaks, median_rs_peaks, mean_rt_peaks, std_rt_peaks, median_rt_peaks];
+
+% Convert Inf to NaN
+feature_vec(isinf(feature_vec)) = NaN;
 
 % Define feature info
 feature_info.names = {'mean_pr_interval', 'std_pr_interval', 'median_pr_interval', 'mean_qt_interval', 'std_qt_interval', 'median_qt_interval', 'qtc_b','qtc_f' ...

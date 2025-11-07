@@ -1,28 +1,28 @@
 function [feature_vec, feature_info] = ecg_svd_features(data, rpeak_indexes, n_svd)
-% featureset = ecg_svd_features(data, R_peak_indexes, number_eigenvalues)
+% function [feature_vec, feature_info] = ecg_svd_features(data, R_peak_indexes, number_eigenvalues)
 % Extract features from ECG using Singular Value Decomposition (SVD)
 %
 % Inputs:
-%   data: ECG signal (1D array).
+%   data: ECG signal as a vector (in microvolts) (1D array).
 %   R_peaks_indexes - A vector containing the R-peak indices of the ECG signal (expressed as sample points).
 %   number_eigenvalues: Number of eigenvalues to consider for the feature vector (scaler).
 %
-% Output:
-%   featureset: Structure containing normalized singular values in percentage.
+% Outputs:
+% feature_vec: A vector contains normalized singular values in percentage.
+% feature_info: A structure contains feature descriptions, names and
+%   units.
 %
 % Dependencies:
 %   `events_snr` function from the OSET package
 %
 % Author:
 %   Seyedeh Somayyeh Mousavi
+%   Sajjad Karimi
+%   Reza Sameni
 %   Emory University, Georgia, USA
 %   Email: bmemousavi@gmail.com
-%   Date: OCT 14, 2024
-% Author:
-%   Sajjad Karimi
-%   Emory University, Georgia, USA
-%   Email: sajjadkarimi91@gmail.com
-%   Date: Mar 14, 2025
+%   First: Date: SEP 24, 2024
+%   Second: Date: AUG 3, 2025
 
 % Step 1: Compute RR intervals in samples
 RR_intervals_samples = diff(rpeak_indexes);
@@ -55,6 +55,9 @@ end
 
 % Step 6: Convert normalized singular values to percentages
 feature_vec = singularvalues_normalized' * 100;
+
+% Convert Inf to NaN
+feature_vec(isinf(feature_vec)) = NaN;
 
 % Define feature info
 for n = 1:n_svd

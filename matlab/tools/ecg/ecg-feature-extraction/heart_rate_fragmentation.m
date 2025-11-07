@@ -1,4 +1,4 @@
-function [pip, ials, pnn_ss, pnn_as] = hrf(rrn_interval , fs)
+function [pip, ials, pnn_ss, pnn_as] = heart_rate_fragmentation(rrn_interval , fs)
 %Computes Heart Rate Fragmentation of a NN interval time series.
 % HRF for assessing short-term (high-frequency [HF]) heart rate dynamics
 

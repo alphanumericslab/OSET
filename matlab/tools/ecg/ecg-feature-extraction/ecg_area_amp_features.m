@@ -1,28 +1,30 @@
 function [feature_vec, feature_info] = ecg_area_amp_features(data, position, fs)
-% featureset = ecg_area_amp_features(data, position, fs)
+
+% function [feature_vec, feature_info] = ecg_area_amp_features(data, position, fs)
 % Extract features related to the ECG amplitude and area under the
-% curve.
+% curve of different ECG parts.
 %
 % Inputs:
-%   data: ECG signal (1D array).
-%   position: Fiducial points of the ECG signal.
-%   fs: Sampling frequency (Hz).
+%   data: ECG signal as a vector (in microvolts) (1D array).
+%   position: Fiducial points of the ECG signal (expressed as sample points).
+%   fs: Sampling frequency of the ECG signal (in Hz).
 %
-% Output:
-%   featureset: Structure containing features related to the ECG
-%   amplitude and area under the curve of the QRS complex, T wave and P wave,
+% Outputs:
+%   feature_vec:  A vector contains features related to ECG amplitude and
+%   area under the curve of the QRS complex, T wave and P wave,
 %   amplitude of the ST segment, and amplitude ratio of the R peak to the S
 %   and T waves.
+%   feature_info: A structure contains feature descriptions, names and
+%   units.
 %
 % Author:
 %   Seyedeh Somayyeh Mousavi
+%   Sajjad Karimi
+%   Reza Sameni
 %   Emory University, Georgia, USA
 %   Email: bmemousavi@gmail.com
-%   Date: SEP 24, 2024
-% Author: Sajjad Karimi
-% Location: Emory University, Georgia, USA
-% Email: sajjadkarimi91@gmail.com
-% Date: Mar 14, 2025
+%   First: Date: SEP 24, 2024
+%   Second: Date: AUG 3, 2025
 
 %% Constant value
 convert_s_ms =1000;
@@ -250,6 +252,7 @@ feature_vec = [mean_qrs_amplitude, std_qrs_amplitude, median_qrs_amplitude, mean
     mean_t_amplitude, std_t_amplitude, median_t_amplitude, ratio_qrs_t_amplitude, mean_t_auc, std_t_auc, median_t_auc, mean_t_abs_auc, std_t_abs_auc, median_t_abs_auc, ...
     mean_p_amplitude, std_p_amplitude, median_p_amplitude, ratio_qrs_p_amplitude, mean_p_auc, std_p_auc, median_p_auc, mean_p_abs_auc, std_p_abs_auc, median_p_abs_auc, ...
     mean_st_amplitude, std_st_amplitude, median_st_amplitude];
+
 % Define feature info
 feature_info.names = {    'mean_qrs_amp', 'std_qrs_amp', 'median_qrs_amp', 'mean_qrs_area', 'std_qrs_area', 'median_qrs_area', 'mean_qrs_abs_area', 'std_qrs_abs_area', 'median_qrs_abs_area', ...
     'mean_t_amp', 'std_t_amp', 'median_t_amp', 'ratio_t_r_amp', 'mean_t_area', 'std_t_area', 'median_t_area',  'mean_t_abs_area', 'std_t_abs_area', 'median_t_abs_area', ...

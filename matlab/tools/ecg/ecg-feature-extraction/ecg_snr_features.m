@@ -1,27 +1,33 @@
 function [feature_vec, feature_info, mean_beat, median_beat] = ecg_snr_features(data, rpeak_indexes)
-% snr_features = ecg_snr_features(data, R_peaks_indexes)
-% Matlab function for calculating SNR features from ECG signal.
+
+% function [feature_vec, feature_info] = ecg_snr_features(data, R_peaks_indexes)
+% Extract features from ECG using beat signal-to-noise ratio (SNR)
 %
-% INPUT:
-% data          - ECG signal
-% R_peaks_indexes - A vector containing the R-peak indices of the ECG signal (expressed as sample points).
+% Inputs:
+%   data: ECG signal as a vector (in microvolts) (1D array).
+%   R_peaks_indexes:  A vector containing the R-peak indices of the ECG signal (expressed as sample points).
 %
-% OUTPUT:
-% snr_features - A struct containing:
+% Outputs:
+% feature_vec: A vector contains
 %   1. median SNR
 %   2. mean SNR
 %
-% Dependencies:
-% 1. `events_snr` function from the OSET package
+%  feature_info: A structure contains feature descriptions, names and
+%  units.
 %
-% Author: Seyedeh Somayyeh Mousavi
-% Date: Dec 18, 2024
-% Location: Emory University, Georgia, USA
-% Email: bmemousavi@gmail.com
-% Author: Sajjad Karimi
-% Location: Emory University, Georgia, USA
-% Email: sajjadkarimi91@gmail.com
-% Date: Mar 14, 2025
+%  mean_beat: Average ECG beat signal (1D array)
+%
+% Dependencies:
+%   1. `events_snr` function from the OSET package
+%
+% Author:
+%   Seyedeh Somayyeh Mousavi
+%   Sajjad Karimi
+%   Reza Sameni
+%   Emory University, Georgia, USA
+%   Email: bmemousavi@gmail.com
+%   First: Date: SEP 24, 2024
+%   Second: Date: AUG 3, 2025
 
 %% Constants
 increasing_beat_length = 1.2;
@@ -40,6 +46,10 @@ snr_features.median = median(snr_median);
 snr_features.mean = median(snr_mean);
 
 feature_vec = [snr_features.median, snr_features.mean];
+
+% Convert Inf to NaN
+feature_vec(isinf(feature_vec)) = NaN;
+
 % Define feature info
 feature_info.names = {'snr_median', 'snr_mean'};
 feature_info.units = {'dB', 'dB'};

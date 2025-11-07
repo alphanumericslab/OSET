@@ -1,5 +1,5 @@
 function [feature_vec, feature_info] = morphology_features(mean_beat, num_samples, norm_flag)
-% featureset = morphology_features(mean_beat, num_samples, norm_flag)
+% [feature_vec, feature_info] = morphology_features(mean_beat, num_samples, norm_flag)
 % Extract features related to the morphology of the average ECG beat
 %
 % Inputs:
@@ -35,6 +35,8 @@ if norm_flag
 end
 
 feature_vec = sampled_values;
+% Convert Inf to NaN
+feature_vec(isinf(feature_vec)) = NaN;
 
 % Define feature info
 for n = 1:num_samples

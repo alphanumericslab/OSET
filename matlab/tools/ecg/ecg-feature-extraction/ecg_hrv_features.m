@@ -1,26 +1,30 @@
 function [feature_vec, feature_info]  = ecg_hrv_features(rpeak_indexes, fs)
 %%
-% Matlab function for extracting Heart Rate Variability (HRV) features.
-% based on time units (seconds).
+% function [feature_vec, feature_info]  =  ecg_hrv_features(R_peaks, fs)
+% Extract Heart Rate Variability (HRV) features.
 %
-% INPUT:
-% R_peaks - A vector containing the R-peak indices of the ECG signal (expressed as sample points).
-% fs      - Sampling frequency (Hz), used to convert sample indices to time units.
+%  Inputs:
+%       R_peaks:  A vector containing the R-peak indices of the ECG signal (expressed as sample points).
+%       fs:  Sampling frequency (Hz), used to convert sample indices to time units.
 %
-% OUTPUT:
-% features - A structure containing the following HRV features:
+% Outputs:
+% feature_vec: Containing the following HRV features:
 %   1. RMSSD (Root Mean Square of Successive Differences) in milliseconds
 %   2. SDNN (Standard Deviation of normal-to-normal (NN) intervals) in milliseconds
 %   3. HR (MEDIAN, MEAN, upper_5, lower_5)
+%   4. HRF (MEDIAN, MEAN)
+% feature_info: A structure contains feature descriptions, names and
+% units.
 %
-% Author: Seyedeh Somayyeh Mousavi
-% Date: Dec 17, 2024
-% Location: Emory University, Georgia, USA
-% Email: bmemousavi@gmail.com
-% Author: Sajjad Karimi
-% Location: Emory University, Georgia, USA
-% Email: sajjadkarimi91@gmail.com
-% Date: Mar 14, 2025
+% Author:
+%   Seyedeh Somayyeh Mousavi
+%   Sajjad Karimi
+%   Reza Sameni
+%   Emory University, Georgia, USA
+%   Email: bmemousavi@gmail.com
+%   First: Date: SEP 24, 2024
+%   Second: Date: AUG 3, 2025
+%   Third: Date: Nov 6, 2025
 %=======================================================================
 %% Constant value
 convert_s_ms =1000;
@@ -38,7 +42,7 @@ if length(rpeak_indexes) > 3
     RR_intervals_seconds(RR_intervals_seconds<max(0.5*median(RR_intervals_seconds),0.2)) = [];
     RR_intervals_seconds(RR_intervals_seconds>min(2*median(RR_intervals_seconds),2)) = [];
 
-    % RR intervals [5 95] percentile for filtering
+    % RR intervals [2.5 97.5] percentile for filtering
     IQR_RR = prctile(RR_intervals_seconds, [2.5 97.5]);
     filtered_RR = RR_intervals_seconds(RR_intervals_seconds >= IQR_RR(1) & RR_intervals_seconds <= IQR_RR(2));
 
@@ -72,7 +76,7 @@ if length(rpeak_indexes) > 3
     HR_mean = 60 / mean(RR_intervals_seconds);
 
 
-    [pip, ials, pnn_ss, pnn_as ] = hrf(RR_intervals_seconds * convert_s_ms , fs);
+    [pip, ials, pnn_ss, pnn_as ] = heart_rate_fragmentation(RR_intervals_seconds * convert_s_ms , fs);
     % Store the HRV features
     features.N_beats = length(rpeak_indexes);
     features.RMSSD = RMSSD;
@@ -106,6 +110,10 @@ end
 
 feature_vec = [features.N_beats, features.RMSSD, features.SDNN, features.HR_median, features.HR_mean, features.HR_upper_5, features.HR_lower_5,...
     features.hrf_pip, features.hrf_ials, features.hrf_pnn_ss, features.hrf_pnn_as];
+
+% Convert Inf to NaN
+feature_vec(isinf(feature_vec)) = NaN;
+
 % Define feature info
 feature_info.names = {'n_beats', 'rmssd', 'sdnn', 'hr_median', 'hr_mean', 'hr_upper_5', 'hr_lower_5',...
     'hrf_pip', 'hrf_ials', 'hrf_pnn_ss', 'hrf_pnn_as'};

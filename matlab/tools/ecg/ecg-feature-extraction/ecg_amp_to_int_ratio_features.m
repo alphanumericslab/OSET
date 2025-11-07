@@ -1,25 +1,26 @@
-function [feature_vec, feature_info] = ecg_angles_features(data, position, fs)
-% featureset = ecg_angles_features(data, position, fs)
-% Extract features related to the ECG amplitude-to-interval ratios
+function [feature_vec, feature_info] = ecg_amp_to_int_ratio_features(data, position, fs)
+
+% function [feature_vec, feature_info] = ecg_amp_to_int_ratio_features(data, position, fs)
+% Extract features related to the ECG amplitude-to- time interval ratios
 %
 % Inputs:
-%   data: ECG signal (1D array).
-%   position: fiducial points of ECG signal
-%   fs: Sampling frequency (Hz)
+%   data: ECG signal as a vector (in microvolts) (1D array).
+%   position: Fiducial points of the ECG signal (expressed as sample points).
+%   fs: Sampling frequency of the ECG signal (in Hz).
 %
 % Output:
-%   featureset: Structure containing features related to ECG amplitude-to-interval ratios
-%   Units: mv/ms (millivolts per millisecond)
+%   feature_vec:  A vector contains features that represent ratios between ECG amplitudes and intervals.
+%   feature_info: A structure contains feature descriptions, names and
+%   units.
 %
 % Author:
 %   Seyedeh Somayyeh Mousavi
+%   Sajjad Karimi
+%   Reza Sameni
 %   Emory University, Georgia, USA
 %   Email: bmemousavi@gmail.com
-%   Date: SEP 24, 2024
-% Author: Sajjad Karimi
-% Location: Emory University, Georgia, USA
-% Email: sajjadkarimi91@gmail.com
-% Date: Apr 10, 2025
+%   First: Date: SEP 24, 2024
+%   Second: Date: AUG 5, 2025
 
 %% Constant value
 convert_s_ms =1000;
