@@ -100,8 +100,16 @@ switch sig_format
 end
 
 % read samp from .dat file
-record_dat=[record '.dat'];
-fileID=fopen(record_dat);
+if exist([record '.dat'])
+    record_dat=[record '.dat'];
+    fileID=fopen(record_dat);
+elseif exist([record '.SIG'])
+    record_dat=[record '.SIG'];
+    fileID=fopen(record_dat);
+else
+    error('No WFDB file')
+end
+
 switch sig_format
     case '212'
         data=fread(fileID,[1,round(channels*data_length*1.5)],data_format);
@@ -289,7 +297,13 @@ function sigInfo = wfdb_desc(headname)
 
 sigInfo = struct;
 
-fid = fopen([headname '.hea']);
+if exist([headname '.hea'],"file")
+    fid = fopen([headname '.hea']);
+elseif exist([headname '.HEA'],"file")
+    fid = fopen([headname '.HEA']);
+else
+    error('No .hea file found')
+end
 str = fgets(fid);
 cc = textscan(str,'%s');
 cc = cc{1};
