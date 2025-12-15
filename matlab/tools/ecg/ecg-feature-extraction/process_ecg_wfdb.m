@@ -93,6 +93,8 @@ else
     [sig, fs, info_ch] = rddat_wfdb(input_wfdb_address(1:end-4));
 end
 
+fs = round(fs);
+
 if nargin < 3 || isempty(lead_names_target)
     lead_names_target =  {'I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'};
 end
