@@ -10,6 +10,39 @@ std::vector<float> generateRamp(size_t start, size_t size) {
     return ramp;
 }
 
+
+
+bool testOverflowKeepsDataIntact() {
+    RingBuffer ringBuffer(10, 1, 1, 6, 4, 0);
+
+    std::vector<float> first = {0, 1, 2, 3, 4, 5};
+    std::vector<float> second = {10, 11, 12, 13, 14, 15};
+
+    if (!ringBuffer.write(first)) {
+        std::cerr << "Initial write failed." << std::endl;
+        return false;
+    }
+
+    if (ringBuffer.write(second)) {
+        std::cerr << "Expected overflow write to fail." << std::endl;
+        return false;
+    }
+
+    std::vector<float> outputData;
+    if (!ringBuffer.read(outputData)) {
+        std::cerr << "Read failed after overflow." << std::endl;
+        return false;
+    }
+
+    std::vector<float> expected = {0, 1, 2, 3};
+    if (outputData != expected) {
+        std::cerr << "Unexpected read data after overflow." << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 int main() {
     // Parameters for the ring buffer
     size_t capacity = 100;          // Total capacity of the ring buffer
@@ -58,6 +91,10 @@ int main() {
             std::cout << outputData[i] << " ";
         }
         std::cout << std::endl;
+    }
+
+    if (!testOverflowKeepsDataIntact()) {
+        return -1;
     }
 
     return 0;

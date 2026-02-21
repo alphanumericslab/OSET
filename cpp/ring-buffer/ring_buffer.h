@@ -20,6 +20,7 @@ private:
     size_t outBlockSize;
     size_t capacity;
     size_t outputOverlap;
+    size_t size;
     std::mutex mutex;
 };
 
