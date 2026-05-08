@@ -115,12 +115,60 @@ for c = 1:C
 
     data_channel = ecg_data(c, :);
     try
-
-
-        if sync_rpeaks==0
-            % Detect peaks based on recording length
-            [~, rpeak_indexes_in] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time);
+        ecg_lp = zeros(1,15);
+        for f = 1:15
+            ecg_lp(f) = std(lp_filter_zero_phase(data_channel, f/fs))/std(data_channel);
         end
+        f_low = find(ecg_lp<0.5,1, 'last');
+        if ~isempty(f_low)
+            peak_params.bp_lower_cutoff = f_low;
+        else
+            peak_params.bp_lower_cutoff = 8;
+        end
+
+         peak_params.bp_upper_cutoff = min(30, fs/2-1);
+              
+        if sync_rpeaks==0
+            peak_params.likelihood_power_env_hist_peak_th = 95;
+            peak_params.p_signal_th = 95;
+            peak_params.p_residual_th = 97;
+      
+            [~, rpeak_indexes_in_{1}] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time, peak_params);
+
+            rr_ms = 1000*diff(rpeak_indexes_in_{1})/fs;
+            med_RR(1)  = mean(rr_ms(rr_ms<1500));
+            shortterm_hrv = diff(rr_ms);
+            shortterm_hrv(shortterm_hrv>1000 | shortterm_hrv<-1000) = [];
+            sd2_val(1) = std(shortterm_hrv);
+
+            peak_params.likelihood_power_env_hist_peak_th = 90;
+            peak_params.p_signal_th = 90;
+            peak_params.p_residual_th = 95;
+            [~, rpeak_indexes_in_{2}] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time, peak_params);
+
+
+            rr_ms = 1000*diff(rpeak_indexes_in_{2})/fs;
+             med_RR(2) = mean(rr_ms(rr_ms<1500));
+            shortterm_hrv = diff(rr_ms);
+            shortterm_hrv(shortterm_hrv>1000 | shortterm_hrv<-1000) = [];
+            sd2_val(2) = std(shortterm_hrv);
+
+            peak_params.likelihood_power_env_hist_peak_th = 85;
+            peak_params.p_signal_th = 85;
+            peak_params.p_residual_th = 90;
+            [~, rpeak_indexes_in_{3}] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time, peak_params);
+
+            rr_ms = 1000*diff(rpeak_indexes_in_{3})/fs;
+            med_RR(3) = mean(rr_ms(rr_ms<1500));
+            shortterm_hrv = diff(rr_ms);
+            shortterm_hrv(shortterm_hrv>1000 | shortterm_hrv<-1000) = [];
+            sd2_val(3) = std(shortterm_hrv);
+
+            [~,indmin] = min(sd2_val);
+
+            rpeak_indexes_in = rpeak_indexes_in_{indmin};
+        end
+
         % Run ECG fiducial points detector
         % position = fiducial_det_lsim(data_channel, R_peaks_indexes, fs);
         % Run wavedet_3D
@@ -157,7 +205,7 @@ for c = 1:C
         error_flag = 0;
     catch ME
         % Error handling: display message and set NaN values for problematic channel
-        disp(ME.message);
+        % disp(ME.message);
         fprintf("Error in processing signal_channel: %s, %d\n", c);
         if flatten_flag>0
             ecg_features_vector = cat(2, ecg_features_vector, nan(1, n_features));
