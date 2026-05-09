@@ -272,7 +272,16 @@ end
 
 clear ecg_data ind_skip
 
-if num_windows>4
+pool = gcp('nocreate');
+if isempty(pool)
+    try
+        pool = parpool('Processes');
+    catch
+        pool = [];
+    end
+end
+
+if num_windows>4 && ~isempty(pool) && isa(pool, 'parallel.ProcessPool')
     % Process each window
     parfor n = 1:num_windows
 
