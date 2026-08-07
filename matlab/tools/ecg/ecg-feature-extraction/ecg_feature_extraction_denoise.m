@@ -117,59 +117,58 @@ for c = 1:C
     try
 
 
-        if sync_rpeaks==0
-            % Detect peaks based on recording length
-            % [~, rpeak_indexes_in] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time);
-            [~, rpeak_indexes_in] = peak_det_pan_tompkins(data_channel, fs);
-        end
-        % Run ECG fiducial points detector
-        % position = fiducial_det_lsim(data_channel, R_peaks_indexes, fs);
-        % Run wavedet_3D
-        % heasig.nsig = 1;
-        % heasig.freq = fs;
-        % heasig.nsamp = length(data_channel);
-        % [position, ~, ~] = wavedet_3D(data_channel', R_peaks_indexes, heasig);
-
-        ecg_data = data_channel;
-
-        seg_len_time = 10;
-        pad_len_time = 1;
-
-        peak_params.REFINE_PEAKS = false;
-        peak_params.min_peak_distance = 0.3;
-        peak_params.p_signal_th = 85;
-        peak_params.p_residual_th = 95;
-
-        peak_params.bp_lower_cutoff = 8;
-        peak_params.bp_upper_cutoff = 30;
-
+         ecg_lp = zeros(1,15);
         for f = 1:15
-            ecg_lp(f) = std(lp_filter_zero_phase(ecg_data, f/fs))/std(ecg_data);
+            ecg_lp(f) = std(lp_filter_zero_phase(data_channel, f/fs))/std(data_channel);
         end
         f_low = find(ecg_lp<0.5,1, 'last');
         if ~isempty(f_low)
             peak_params.bp_lower_cutoff = f_low;
+        else
+            peak_params.bp_lower_cutoff = 8;
         end
 
-        [~, rpeak_indexes_in] = peak_det_likelihood_long_recs(ecg_data, fs, seg_len_time, pad_len_time, peak_params);
-
-        ecg_rpeaks_index = rpeak_indexes_in(:);
-        rr_intervals_ecg = em_interval_calc(ecg_rpeaks_index);
-        N = max(5,min(60,ceil(length(ecg_rpeaks_index)/20)));
-        rr_intervals_ecg(rr_intervals_ecg>1.75*fs) = 1.75*fs;
-        avg_intervals_ecg = movmean(rr_intervals_ecg,[N,N]);
-        index_remove = 1+find(((diff(ecg_rpeaks_index(:))./avg_intervals_ecg-1)<-0.4 & ~(diff(ecg_rpeaks_index(:))>0.8*fs)) | diff(ecg_rpeaks_index(:))<0.25*fs);
-
-        thr_tpeak = mean(abs(diff(diff(ecg_rpeaks_index))))/mean(abs(diff(ecg_rpeaks_index)));
-
-        if thr_tpeak > 0.2 || length(index_remove)/length(rpeak_indexes_in)>0.1
-
-            peak_params.min_peak_distance = min(0.4*sqrt(median(rr_intervals_ecg)/fs),prctile(rr_intervals_ecg,10)/fs);
-            peak_params.p_signal_th = 90;
+         peak_params.bp_upper_cutoff = min(30, fs/2-1);
+              
+        if sync_rpeaks==0
+            peak_params.likelihood_power_env_hist_peak_th = 95;
+            peak_params.p_signal_th = 95;
             peak_params.p_residual_th = 97;
+      
+            [~, rpeak_indexes_in_{1}] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time, peak_params);
 
-            [~, rpeak_indexes_in] = peak_det_likelihood_long_recs(ecg_data, fs, seg_len_time, pad_len_time, peak_params);
+            rr_ms = 1000*diff(rpeak_indexes_in_{1})/fs;
+            med_RR(1)  = mean(rr_ms(rr_ms<1500));
+            shortterm_hrv = diff(rr_ms);
+            shortterm_hrv(shortterm_hrv>1000 | shortterm_hrv<-1000) = [];
+            sd2_val(1) = std(shortterm_hrv);
 
+            peak_params.likelihood_power_env_hist_peak_th = 90;
+            peak_params.p_signal_th = 90;
+            peak_params.p_residual_th = 95;
+            [~, rpeak_indexes_in_{2}] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time, peak_params);
+
+
+            rr_ms = 1000*diff(rpeak_indexes_in_{2})/fs;
+             med_RR(2) = mean(rr_ms(rr_ms<1500));
+            shortterm_hrv = diff(rr_ms);
+            shortterm_hrv(shortterm_hrv>1000 | shortterm_hrv<-1000) = [];
+            sd2_val(2) = std(shortterm_hrv);
+
+            peak_params.likelihood_power_env_hist_peak_th = 85;
+            peak_params.p_signal_th = 85;
+            peak_params.p_residual_th = 90;
+            [~, rpeak_indexes_in_{3}] = peak_det_likelihood_long_recs(data_channel, fs, seg_len_time, pad_len_time, peak_params);
+
+            rr_ms = 1000*diff(rpeak_indexes_in_{3})/fs;
+            med_RR(3) = mean(rr_ms(rr_ms<1500));
+            shortterm_hrv = diff(rr_ms);
+            shortterm_hrv(shortterm_hrv>1000 | shortterm_hrv<-1000) = [];
+            sd2_val(3) = std(shortterm_hrv);
+
+            [~,indmin] = min(sd2_val);
+
+            rpeak_indexes_in = rpeak_indexes_in_{indmin};
         end
 
         try
