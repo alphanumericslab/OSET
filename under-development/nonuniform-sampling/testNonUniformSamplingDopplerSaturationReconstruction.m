@@ -4,16 +4,21 @@ clc
 
 % Convert all dat files in bash using this command: find ./*/ -type f -execdir wfdb2mat -r {} \;
 
-datafilepath = '../../../../DataFiles/physionet.org/files/ptbdb/1.0.0/';
-directory_list = dir([datafilepath 'patient*']);
-
-filelist = dir(fullfile([datafilepath, '**/*lr*.mat']));  % get list of all mat files
+% datafilepath = '../../../../DataFiles/physionet.org/files/ptbdb/1.0.0/';
+% directory_list = dir([datafilepath 'patient*']);
+% 
+% filelist = dir(fullfile([datafilepath, '**/*lr*.mat']));  % get list of all mat files
 
 w1 = 0.72; % First stage baseline wander removal window size in seconds
 w2 = 0.87; % Second stage baseline wander removal window size in seconds
 BASELINE_REMOVAL_APPROACH = 'BYPASS';%'BP'; %'MDMN';
 
-datafilename = '/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/ultrasound_p55v1_2_725985530069.wav';
+% datafilename = '/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/ultrasound_p55v1_2_725985530069.wav';
+% datafilename = '/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/758898592846_p65v2_1_angelSoundsDevice_758900097777.wav';
+% datafilename = '/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/758904363244_p31v4_1_angelSoundsDevice_758905811734.wav';
+datafilename = '/Users/rsameni/Documents/DataFiles/Acoustic_1D_Doppler_OneDrive/758744846692_p53v3_1_angelSoundsDevice_758746338486.wav';
+
+
 % data = load(datafilename);
 % data = data.val;
 
@@ -37,23 +42,25 @@ switch(BASELINE_REMOVAL_APPROACH)
 end
 
 % preserve_percentage = 0.6;
-ITR = 10;
+ITR = 30;
 T = size(data, 2);
 % N_keep = round(T * preserve_percentage);
 % kept_indexes = randi(T, [1, N_keep]);
 
 % fc = 1000.0;
 % fc = linspace(750, 1000, ITR);
-fc = 1000.0 + zeros(1, ITR);
+fc = 500.0 + zeros(1, ITR);
 
 th = 28000;%0.86;
+% th = 0.86;
 kept_indexes = find(abs(data) < th);
 
 ecg_org = data;%lp_filter_zero_phase(data, fc(1) / fs);
 ecg_dc = mean(ecg_org);
 ecg_zero_mean = ecg_org - ecg_dc;
 
-ecg_rec = interp1(kept_indexes, ecg_zero_mean(kept_indexes), 1:T);%zeros(1, T);
+% ecg_rec = interp1(kept_indexes, ecg_zero_mean(kept_indexes), 1:T);%zeros(1, T);
+ecg_rec = ecg_zero_mean(kept_indexes);
 ecg_rec(kept_indexes) = ecg_zero_mean(kept_indexes);
 
 % load lpf_1khz_at_48khz;
@@ -64,7 +71,9 @@ for m = 1 : ITR
     ecg_all(m, :) = ecg_rec;
     ecg_rec(kept_indexes) = ecg_zero_mean(kept_indexes);
 
-    ecg_rec_lp = lp_filter_zero_phase(ecg_rec, fc(m) / fs);
+    ecg_rec_hp = ecg_rec - lp_filter_zero_phase(ecg_rec, 10.0 / fs);
+    ecg_rec_lp = lp_filter_zero_phase(ecg_rec_hp, fc(m) / fs);
+    % ecg_rec_lp = lp_filter_zero_phase(ecg_rec, fc(m) / fs);
     % ecg_rec_lp = lp_filter_zero_phase(ecg_rec, fc / fs);
     % ecg_rec_lp = filtfilt(lpf_1khz_at_48khz, 1, ecg_rec);
     
