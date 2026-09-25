@@ -1,20 +1,13 @@
-
-
 clear;
 close all;
 clc;
 
+USE_CONSENSUS_BASED_PEAKS = true;
 
-oset_path = 'D:\projects\toolboxes\OSET'; % enter the path of OSET toolbox
-addpath(genpath(oset_path))
+db_folder = 'path/to/matlab/ecg/files'
 
-
-db_folder = pwd; % if you run from lsim-deli folder otherwise
-% db_folder = 'D:\projects\toolboxes\OSET\under-development\lsim-deli'
 local_db_files = dir([db_folder '/*.mat']); % list of all mat files
 
-
-%%
 
 for m = 1:length(local_db_files)
 
@@ -53,7 +46,10 @@ for m = 1:length(local_db_files)
     seg_len_time = 10.0; % segment length in seconds
 
     [peaks, ecg_rpeaks_index, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood_long_recs(ecg_denoised, fs, seg_len_time, overlap_time, peak_detector_params);
-    ecg_rpeaks_index = peak_indexes_consensus;
+    
+    if USE_CONSENSUS_BASED_PEAKS 
+        ecg_rpeaks_index = peak_indexes_consensus;
+    end
 
     % LSIM-Deli
     flag_post_processing = 1;
