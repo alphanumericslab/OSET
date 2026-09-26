@@ -1,34 +1,54 @@
-
+% SAMPLE_DELI  Demo of LSIM-based ECG delineation with ecg_delineate_lsim
+%
+%   Runs ecg_delineate_lsim on every .mat record in this folder, plots
+%   the detected fiducial points against the expert annotations and prints
+%   the mean absolute error (ms) per fiducial point.
+%
+%   Each .mat record is expected to contain:
+%       ecg           - ECG samples (T x channels); the first channel is used
+%       fs            - sampling rate (Hz)
+%       t_second      - time axis (s)
+%       true_position - struct of expert annotations in samples
+%                       (R, QRSon, QRSoff, Ton, T, Toff; NaN if absent)
+%
+%   Sajjad Karimi, Reza Sameni  2024
+%   The Open-Source Electrophysiological Toolbox
+%   https://github.com/alphanumericslab/OSET
 
 clear;
 close all;
 clc;
 
+% OSET root is three levels up from this script (OSET/under-development/lsim-deli)
+db_folder = fileparts(mfilename('fullpath'));
+oset_path = fileparts(fileparts(db_folder)); % or set manually, e.g. 'D:\projects\toolboxes\OSET'
+addpath(genpath(fullfile(oset_path, 'matlab')))
+addpath(genpath(fullfile(oset_path, 'external', 'chmm-lsim-matlab-toolbox'))) % em_lsim and LSIM inference
+addpath(db_folder)
 
-oset_path = 'D:\projects\toolboxes\OSET'; % enter the path of OSET toolbox
-addpath(genpath(oset_path))
+local_db_files = dir(fullfile(db_folder, '*.mat')); % list of all mat files
 
+% LSIM-Deli parameters (empty -> default value)
+flag_post_processing = 1;           % use RR-interval priors to refine LSIM fiducials
+flag_prune_P         = 0;           % prune low-quality P-waves using P_score
+win_qrs              = [];          % feature window (s) for QRS on/off, default 0.01
+win_T                = [];          % feature window (s) for T on/off, default 0.02
+win_P                = [];          % feature window (s) for P on/off, default 0.02
+max_clusters         = [];          % max FCM clusters, default adaptive (3..6)
+twave_shape          = 'none';      % 'none', 'bi-phasic', 'min', 'max'
+time_prior_mode      = 'disabled';  % 'disabled' or 'normalized'
 
-db_folder = pwd; % if you run from lsim-deli folder otherwise
-% db_folder = 'D:\projects\toolboxes\OSET\under-development\lsim-deli'
-local_db_files = dir([db_folder '/*.mat']); % list of all mat files
-
+fiducial_names = {'QRSon', 'QRSoff', 'Ton', 'T', 'Toff'};
 
 %%
 
 for m = 1:length(local_db_files)
 
-    clc
-    close all
-
-    disp(m)
-    toc
     tic
-    % load data and rpeaks
+    % load data and expert annotations
     in_fname = local_db_files(m).name(1:end-4);
-
-    load([db_folder,'/',in_fname,'.mat']);
-    index_R =  true_position.R;
+    fprintf('[%d/%d] %s\n', m, length(local_db_files), in_fname);
+    load(fullfile(db_folder, [in_fname, '.mat']), 'ecg', 'fs', 't_second', 'true_position');
 
     % ECG preprocessing
     ecg_denoised = ecg(:,1)';
@@ -36,7 +56,7 @@ for m = 1:length(local_db_files)
     % NOTCH FILTERING THE ECG
     fc = 50.0; % powerline frequency
     Qfactor = 45; % Q-factor of the notch filter
-    Wo = fc/(fs/2);  BW = Wo/Qfactor; % nothc filter parameters
+    Wo = fc/(fs/2);  BW = Wo/Qfactor; % notch filter parameters
     [b,a] = iirnotch(Wo, BW); % design the notch filter
     ecg_denoised = filtfilt(b, a, ecg_denoised); % zero-phase non-causal filtering
     ecg_denoised = ecg_denoised - movmean(movmedian(ecg_denoised,[round(0.3*fs),round(0.3*fs)]),[round(0.15*fs),round(0.15*fs)]);
@@ -52,73 +72,60 @@ for m = 1:length(local_db_files)
     overlap_time = 1.0; % overlap between segments for continuity (1.0-2.0 seconds is enough)
     seg_len_time = 10.0; % segment length in seconds
 
-    [peaks, ecg_rpeaks_index, peak_indexes_consensus, qrs_likelihood] = peak_det_likelihood_long_recs(ecg_denoised, fs, seg_len_time, overlap_time, peak_detector_params);
-    ecg_rpeaks_index = peak_indexes_consensus;
+    [~, ~, ecg_rpeaks_index] = peak_det_likelihood_long_recs(ecg_denoised, fs, seg_len_time, overlap_time, peak_detector_params);
+    % To evaluate delineation independently of R-peak detection, use the
+    % expert R-peaks instead:  ecg_rpeaks_index = true_position.R;
+    % Passing [] lets ecg_delineate_lsim detect the R-peaks internally.
 
     % LSIM-Deli
-    flag_post_processing = 1;
-    lsim_positions = fiducial_det_lsim( ecg_denoised, ecg_rpeaks_index, fs, flag_post_processing);
+    [lsim_positions, EXITFLAG] = ecg_delineate_lsim(ecg_denoised, fs, ecg_rpeaks_index, ...
+        flag_post_processing, flag_prune_P, win_qrs, win_T, win_P, ...
+        max_clusters, twave_shape, time_prior_mode);
+    if strcmp(EXITFLAG.status, 'failed')
+        warning('LSIM-Deli failed on %s: %s', in_fname, EXITFLAG.message.message);
+    end
 
+    % Mean absolute error (ms) against expert annotations, matched to the
+    % nearest detected point within 150 ms
+    for k = 1:length(fiducial_names)
+        fn = fiducial_names{k};
+        if ~isfield(true_position, fn), continue; end
+        ref = true_position.(fn)(:);  ref(isnan(ref)) = [];
+        det = lsim_positions.(fn)(:); det(isnan(det)) = [];
+        if isempty(ref) || isempty(det), continue; end
+        err_ms = 1000*min(abs(ref - det'), [], 2)/fs;
+        err_ms(err_ms > 150) = [];
+        fprintf('   %-7s MAE = %6.2f ms  (%d / %d matched)\n', fn, mean(err_ms), length(err_ms), length(ref));
+    end
+    toc
 
     % plot the results
-    ecg_rpeaks_index_p = lsim_positions.R;
-    ecg_rpeaks_index_p(isnan(ecg_rpeaks_index_p))=[];
-
-    ecg_QRSon_index = lsim_positions.QRSon; ecg_QRSon_index_p = ecg_QRSon_index;  ecg_QRSon_index_p(isnan(ecg_QRSon_index_p))=[];
-    ecg_QRSon_true = true_position.QRSon; ecg_QRSon_wavdet_p = ecg_QRSon_true;  ecg_QRSon_wavdet_p(isnan(ecg_QRSon_wavdet_p))=[];
-
-    ecg_QRSoff_index = lsim_positions.QRSoff; ecg_QRSoff_index_p = ecg_QRSoff_index;  ecg_QRSoff_index_p(isnan(ecg_QRSoff_index_p))=[];
-    ecg_QRSoff_true = true_position.QRSoff; ecg_QRSoff_wavedet_p = ecg_QRSoff_true;  ecg_QRSoff_wavedet_p(isnan(ecg_QRSoff_wavedet_p))=[];
-
-    ecg_Pon_index = lsim_positions.Pon;  ecg_Pon_index_p = ecg_Pon_index; ecg_Pon_index_p(isnan(ecg_Pon_index_p))=[];
-    ecg_P_index = lsim_positions.P;  ecg_P_index_p = ecg_P_index; ecg_P_index_p(isnan(ecg_P_index_p))=[];
-    ecg_Poff_index = lsim_positions.Poff;  ecg_Poff_index_p = ecg_Poff_index; ecg_Poff_index_p(isnan(ecg_Poff_index_p))=[];
-
-    ecg_Ton_index = lsim_positions.Ton';     ecg_Ton_index_p = ecg_Ton_index;  ecg_Ton_index_p(isnan(ecg_Ton_index_p))=[];
-    ecg_Ton_true = true_position.Ton';     ecg_Ton_wavedet_p = ecg_Ton_true;  ecg_Ton_wavedet_p(isnan(ecg_Ton_wavedet_p))=[];
-
-    ecg_T_index = lsim_positions.T';     ecg_T_index_p = ecg_T_index;  ecg_T_index_p(isnan(ecg_T_index_p))=[];
-    ecg_T_true = true_position.T';     ecg_T_wavedet_p = ecg_T_true;  ecg_T_wavedet_p(isnan(ecg_T_wavedet_p))=[];
-
-    ecg_Toff_index = lsim_positions.Toff';  ecg_Toff_index_p = ecg_Toff_index;  ecg_Toff_index_p(isnan(ecg_Toff_index_p))=[];
-    ecg_Toff_true = true_position.Toff';  ecg_Toff_wavedet_p = ecg_Toff_true;  ecg_Toff_wavedet_p(isnan(ecg_Toff_wavedet_p))=[];
-
-
-    a = figure('Position', [130 130 1500 800]);
+    figure('Position', [130 130 1500 800]);
     lg = {};
-    plot(t_second,ecg_denoised,LineWidth=1.5) ;lg = cat(2, lg, {'ECG'});
+    plot(t_second, ecg_denoised, LineWidth=1.5); lg = cat(2, lg, {'ECG'});
     hold on
-    ecg_plot = ecg_denoised;
-    plot(t_second(ecg_rpeaks_index_p),ecg_plot(ecg_rpeaks_index_p),'*',MarkerSize=6,LineWidth=1);lg = cat(2, lg, {'R'});
-    plot(t_second(ecg_Ton_index_p),ecg_plot(ecg_Ton_index_p),'m+',MarkerSize=12,LineWidth=2);lg = cat(2, lg, {'Ton'});
-    plot(t_second(ecg_T_index_p),ecg_plot(ecg_T_index_p),'m*',MarkerSize=12,LineWidth=2);lg = cat(2, lg, {'T'});
-    plot(t_second(ecg_Toff_index_p),ecg_plot(ecg_Toff_index_p),'mx',MarkerSize=12,LineWidth=2);lg = cat(2, lg, {'Toff'});
 
-    if ~isempty(ecg_Ton_wavedet_p)
-        plot(t_second(ecg_Ton_wavedet_p),ecg_plot(ecg_Ton_wavedet_p),'g+',MarkerSize=10,LineWidth=2);lg = cat(2, lg, {'EXPERT-Ton'});
-    end
-    if ~isempty(ecg_T_wavedet_p)
-        plot(t_second(ecg_T_wavedet_p),ecg_plot(ecg_T_wavedet_p),'g*',MarkerSize=10,LineWidth=2);lg = cat(2, lg, {'EXPERT-T'});
-    end
-    if ~isempty(ecg_Toff_wavedet_p)
-        plot(t_second(ecg_Toff_wavedet_p),ecg_plot(ecg_Toff_wavedet_p),'gx',MarkerSize=10,LineWidth=2);lg = cat(2, lg, {'EXPERT-Toff'});
-    end
-    plot(t_second(ecg_Pon_index_p),ecg_plot(ecg_Pon_index_p),'k+',MarkerSize=12,LineWidth=2);lg = cat(2, lg, {'Pon'});
-    plot(t_second(ecg_P_index_p),ecg_plot(ecg_P_index_p),'k*',MarkerSize=12,LineWidth=2);lg = cat(2, lg, {'P'});
-    plot(t_second(ecg_Poff_index_p),ecg_plot(ecg_Poff_index_p),'kx',MarkerSize=12,LineWidth=2);lg = cat(2, lg, {'Poff'});
+    % {field, marker, label}
+    lsim_markers = {'R','b*','R'; 'Pon','k+','Pon'; 'P','k*','P'; 'Poff','kx','Poff'; ...
+        'QRSon','rx','QRSon'; 'QRSoff','rx','QRSoff'; 'Ton','m+','Ton'; 'T','m*','T'; 'Toff','mx','Toff'};
+    expert_markers = {'QRSon','go','EXPERT-QRSon'; 'QRSoff','go','EXPERT-QRSoff'; ...
+        'Ton','g+','EXPERT-Ton'; 'T','g*','EXPERT-T'; 'Toff','gx','EXPERT-Toff'};
 
-    plot(t_second(ecg_QRSon_index_p),ecg_plot(ecg_QRSon_index_p),'rx',MarkerSize=12,LineWidth=2);lg = cat(2, lg, {'QRSon'});
-    plot(t_second(ecg_QRSon_wavdet_p),ecg_plot(ecg_QRSon_wavdet_p),'go',MarkerSize=10,LineWidth=2);lg = cat(2, lg, {'EXPERT-QRSon'});
-
-    plot(t_second(ecg_QRSoff_index_p),ecg_plot(ecg_QRSoff_index_p),'rx',MarkerSize=12,LineWidth=2);lg = cat(2, lg, {'QRSoff'});
-    plot(t_second(ecg_QRSoff_wavedet_p),ecg_plot(ecg_QRSoff_wavedet_p),'go',MarkerSize=10,LineWidth=2);lg = cat(2, lg, {'EXPERT-QRSoff'});
+    for k = 1:size(lsim_markers, 1)
+        idx = lsim_positions.(lsim_markers{k,1}); idx(isnan(idx)) = [];
+        if isempty(idx), continue; end
+        plot(t_second(idx), ecg_denoised(idx), lsim_markers{k,2}, MarkerSize=12, LineWidth=2); lg = cat(2, lg, lsim_markers(k,3));
+    end
+    for k = 1:size(expert_markers, 1)
+        if ~isfield(true_position, expert_markers{k,1}), continue; end
+        idx = true_position.(expert_markers{k,1}); idx(isnan(idx)) = [];
+        if isempty(idx), continue; end
+        plot(t_second(idx), ecg_denoised(idx), expert_markers{k,2}, MarkerSize=10, LineWidth=2); lg = cat(2, lg, expert_markers(k,3));
+    end
 
     grid on
-    legend(lg,'Interpreter' ,'latex','orientation','horizontal','FontSize',14)
-    xlabel('time (sec)',Interpreter='latex',FontSize=14)
-
+    legend(lg, 'Interpreter', 'latex', 'orientation', 'horizontal', 'FontSize', 14)
+    xlabel('time (sec)', Interpreter='latex', FontSize=14)
+    title(in_fname, 'Interpreter', 'none')
 
 end
-
-
-

@@ -1,60 +1,86 @@
 
-function [positions, EXITFLAG] = lsim_energy_ecgfiducial(data, ecg_rpeaks_index, fs, varargin)
+function [positions, EXITFLAG] = ecg_delineate_lsim(data, fs, ecg_rpeaks_index, varargin)
 
-% ECG fiducial points detector based on the LSIM energy approach.
+% ECG_DELINEATE_LSIM  ECG fiducial points detector based on the LSIM energy approach
 %
-%   [positions, EXITFLAG] = lsim_energy_ecgfiducial(data, ecg_rpeaks_index, fs, varargin)
+%   [positions, EXITFLAG] = ecg_delineate_lsim(data, fs)
+%   [positions, EXITFLAG] = ecg_delineate_lsim(data, fs, ecg_rpeaks_index)
+%   [positions, EXITFLAG] = ecg_delineate_lsim(data, fs, ecg_rpeaks_index, ...
+%       flag_post_processing, flag_prune_P, win_qrs, win_T, win_P, ...
+%       max_clusters, twave_shape, time_prior_mode)
 %
-%   This is a readability-oriented refactor of FIDUCIAL_DET_LSIM. The numerical
-%   behaviour is intended to be IDENTICAL to the original; the algorithm has only
-%   been reorganised so that the three waves are delineated by three dedicated
-%   local functions and the repeated building blocks are shared helpers:
+%   Detects the onset, peak and offset of the P-wave, QRS complex and T-wave
+%   of every beat in a single-lead ECG. For P-, QRS- and T-wave onset/offset
+%   delineation, LSIM uses the same two features: the absolute local
+%   difference and the moving standard deviation. The difference feature is
+%   scaled by the temporal prior (see time_prior_mode).
 %
-%       build_beat_context  - baseline/cluster preparation common to all waves
-%       detect_qrs          - QRS onset / R / QRS offset
-%       detect_twave        - T onset / T peak / T offset
-%       detect_pwave        - P onset / P peak / P offset (+ P quality score)
+%   Inputs:
+%       data:             Vector of input ECG data (powerline noise and
+%                         baseline wander removed)
+%       fs:               Sampling rate in Hz
+%   (optional inputs, pass [] to use the default value):
+%       ecg_rpeaks_index: R-peak indexes in samples. If empty or omitted,
+%                         R-peaks are detected internally with
+%                         peak_det_likelihood_long_recs (default [])
+%       flag_post_processing: 0/1, if 1 RR-interval priors are used to refine
+%                         the initial LSIM fiducial points (default 0)
+%       flag_prune_P:     0/1, if 1 detected P-waves are pruned with the
+%                         P-wave quality score P_score (default 0)
+%       win_qrs:          window (s) for diff/std features of QRS on/off (default 0.01)
+%       win_T:            window (s) for diff/std features of T on/off (default 0.02)
+%       win_P:            window (s) for diff/std features of P on/off (default 0.01)
+%                         With flag_post_processing = 1 the default windows are
+%                         scaled by the median RR interval (factor 0.5 to 1).
+%       max_clusters:     max number of FCM morphology clusters
+%                         (default max(3,min(6,ceil(length(data)/(10*fs)))))
+%       twave_shape:      'none', 'bi-phasic', 'min' or 'max' (default 'none')
+%       time_prior_mode:  'disabled' uses a scalar prior of 1; 'normalized'
+%                         uses the local moving standard deviation divided by
+%                         its 90th percentile (default 'disabled')
+%
+%   Outputs:
+%       positions: struct with one entry per R-peak, locations in samples.
+%                  Beats removed during preprocessing are NaN.
+%                  Pon, P, Poff:     P-wave onset, peak and offset
+%                  QRSon, R, QRSoff: QRS onset, R-peak and QRS offset
+%                  Ton, T, Toff:     T-wave onset, first T-wave peak and offset
+%                  P_score:          P-wave quality score in [0,1]
+%                  beat_quality_score: correlation-based beat quality q
+%                                    (0 for removed beats)
+%                  beat_snr:         per-beat SNR in dB = 10*log10(q^2/(1-q^2)),
+%                                    |q| clamped to [1e-4,0.9999]; q==0 -> -100 dB,
+%                                    NaN -> NaN
+%                                    (https://dsp.stackexchange.com/questions/75246/correlation-a-magnitude-or-power-quantity)
+%                  index_clustering: per-beat FCM cluster label. The first and
+%                                    last retained beats and removed beats are
+%                                    NaN, since clustering uses interior beats only.
+%                  rpeak_bp_lower_cutoff_hz: high-pass cutoff (Hz) used for the
+%                                    internal R-peak detection, NaN when
+%                                    ecg_rpeaks_index is given
+%       EXITFLAG:  struct with .status ('succeeded'/'failed') and .message
+%                  (the MException when a stage failed; the points detected
+%                  before the failure are still returned)
+%
+%   Internal structure:
+%       build_beat_context   - baseline/cluster preparation common to all waves
+%       detect_qrs           - QRS onset / R / QRS offset
+%       detect_twave         - T onset / T peak / T offset
+%       detect_pwave         - P onset / P peak / P offset (+ P quality score)
 %       lsim_onoff_detection - shared LSIM on/off transition decoder
 %       regularize_interval  - shared RR-prior interval post-processing
 %       cluster_beats_fcm    - shared fuzzy-c-means beat clustering
 %
-%   Splitting the code this way keeps each wave self-contained and makes a future
-%   Python translation considerably easier.
+%   Example:
+%       positions = ecg_delineate_lsim(ecg, fs);            % internal R-peaks
+%       positions = ecg_delineate_lsim(ecg, fs, rpeaks, 1); % with post-processing
+%       qt_ms = 1000*(positions.Toff - positions.QRSon)/fs;
 %
-%   Inputs:
-%       data: Vector of input ECG data
-%       ecg_rpeaks_index: R-peak indexes in samples
-%       fs: Sampling rate in Hz
-%  (optional input):
-%        - flag_post_processing: flag 0/1, if 1 RR-interval priors are used to
-%                   refine the initial LSIM fiducial points (default 0)
-%        - flag_prune_P: flag 0/1, if 1 detected P-waves are pruned with a
-%                   P-wave quality score (default 0)
-%        - win_qrs: window (s) for diff/std features of QRS on/off  (default 0.01)
-%        - win_T:   window (s) for diff/std features of T  on/off   (default 0.02)
-%        - win_P:   window (s) for diff/std features of P  on/off   (default 0.02)
-%        - num_cluster: max number of clusters for FCM (default adaptive)
-%        - twave_shape: 'none','bi-phasic','min','max' (default 'none')
-%        - time_prior_mode: 'disabled' uses a scalar prior of 1; 'normalized'
-%                   uses the original local moving standard deviation divided
-%                   by its 90th percentile (default 'disabled')
+%   For Holter or exercise/stress-test ECG, where the heart rate drifts a lot
+%   within the recording, see ECG_DELINEATE_LSIM_LONG instead: it rescales the
+%   T-wave search window per beat with a QT/RR prior for more robust Toff.
 %
-%   For P-, QRS-, and T-wave onset/offset delineation, LSIM uses the same
-%   two features: the absolute local difference and the moving standard
-%   deviation. The difference feature is scaled by the temporal prior.
-%
-%   Outputs:
-%       positions: struct with detected point locations in samples
-%                  (Pon,P,Poff,P_score,QRSon,R,QRSoff,Ton,T,Toff,
-%                   beat_quality_score,beat_snr,index_clustering,
-%                   rpeak_bp_lower_cutoff_hz)
-%       beat_snr:  per-beat SNR in dB = 10*log10(q^2/(1-q^2)) of beat_quality_score q,
-%                  |q| clamped to [1e-4,0.9999]; removed/skipped beats q==0 -> -100 dB, NaN -> NaN
-%       index_clustering: per-beat FCM cluster label. The first and last
-%                  retained beats and any beats removed during preprocessing
-%                  are NaN because clustering uses only the interior beats.
-% https://dsp.stackexchange.com/questions/75246/correlation-a-magnitude-or-power-quantity
-%       EXITFLAG:  struct with .status ('succeeded'/'failed') and .message
+%   See also ECG_DELINEATE_LSIM_LONG, FIDUCIAL_DET_LSIM (deprecated), PEAK_DET_LIKELIHOOD_LONG_RECS.
 %
 %   Reference:
 %      ........
@@ -67,9 +93,18 @@ EXITFLAG.status = 'succeeded';
 EXITFLAG.message = [];
 rpeak_bp_lower_cutoff_hz = nan;
 
-if nargin < 3
-    error('The first 3 inputs are necessary for the fiducial detection')
+if nargin < 2
+    error('data and fs are necessary for the fiducial detection')
 end
+if nargin < 3
+    ecg_rpeaks_index = [];
+end
+if ~isscalar(fs)
+    error('ecg_delineate_lsim:InputOrder', ...
+        ['fs must be a scalar. The input order is (data, fs, ecg_rpeaks_index, ...); ' ...
+        'fiducial_det_lsim used (data, ecg_rpeaks_index, fs, ...).']);
+end
+
 
 fs_fd = 1000;
 fs_fd = fs;
@@ -111,7 +146,7 @@ else
     time_prior_mode = 'disabled';
 end
 if ~ismember(time_prior_mode,{'disabled','normalized'})
-    error('lsim_energy_ecgfiducial:TimePriorMode', ...
+    error('ecg_delineate_lsim:TimePriorMode', ...
         ['time_prior_mode must be ''disabled'' or ''normalized''; ' ...
         'received ''%s''.'],time_prior_mode);
 end
@@ -1266,18 +1301,6 @@ time_prior_mode      = ctx.time_prior_mode;
     %%  T-wave detection ##################################################################################################################
     %  ================= ##################################################################################################################
 
-    qt_rr_prior = compute_qt_rr_prior(data_bias, ecg_rpeaks_index, ...
-        ecg_qrson_index, positions.QRSoff, ...
-        beat_quality_twave, avg_intervals_ecg, rr_intervals_ecg, ...
-        index_clustering, num_cls, fs, win_sample_T);
-
-    qt_curve = [168 181	196	211	225	238	250	262	274	284	295	304	313	322	331	338	346	353	...
-        360	366	372	378	383	388	393	397	401	405	409	412	415	418	421	424	426	428	431	...
-        433	435	436	438	439	441	442	443	445	446	447	448	449	449	450	451	452	452	453	...
-        453	454	454	455	455	456	456	456	457	457	457	457	458	458	458	458	458];
-    linear_rr = 200:25:2000;
-
-
     T_bloks_on = cell(2,length(ecg_rpeaks_index)-2);
     T_bloks_on_index = cell(1,length(ecg_rpeaks_index)-2);
 
@@ -1317,12 +1340,6 @@ time_prior_mode      = ctx.time_prior_mode;
     T_peaks_cls_samples = nan(length(num_cls),1);
 
     for c = 1:length(num_cls)
-        prior_QT = qt_rr_prior(c).median_QT;
-        prior_RR = qt_rr_prior(c).median_RR;
-
-        [~,idx_prior] = min(abs(linear_rr-prior_RR));
-        qt_curve_cluster = (prior_QT/qt_curve(idx_prior)) * qt_curve;
-
         ind_c = index_clustering(index_clustering(:,2)==num_cls(c),1);
         cluster_ecg_beats = nan(length(ind_c),2*sample_350ms);
         cluster_ecg_samples = zeros(length(ind_c),1);
@@ -1331,14 +1348,6 @@ time_prior_mode      = ctx.time_prior_mode;
         for pcls = 1:length(ind_c)
             p = ind_c(pcls)+1;
             cluster_qrs_samples(pcls,1)= ecg_qrsoff_index(p) - ecg_qrson_index(p);
-            rr_ms_p = 1000 * avg_intervals_ecg(p) / fs;
-            qt_ms_p = interp1(linear_rr, qt_curve_cluster, rr_ms_p, 'linear', 'extrap');
-            qt_samp_p = round(qt_ms_p * fs / 1000);
-            guard_samp_p = max(round(0.2*max(0.5,rr_ms_p/1000) * qt_samp_p), 3*sample_10ms);
-            qrs_dur_p = ecg_qrsoff_index(p) - ecg_qrson_index(p);
-            t_search_len = qt_samp_p - qrs_dur_p + guard_samp_p;
-            t_end_p = max(2*sample_70ms, min(t_search_len, ecg_qrson_index(p+1) - ecg_qrsoff_index(p) - round(2*sample_70ms*(rr_ms_p/1000))));
-            % this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+t_end_p;
             this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+...
                 min((sample_350ms+sample_100ms)*max(1,avg_intervals_ecg(p)/fs) , min(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms));
 
@@ -1587,14 +1596,6 @@ time_prior_mode      = ctx.time_prior_mode;
 
         for pcls = 1:length(ind_c)
             p = ind_c(pcls)+1;
-            rr_ms_p = 1000 * avg_intervals_ecg(p) / fs;
-            qt_ms_p = interp1(linear_rr, qt_curve_cluster, rr_ms_p, 'linear', 'extrap');
-            qt_samp_p = round(qt_ms_p * fs / 1000);
-            guard_samp_p = max(round(0.2*max(0.5,rr_ms_p/1000) * qt_samp_p), 3*sample_10ms);
-            qrs_dur_p = ecg_qrsoff_index(p) - ecg_qrson_index(p);
-            t_search_len = qt_samp_p - qrs_dur_p + guard_samp_p;
-            t_end_p = max(2*sample_70ms, min(t_search_len, ecg_qrson_index(p+1) - ecg_qrsoff_index(p) - round(2*sample_70ms*(rr_ms_p/1000))));
-            % this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+t_end_p;
             this_T_index = ecg_qrsoff_index(p)+1:ecg_qrsoff_index(p)+...
                 min((sample_350ms+sample_100ms)*max(1,avg_intervals_ecg(p)/fs) , min(sample_350ms*max(1,avg_intervals_ecg(p)/(2*sample_350ms)), ecg_qrson_index(p+1) - ecg_qrsoff_index(p)-sample_70ms));
 
@@ -2960,7 +2961,7 @@ switch time_prior_mode
     case 'normalized'
         time_prior = raw_prior/prctile(raw_prior,90);
     otherwise
-        error('lsim_energy_ecgfiducial:TimePriorMode', ...
+        error('ecg_delineate_lsim:TimePriorMode', ...
             'Unsupported time-prior mode: %s.',time_prior_mode);
 end
 end
