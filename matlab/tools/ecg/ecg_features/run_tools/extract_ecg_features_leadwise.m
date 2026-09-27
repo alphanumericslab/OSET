@@ -18,7 +18,7 @@ function [Table_csv] = extract_ecg_features_leadwise(signal_name, data, fs , ...
     %   data (1D array, microvolts): Preprocessed ECG signal
     %   fs (scalar, Hz): Sampling frequency of the ECG signal
     %   increasing_ECG_beat_lenght - (float) (Required for ecg_snr_features function)
-    %   flag_post_processing (binary)(Required for fiducial_det_lsim function)
+    %   flag_post_processing (binary)(Required for the  function)
     %   pre_R_peak_segment (float): Portion used before the R-peak
     %   post_R_peak_segment (float): Portion used after the R-peak
     %   n_mean_ECG_beats (scalar): Number of samples to consider for morphology-based features    
@@ -28,8 +28,8 @@ function [Table_csv] = extract_ecg_features_leadwise(signal_name, data, fs , ...
     %   output_path (string): Full path to save the extracted features as a `.csv` file   
     %
     % DEPENDENCIES:
-    %  1. peak_det_likelihood_long_recs function from the OSET package
-    %  2. fiducial_det_lsim function from the OSET package
+    %  1. peak_det_likelihood_long_recs function
+    %  2. ecg_delineate_lsim function
     %
     % OUTPUT:
     % Table_csv: A csv file that includes the following features:
@@ -70,7 +70,7 @@ function [Table_csv] = extract_ecg_features_leadwise(signal_name, data, fs , ...
                          end
 
                          % Run ECG fiducial points detector    
-                         position = fiducial_det_lsim(data_channel, R_peaks_indexes, fs, flag_post_processing);
+                         position = ecg_delineate_lsim(data_channel, fs, R_peaks_indexes, flag_post_processing);
                          % Extract features
                          [hrv_features, hrv_feature_info]  = ecg_hrv_features(data_channel, R_peaks_indexes, fs);
                          [snr_features, snr_feature_info, ~]  = ecg_snr_features(data_channel, R_peaks_indexes, increasing_ECG_beat_length, pre_R_peak_segment, post_R_peak_segment);

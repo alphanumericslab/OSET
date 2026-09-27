@@ -85,7 +85,7 @@ fprintf('Loop through each file, process the data, and extract features.\n')
 fprintf('Number of ECG files in the folder: %d\n', length(file_list));
 
 % Loop through each file
-for i = 1:length(file_list)
+parfor i = 1:length(file_list)
 
     % Display progress every 200 files
     if mod(i, 200) == 0

@@ -108,8 +108,7 @@ if nargin < 3
 end
 if ~isscalar(fs)
     error('ecg_delineate_lsim_long:InputOrder', ...
-        ['fs must be a scalar. The input order is (data, fs, ecg_rpeaks_index, ...); ' ...
-        'fiducial_det_lsim used (data, ecg_rpeaks_index, fs, ...).']);
+        'fs must be a scalar. The input order is (data, fs, ecg_rpeaks_index, ...).');
 end
 
 

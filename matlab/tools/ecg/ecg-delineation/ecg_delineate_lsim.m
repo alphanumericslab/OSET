@@ -80,7 +80,7 @@ function [positions, EXITFLAG] = ecg_delineate_lsim(data, fs, ecg_rpeaks_index, 
 %   within the recording, see ECG_DELINEATE_LSIM_LONG instead: it rescales the
 %   T-wave search window per beat with a QT/RR prior for more robust Toff.
 %
-%   See also ECG_DELINEATE_LSIM_LONG, FIDUCIAL_DET_LSIM (deprecated), PEAK_DET_LIKELIHOOD_LONG_RECS.
+%   See also ECG_DELINEATE_LSIM_LONG, PEAK_DET_LIKELIHOOD_LONG_RECS.
 %
 %   Reference:
 %      ........
@@ -101,8 +101,7 @@ if nargin < 3
 end
 if ~isscalar(fs)
     error('ecg_delineate_lsim:InputOrder', ...
-        ['fs must be a scalar. The input order is (data, fs, ecg_rpeaks_index, ...); ' ...
-        'fiducial_det_lsim used (data, ecg_rpeaks_index, fs, ...).']);
+        'fs must be a scalar. The input order is (data, fs, ecg_rpeaks_index, ...).');
 end
 
 

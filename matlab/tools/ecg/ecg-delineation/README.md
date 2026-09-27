@@ -39,8 +39,6 @@ addpath(genpath(fullfile(oset_path, 'external', 'chmm-lsim-matlab-toolbox')))
 addpath(fullfile(oset_path, 'under-development', 'lsim-deli'))
 ```
 
-> Avoid `addpath(genpath(oset_path))` on the whole toolbox. It also adds the `depricated/` folders, whose older copies can shadow the current functions.
-
 ## Quick start
 
 ```matlab
@@ -120,23 +118,6 @@ Only `data` and `fs` are required. Pass `[]` for any optional input to keep its 
 | [`lsim_fit_detect.m`](lsim_fit_detect.m) | Fits the LSIM model and decodes transitions |
 | [`em_interval_calc.m`](em_interval_calc.m) | RR-interval estimate |
 | [`fiducial_det_ppg.m`](fiducial_det_ppg.m) | Equivalent LSIM delineator for PPG |
-| [`fiducial_det_lsim.m`](fiducial_det_lsim.m) | **Deprecated.** Forwards to `ecg_delineate_lsim` |
-| [`depricated/`](depricated) | Archived earlier implementations (`fiducial_det_lsim_v1.m`, `fiducial_det_lsim_v2.m`) |
-
-## Migrating from `fiducial_det_lsim`
-
-`fiducial_det_lsim` now forwards to `ecg_delineate_lsim`. The first call in a session shows the warning `OSET:fiducial_det_lsim:deprecated`. Existing code keeps working without changes, and the output struct now has three extra fields: `beat_snr`, `index_clustering`, and `rpeak_bp_lower_cutoff_hz`.
-
-To migrate, rename the call and **swap the second and third inputs**. `ecg_delineate_lsim` takes `fs` second, so that every input after `fs` is optional. The optional inputs keep their positions (4–11).
-
-```matlab
-positions = fiducial_det_lsim(ecg, rpeaks, fs, 1);    % old
-positions = ecg_delineate_lsim(ecg, fs, rpeaks, 1);   % new
-```
-
-If you pass the old order to `ecg_delineate_lsim` by mistake, it stops with the error `ecg_delineate_lsim:InputOrder` because `fs` is not a scalar.
-
-To hide the warning: `warning('off', 'OSET:fiducial_det_lsim:deprecated')`.
 
 ## Authors
 

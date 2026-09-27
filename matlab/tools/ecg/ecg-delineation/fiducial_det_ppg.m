@@ -1,8 +1,8 @@
 
 function [positions, EXITFLAG] = fiducial_det_ppg(data, ecg_rpeaks_index, fs, varargin)
 
-% ECG fiducial points detector based on LSIM approach
-%   [positions, EXITFLAG] = fiducial_det_lsim(data, ecg_rpeaks_index, fs, varargin)
+% PPG fiducial points detector based on LSIM approach
+%   [positions, EXITFLAG] = fiducial_det_ppg(data, ecg_rpeaks_index, fs, varargin)
 %
 %   Inputs:
 %       data: Vector of input ECG data

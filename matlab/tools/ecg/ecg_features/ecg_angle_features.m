@@ -16,7 +16,7 @@ function [feature_vec, feature_info] = ecg_angle_features(data, fs, ...
     %   median_window_coff (scalar): coefficient for the moving median window
     %   mean_window_coff (scalar): coefficient for the moving mean window
     %   lead_list (cell array of strings): Names and order of ECG leads
-    %   flag_post_processing (binary)(Required for fiducial_det_lsim function)
+    %   flag_post_processing (binary)(Required for the ecg_delineate_lsim function)
     %
     % Outputs:
     %   feature_vec: A vector contains features related to ECG angles
@@ -30,12 +30,12 @@ function [feature_vec, feature_info] = ecg_angle_features(data, fs, ...
     %   Croatian medical journal 40 (1999): 77-79.
     %
     % Dependencies:
-    %   1. `mean_median_ecg_amp` function from the OSET package
-    %   2. `calculate_ecg_angle` function from the OSET package
-    %   3. `preprocess_for_ecg_angle_features` function from the OSET package
-    %   4. `peak_det_likelihood_long_recs` function from the OSET package
-    %   5. `peak_det_likelihood` function from the OSET package
-    %   6. `fiducial_det_lsim` function from the OSET package
+    %   1. `mean_median_ecg_amp` function
+    %   2. `calculate_ecg_angle` function
+    %   3. `preprocess_for_ecg_angle_features` function
+    %   4. `peak_det_likelihood_long_recs` function
+    %   5. `peak_det_likelihood` function
+    %   6. `ecg_delineate_lsim` function
     %  
     % Authors:
     %   Seyedeh Somayyeh Mousavi 
@@ -85,7 +85,7 @@ function [feature_vec, feature_info] = ecg_angle_features(data, fs, ...
                               data_channel = data_filtered(j, :);
 
                               % Run ECG fiducial points detector    
-                              position = fiducial_det_lsim(data_channel, R_peaks_indexes, fs, flag_post_processing);
+                              position = ecg_delineate_lsim(data_channel, fs, R_peaks_indexes, flag_post_processing);
                               Length_data = length(data_channel);
                               [mean_amp, median_amp] = mean_median_ecg_amp(data_channel, position, Length_data);
 

@@ -65,7 +65,7 @@ ecg_qrson_index  = ecg_qrson_index(:);
 ecg_qrsoff_index = ecg_qrsoff_index(:);
 ecg_rpeaks_index = ecg_rpeaks_index(:);
 
-% === Prepare T-wave signal (same as fiducial_det_lsim lines 1146-1161) ===
+% === Prepare T-wave signal (same as the T-wave baseline removal in detect_twave) ===
 ecg_Twave = data_bias;
 new_baseline = nan(N - 2, 1);
 for p = 2:N-1
@@ -172,7 +172,7 @@ for c = 1:length(num_cls)
     avg_tw  = movmean(avg_tw, [sample_10ms, sample_10ms]);
     avg_tw  = fillmissing(avg_tw, "nearest");
 
-    % --- Detect T-peak on template (same logic as fiducial_det_lsim) ---
+    % --- Detect T-peak on template (same logic as detect_twave) ---
     skip  = 3 * sample_10ms;
     tsrch = avg_tw(skip + 1 : end);
 
@@ -274,7 +274,7 @@ end
 %% ========================================================================
 function toff = detect_toff(sig, t_peak, sample_10ms, sample_70ms, win_T)
 %DETECT_TOFF  Detect T-wave offset using derivative-threshold after T-peak
-%   Uses the same feature types as fiducial_det_lsim (abs-diff + moving std)
+%   Uses the same feature types as ECG_DELINEATE_LSIM_LONG (abs-diff + moving std)
 %   with Gaussian weighting to suppress late activity (P-wave of next beat).
 
     L = length(sig);
