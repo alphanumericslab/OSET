@@ -33,6 +33,9 @@ Refer to [Code of conduct, diversity, equity, and inclusion statement](./code-of
 * Version 3.14 (June 2018): Git repository public release
 * Version 4.0 (December 2023 - *beta version*): OSET codebase revision initiated
 
+## ACKNOWLEDGEMENT
+The OSET project was supported by the American Heart Association Innovative Project Award [23IPA1054351](https://doi.org/10.58275/AHA.23IPA1054351.pc.gr.171988) and Innovative Project Bridge Award [26BIPA1622629](https://doi.org/10.58275/AHA.26BIPA1622629.pc.gr.243704).
+
 ## CITATION
 Please cite OSET as follows: R. Sameni, OSET: The open-source electrophysiological toolbox. Version 3.14, 2006-2023. Available [online]. URL: [https://github.com/alphanumericslab/OSET.git](https://github.com/alphanumericslab/OSET.git)
 
